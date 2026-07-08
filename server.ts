@@ -63,7 +63,7 @@ app.post("/api/parse-screenshot", async (req, res) => {
       Se não conseguires identificar alguma informação com certeza, faz a melhor estimativa ou deixa em branco.
     `;
 
-    const modelsToTry = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
+    const modelsToTry = ["gemini-2.5-flash", "gemini-1.5-flash"];
     let response: any = null;
     let lastError: any = null;
     const maxAttempts = 5;
