@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Aumentamos o limite para 50mb (screenshots em base64 podem ser pesados)
 app.use(express.json({ limit: "50mb" }));
@@ -191,7 +191,13 @@ app.post("/api/parse-screenshot", async (req, res) => {
 });
 
 // Configure Vite middleware in development or serve static in production
+// Configure Vite middleware in development or serve static in production
 async function start() {
+  // Se estivermos na Vercel, não precisamos de iniciar o servidor nem configurar o Vite
+  if (process.env.VERCEL) {
+    return;
+  }
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
