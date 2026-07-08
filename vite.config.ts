@@ -10,32 +10,51 @@ export default defineConfig(() => {
       react(), 
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate', // Atualiza automaticamente os ficheiros da app em segundo plano
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'], // Ficheiros estáticos fundamentais
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
         manifest: {
           name: 'BetTrackr',
           short_name: 'BetTrackr',
           description: 'Aplicação para gestão e análise de boletins de apostas desportivas',
-          theme_color: '#000000', // Altera para a cor principal da tua app se desejares
+          theme_color: '#0070f3',
           background_color: '#ffffff',
-          display: 'standalone', // Abre a app em ecrã inteiro sem a barra do browser (como uma app nativa)
+          display: 'standalone',
           start_url: '/',
           icons: [
             {
               src: 'pwa-192x192.png',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any' // Ícone normal para ecrãs normais
             },
             {
-              src: 'pwa-512x512.png',
-              sizes: '512x512',
-              type: 'image/png'
+              src: 'pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'maskable' // Ícone adaptável para o Android cortar
             },
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'any maskable' // Garante que o Android não corta os cantos do ícone de forma feia
+              purpose: 'any'
+            }
+          ],
+          // Isto resolve o aviso de "Richer PWA Install UI" mostrando fotos da tua app ao utilizador antes de instalar!
+          screenshots: [
+            {
+              src: 'pwa-512x512.png', // Podes usar o próprio ícone ou um print da app temporariamente
+              sizes: '512x512',
+              type: 'image/png',
+              form_factor: 'wide',
+              label: 'BetTrackr Desktop'
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              form_factor: 'narrow',
+              label: 'BetTrackr Mobile'
             }
           ]
         }
