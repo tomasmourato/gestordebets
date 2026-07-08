@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
@@ -9,9 +8,9 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// Aumentamos o limite para 50mb (screenshots em base64 podem ser pesados)
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+// Limite ideal para payloads na Vercel (máximo suportado por eles é 4.5mb)
+app.use(express.json({ limit: "4mb" }));
+app.use(express.urlencoded({ limit: "4mb", extended: true }));
 
 // Lazy init of GoogleGenAI
 let aiClient: GoogleGenAI | null = null;
@@ -63,11 +62,10 @@ app.post("/api/parse-screenshot", async (req, res) => {
       Se não conseguires identificar alguma informação com certeza, faz a melhor estimativa ou deixa em branco.
     `;
 
-    // Modelos oficiais corrigidos
     const modelsToTry = ["gemini-2.5-flash", "gemini-1.5-flash"];
     let response: any = null;
     let lastError: any = null;
-    const maxAttempts = 5;
+    const maxAttempts = 3; // Reduzido para 3 para evitar dar timeout na Vercel
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const model = modelsToTry[attempt % modelsToTry.length];
@@ -157,48 +155,39 @@ app.post("/api/parse-screenshot", async (req, res) => {
         lastError = err;
         console.warn(`Tentativa ${attempt + 1} falhou com o modelo ${model}:`, err.message || err);
         
-        const baseWait = (attempt + 1) * 2000;
-        const jitter = Math.random() * 1000;
-        const waitTime = Math.min(baseWait + jitter, 10000);
-        
+        const baseWait = (attempt + 1) * 1000;
         if (attempt < maxAttempts - 1) {
-          console.log(`A aguardar ${Math.round(waitTime)}ms antes da próxima tentativa...`);
-          await new Promise((resolve) => setTimeout(resolve, waitTime));
+          await new Promise((resolve) => setTimeout(resolve, baseWait));
         }
       }
     }
 
     if (!response || !response.text) {
-      throw lastError || new Error("Não foi possível obter resposta do Gemini após várias tentativas e modelos.");
+      throw lastError || new Error("Não foi possível obter resposta do Gemini após várias tentativas.");
     }
 
     const textResult = response.text;
-    if (!textResult) {
-      res.status(500).json({ error: "Não foi possível extrair dados da imagem." });
-      return;
-    }
-
     const parsedData = JSON.parse(textResult.trim());
     res.json({ success: true, data: parsedData });
 
   } catch (error: any) {
     console.error("Erro ao analisar imagem com Gemini:", error);
     res.status(500).json({ 
-      error: "Ocorreu um erro ao processar o screenshot. Verifica se a tua chave API do Gemini está correta e tenta novamente.",
+      error: "Ocorreu um erro ao processar o screenshot.",
       details: error.message 
     });
   }
 });
 
 // Configure Vite middleware in development or serve static in production
-// Configure Vite middleware in development or serve static in production
 async function start() {
-  // Se estivermos na Vercel, não precisamos de iniciar o servidor nem configurar o Vite
   if (process.env.VERCEL) {
-    return;
+    return; // Na Vercel não faz nada, deixa a Vercel servir os estáticos nativamente
   }
 
   if (process.env.NODE_ENV !== "production") {
+    // IMPORT DINÂMICO: O Vite só é carregado aqui se estiveres a rodar no teu PC localmente!
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -211,7 +200,6 @@ async function start() {
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
-    console.log("Modo de produção: Servindo ficheiros estáticos de /dist.");
   }
 
   app.listen(PORT, "0.0.0.0", () => {
@@ -219,14 +207,10 @@ async function start() {
   });
 }
 
-// --- O SEGREDO PARA A VERCEL ---
-// A Vercel adiciona automaticamente a variável VERCEL=1 aos seus servidores.
-// Se NÃO estivermos na Vercel (ou seja, no teu PC), arrancamos o servidor e o Vite normalmente.
 if (!process.env.VERCEL) {
   start().catch((err) => {
     console.error("Erro ao iniciar o servidor:", err);
   });
 }
 
-// Se ESTIVERMOS na Vercel, apenas exportamos a aplicação para ela a tratar como Serverless Function.
 export default app;
