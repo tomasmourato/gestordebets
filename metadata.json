@@ -1,0 +1,6 @@
+{
+  "name": "BetTrackr",
+  "description": "Aplicação moderna e responsiva de gestão de apostas desportivas com registo manual, estatísticas avançadas, análise de freebets e importação automática de screenshots de boletins com IA (Gemini).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
