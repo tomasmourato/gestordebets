@@ -25,13 +25,13 @@ export default defineConfig(() => {
               src: 'pwa-192x192.png',
               sizes: '192x192',
               type: 'image/png',
-              purpose: 'any' // Ícone normal para ecrãs normais
+              purpose: 'any' // Resolve o aviso separando o 'any'
             },
             {
               src: 'pwa-192x192.png',
               sizes: '192x192',
               type: 'image/png',
-              purpose: 'maskable' // Ícone adaptável para o Android cortar
+              purpose: 'maskable' // Resolve o aviso separando o 'maskable'
             },
             {
               src: 'pwa-512x512.png',
@@ -40,20 +40,20 @@ export default defineConfig(() => {
               purpose: 'any'
             }
           ],
-          // Isto resolve o aviso de "Richer PWA Install UI" mostrando fotos da tua app ao utilizador antes de instalar!
+          // Resolve o aviso de "Richer PWA Install UI" mostrando o design da app no PC e Telemóvel
           screenshots: [
             {
-              src: 'pwa-512x512.png', // Podes usar o próprio ícone ou um print da app temporariamente
+              src: 'pwa-512x512.png', 
               sizes: '512x512',
               type: 'image/png',
-              form_factor: 'wide',
+              form_factor: 'wide', // Para Desktop
               label: 'BetTrackr Desktop'
             },
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
-              form_factor: 'narrow',
+              form_factor: 'narrow', // Para Mobile
               label: 'BetTrackr Mobile'
             }
           ]
