@@ -7,11 +7,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Increase body limit for image uploads
-app.use(express.json({ limit: "15mb" }));
-app.use(express.urlencoded({ limit: "15mb", extended: true }));
+// Aumentamos o limite para 50mb (screenshots em base64 podem ser pesados)
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Lazy init of GoogleGenAI
 let aiClient: GoogleGenAI | null = null;
@@ -63,6 +63,7 @@ app.post("/api/parse-screenshot", async (req, res) => {
       Se não conseguires identificar alguma informação com certeza, faz a melhor estimativa ou deixa em branco.
     `;
 
+    // Modelos oficiais corrigidos
     const modelsToTry = ["gemini-2.5-flash", "gemini-1.5-flash"];
     let response: any = null;
     let lastError: any = null;
@@ -156,10 +157,9 @@ app.post("/api/parse-screenshot", async (req, res) => {
         lastError = err;
         console.warn(`Tentativa ${attempt + 1} falhou com o modelo ${model}:`, err.message || err);
         
-        // Wait longer on each attempt with a bit of random jitter to avoid collision
         const baseWait = (attempt + 1) * 2000;
         const jitter = Math.random() * 1000;
-        const waitTime = Math.min(baseWait + jitter, 10000); // maximum 10 seconds wait
+        const waitTime = Math.min(baseWait + jitter, 10000);
         
         if (attempt < maxAttempts - 1) {
           console.log(`A aguardar ${Math.round(waitTime)}ms antes da próxima tentativa...`);
@@ -213,6 +213,14 @@ async function start() {
   });
 }
 
-start().catch((err) => {
-  console.error("Erro ao iniciar o servidor:", err);
-});
+// --- O SEGREDO PARA A VERCEL ---
+// A Vercel adiciona automaticamente a variável VERCEL=1 aos seus servidores.
+// Se NÃO estivermos na Vercel (ou seja, no teu PC), arrancamos o servidor e o Vite normalmente.
+if (!process.env.VERCEL) {
+  start().catch((err) => {
+    console.error("Erro ao iniciar o servidor:", err);
+  });
+}
+
+// Se ESTIVERMOS na Vercel, apenas exportamos a aplicação para ela a tratar como Serverless Function.
+export default app;
