@@ -1,0 +1,803 @@
+import React, { useState, useMemo } from "react";
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  Trash2, 
+  Edit, 
+  Copy, 
+  X, 
+  PlusCircle, 
+  MinusCircle, 
+  Check, 
+  HelpCircle,
+  Eye,
+  Trash,
+  Clock,
+  AlertTriangle
+} from "lucide-react";
+import { Bet, Selection, BetStatus, BetType } from "../types";
+import { calculateBetReturnAndProfit, AVAILABLE_BOOKMAKERS, safeNum } from "../utils";
+
+interface BetsManagerProps {
+  bets: Bet[];
+  currency: string;
+  onAddBet: (bet: Bet) => void;
+  onUpdateBet: (bet: Bet) => void;
+  onDeleteBet: (id: string) => void;
+}
+
+export default function BetsManager({ 
+  bets, 
+  currency, 
+  onAddBet, 
+  onUpdateBet, 
+  onDeleteBet 
+}: BetsManagerProps) {
+  
+  // Search & Filter state
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [typeFilter, setTypeFilter] = useState<string>("ALL");
+  const [freebetFilter, setFreebetFilter] = useState<string>("ALL");
+  const [bookmakerFilter, setBookmakerFilter] = useState<string>("ALL");
+
+  // Form / Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingBet, setEditingBet] = useState<Bet | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Form Fields
+  const [formType, setFormType] = useState<BetType>("SIMPLES");
+  const [formStatus, setFormStatus] = useState<BetStatus>("POR_LIQUIDAR");
+  const [formBookmaker, setFormBookmaker] = useState("Betano");
+  const [formCustomBookmaker, setFormCustomBookmaker] = useState("");
+  const [formStake, setFormStake] = useState<string>("10.00");
+  const [formIsFreebet, setFormIsFreebet] = useState(false);
+  const [formDateTime, setFormDateTime] = useState("");
+  const [formNotes, setFormNotes] = useState("");
+  const [formSelections, setFormSelections] = useState<Array<{
+    event: string;
+    market: string;
+    choice: string;
+    odd: string;
+  }>>([{ event: "", market: "", choice: "", odd: "1.80" }]);
+
+  // Combined Odd Calculator based on selections
+  const calculatedOdd = useMemo(() => {
+    let multiplier = 1;
+    let validCount = 0;
+    formSelections.forEach(s => {
+      const parsed = parseFloat(s.odd);
+      if (!isNaN(parsed) && parsed > 0) {
+        multiplier *= parsed;
+        validCount++;
+      }
+    });
+    return validCount > 0 ? Number(multiplier.toFixed(2)) : 1.00;
+  }, [formSelections]);
+
+  // Real-time calculations for potential return in the form
+  const potentialWinningsInfo = useMemo(() => {
+    const stakeNum = parseFloat(formStake) || 0;
+    const calcs = calculateBetReturnAndProfit(stakeNum, calculatedOdd, formStatus, formIsFreebet);
+    return calcs;
+  }, [formStake, calculatedOdd, formStatus, formIsFreebet]);
+
+  // Filtered bets
+  const filteredBets = useMemo(() => {
+    return bets.filter(bet => {
+      // Search matches event, market, choice, bookmaker, or notes
+      const matchesSearch = search === "" || bet.selections.some(s => 
+        s.event.toLowerCase().includes(search.toLowerCase()) ||
+        s.market.toLowerCase().includes(search.toLowerCase()) ||
+        s.choice.toLowerCase().includes(search.toLowerCase())
+      ) || bet.bookmaker.toLowerCase().includes(search.toLowerCase()) || 
+          (bet.notes && bet.notes.toLowerCase().includes(search.toLowerCase()));
+
+      const matchesStatus = statusFilter === "ALL" || bet.status === statusFilter;
+      const matchesType = typeFilter === "ALL" || bet.type === typeFilter;
+      
+      let matchesFreebet = true;
+      if (freebetFilter === "FREEBET") matchesFreebet = bet.isFreebet;
+      if (freebetFilter === "NORMAL") matchesFreebet = !bet.isFreebet;
+
+      const matchesBookmaker = bookmakerFilter === "ALL" || bet.bookmaker === bookmakerFilter;
+
+      return matchesSearch && matchesStatus && matchesType && matchesFreebet && matchesBookmaker;
+    }).sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+  }, [bets, search, statusFilter, typeFilter, freebetFilter, bookmakerFilter]);
+
+  // Reset Form
+  const resetForm = () => {
+    setEditingBet(null);
+    setFormType("SIMPLES");
+    setFormStatus("POR_LIQUIDAR");
+    setFormBookmaker("Betano");
+    setFormCustomBookmaker("");
+    setFormStake("10.00");
+    setFormIsFreebet(false);
+    setFormDateTime(new Date().toISOString().replace("T", " ").slice(0, 16));
+    setFormNotes("");
+    setFormSelections([{ event: "", market: "", choice: "", odd: "1.80" }]);
+    setFormError(null);
+  };
+
+  // Open Modal for Add
+  const openAddModal = () => {
+    resetForm();
+    setIsModalOpen(true);
+  };
+
+  // Open Modal for Edit
+  const openEditModal = (bet: Bet) => {
+    setFormError(null);
+    setEditingBet(bet);
+    setFormType(bet.type);
+    setFormStatus(bet.status);
+    
+    if (AVAILABLE_BOOKMAKERS.includes(bet.bookmaker)) {
+      setFormBookmaker(bet.bookmaker);
+      setFormCustomBookmaker("");
+    } else {
+      setFormBookmaker("Outra");
+      setFormCustomBookmaker(bet.bookmaker);
+    }
+    
+    setFormStake(bet.stake.toString());
+    setFormIsFreebet(bet.isFreebet);
+    setFormDateTime(bet.dateTime);
+    setFormNotes(bet.notes || "");
+    setFormSelections(bet.selections.map(s => ({
+      event: s.event,
+      market: s.market,
+      choice: s.choice,
+      odd: s.odd.toString()
+    })));
+    setIsModalOpen(true);
+  };
+
+  // Duplicate Bet
+  const handleDuplicate = (bet: Bet) => {
+    const duplicated: Bet = {
+      ...bet,
+      id: "bet-" + Date.now(),
+      dateTime: new Date().toISOString().replace("T", " ").slice(0, 16),
+      notes: bet.notes ? `[Duplicado] ${bet.notes}` : "Aposta duplicada.",
+      origin: "MANUAL"
+    };
+    onAddBet(duplicated);
+  };
+
+  // Add Selection inside form
+  const addSelection = () => {
+    setFormSelections([...formSelections, { event: "", market: "", choice: "", odd: "1.50" }]);
+  };
+
+  // Remove Selection inside form
+  const removeSelection = (index: number) => {
+    if (formSelections.length > 1) {
+      setFormSelections(formSelections.filter((_, i) => i !== index));
+    }
+  };
+
+  // Handle Input changes in Selections
+  const handleSelectionChange = (index: number, field: string, value: string) => {
+    const updated = [...formSelections];
+    updated[index] = { ...updated[index], [field]: value };
+    setFormSelections(updated);
+  };
+
+  // Handle Form Submit
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validations
+    const stakeNum = parseFloat(formStake);
+    if (isNaN(stakeNum) || stakeNum <= 0) {
+      setFormError("Por favor insere uma Stake válida.");
+      return;
+    }
+
+    const finalBookmaker = formBookmaker === "Outra" ? formCustomBookmaker.trim() : formBookmaker;
+    if (!finalBookmaker) {
+      setFormError("Por favor define a Casa de Apostas.");
+      return;
+    }
+
+    // Build selections
+    const selections: Selection[] = [];
+    let isValid = true;
+    
+    formSelections.forEach((s, idx) => {
+      const oddVal = parseFloat(s.odd);
+      if (!s.event.trim() || !s.market.trim() || !s.choice.trim() || isNaN(oddVal) || oddVal <= 1) {
+        isValid = false;
+      }
+      selections.push({
+        id: `sel-${editingBet?.id || "new"}-${idx}-${Date.now()}`,
+        event: s.event.trim(),
+        market: s.market.trim(),
+        choice: s.choice.trim(),
+        odd: oddVal
+      });
+    });
+
+    if (!isValid) {
+      setFormError("Por favor preenche todos os campos das seleções com valores válidos (odds devem ser maiores que 1.0).");
+      return;
+    }
+
+    setFormError(null);
+
+    const { potentialReturn, finalReturn, netProfit } = calculateBetReturnAndProfit(
+      stakeNum,
+      calculatedOdd,
+      formStatus,
+      formIsFreebet
+    );
+
+    const betData: Bet = {
+      id: editingBet ? editingBet.id : "bet-" + Date.now(),
+      type: formType,
+      status: formStatus,
+      selections: selections,
+      stake: stakeNum,
+      odd: calculatedOdd,
+      isFreebet: formIsFreebet,
+      potentialReturn,
+      finalReturn,
+      netProfit,
+      bookmaker: finalBookmaker,
+      dateTime: formDateTime || new Date().toISOString().replace("T", " ").slice(0, 16),
+      notes: formNotes.trim() || undefined,
+      origin: editingBet ? editingBet.origin : "MANUAL"
+    };
+
+    if (editingBet) {
+      onUpdateBet(betData);
+    } else {
+      onAddBet(betData);
+    }
+
+    setIsModalOpen(false);
+    resetForm();
+  };
+
+  // Map status values to badges
+  const getStatusBadge = (status: BetStatus) => {
+    switch (status) {
+      case "POR_LIQUIDAR":
+        return <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-200 flex items-center gap-1 w-max"><Clock size={10} /> Por Liquidar</span>;
+      case "GANHA":
+        return <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1 w-max"><Check size={10} /> Ganha</span>;
+      case "PERDIDA":
+        return <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-600 border border-rose-200 flex items-center gap-1 w-max"><X size={10} /> Perdida</span>;
+      case "ANULADA":
+        return <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1 w-max"><MinusCircle size={10} /> Anulada</span>;
+      case "MEIO_GANHA":
+        return <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-500 border border-emerald-200 flex items-center gap-1 w-max"><Check size={10} /> Meio Ganha</span>;
+      case "MEIO_PERDIDA":
+        return <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider bg-rose-50/50 text-rose-500 border border-rose-200 flex items-center gap-1 w-max"><X size={10} /> Meio Perdida</span>;
+    }
+  };
+
+  return (
+    <div className="space-y-4" id="bets-tab">
+      
+      {/* Search and Filters Toolbar */}
+      <div className="bg-white rounded-sm p-4 border border-slate-200 flex flex-col md:flex-row gap-3 items-center justify-between" id="bets-toolbar">
+        
+        {/* Search */}
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Pesquisar equipa, mercado, notas..."
+            className="w-full pl-9 pr-4 py-2 text-xs rounded-sm bg-white border border-slate-200 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-colors"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        {/* Dynamic Filters */}
+        <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
+          
+          {/* Status Filter */}
+          <select
+            className="px-3 py-2 text-xs rounded-sm bg-white border border-slate-200 text-slate-700 hover:border-slate-300 focus:border-indigo-600 focus:outline-none transition-colors"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="ALL">Todos os Estados</option>
+            <option value="POR_LIQUIDAR">Por Liquidar</option>
+            <option value="GANHA">Ganha</option>
+            <option value="PERDIDA">Perdida</option>
+            <option value="ANULADA">Anulada</option>
+            <option value="MEIO_GANHA">Meio Ganha</option>
+            <option value="MEIO_PERDIDA">Meio Perdida</option>
+          </select>
+
+          {/* Type Filter */}
+          <select
+            className="px-3 py-2 text-xs rounded-sm bg-white border border-slate-200 text-slate-700 hover:border-slate-300 focus:border-indigo-600 focus:outline-none transition-colors"
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+          >
+            <option value="ALL">Qualquer Tipo</option>
+            <option value="SIMPLES">Simples</option>
+            <option value="MULTIPLA">Múltipla</option>
+          </select>
+
+          {/* Freebet Filter */}
+          <select
+            className="px-3 py-2 text-xs rounded-sm bg-white border border-slate-200 text-slate-700 hover:border-slate-300 focus:border-indigo-600 focus:outline-none transition-colors"
+            value={freebetFilter}
+            onChange={(e) => setFreebetFilter(e.target.value)}
+          >
+            <option value="ALL">Tipo de Dinheiro</option>
+            <option value="NORMAL">Dinheiro Real</option>
+            <option value="FREEBET">Freebet</option>
+          </select>
+
+          {/* Bookmaker Filter */}
+          <select
+            className="px-3 py-2 text-xs rounded-sm bg-white border border-slate-200 text-slate-700 hover:border-slate-300 focus:border-indigo-600 focus:outline-none transition-colors"
+            value={bookmakerFilter}
+            onChange={(e) => setBookmakerFilter(e.target.value)}
+          >
+            <option value="ALL">Todas as Casas</option>
+            {AVAILABLE_BOOKMAKERS.map((b, idx) => (
+              <option key={idx} value={b}>{b}</option>
+            ))}
+          </select>
+
+          {/* New Bet Button */}
+          <button
+            onClick={openAddModal}
+            className="ml-auto md:ml-0 px-4 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+            id="btn-new-bet"
+          >
+            <Plus size={14} /> Registar Aposta
+          </button>
+        </div>
+
+      </div>
+
+      {/* Bets List / Grid */}
+      <div className="space-y-3" id="bets-list">
+        {filteredBets.map((bet) => {
+          const isSettled = bet.status !== "POR_LIQUIDAR";
+          return (
+            <div 
+              key={bet.id} 
+              className="bg-white rounded-sm border border-slate-200 p-4 md:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-slate-50/50 transition-colors"
+            >
+              
+              {/* Left Column: Selections and Details */}
+              <div className="space-y-2 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[9px] font-bold text-indigo-700 tracking-wider uppercase bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-sm font-mono">
+                    {bet.type}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {bet.dateTime}
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-sm">
+                    {bet.bookmaker}
+                  </span>
+                  {bet.isFreebet && (
+                    <span className="text-[9px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-sm uppercase border border-amber-200">
+                      Freebet
+                    </span>
+                  )}
+                  {getStatusBadge(bet.status)}
+                </div>
+
+                {/* Selections List */}
+                <div className="space-y-1.5">
+                  {(bet.selections || []).map((sel, sIdx) => (
+                    <div key={sel.id || sIdx} className="flex flex-wrap items-center gap-x-2 text-xs">
+                      <span className="font-semibold text-slate-900">{sel.event}</span>
+                      <span className="text-slate-300 shrink-0">|</span>
+                      <span className="text-slate-500 shrink-0">{sel.market}:</span>
+                      <span className="font-medium text-slate-700">{sel.choice}</span>
+                      <span className="text-[10px] text-indigo-700 font-bold ml-1 bg-indigo-50 border border-indigo-100/50 px-1.5 py-0.5 rounded-sm">@{safeNum(sel.odd).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Notes and Audit info */}
+                {bet.notes && (
+                  <p className="text-[11px] text-slate-400 bg-slate-50/50 border border-slate-100 p-2 rounded-sm italic">
+                    {bet.notes}
+                  </p>
+                )}
+              </div>
+
+              {/* Right Column: Financial Figures and Action Buttons */}
+              <div className="flex items-center gap-6 self-stretch md:self-auto justify-between border-t border-slate-100 md:border-0 pt-3 md:pt-0 shrink-0">
+                
+                {/* Financial Summary */}
+                <div className="flex gap-4 text-right pr-2">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Stake</span>
+                    <span className="text-xs font-bold text-slate-800 font-mono mt-0.5">
+                      {safeNum(bet.stake).toFixed(2)}{currency}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Odd</span>
+                    <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded-sm self-end mt-0.5">
+                      {safeNum(bet.odd).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex flex-col min-w-[75px]">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                      {isSettled ? "Lucro" : "Potencial"}
+                    </span>
+                    <span className={`text-xs font-bold font-mono mt-0.5 ${
+                      !isSettled 
+                        ? "text-slate-500" 
+                        : safeNum(bet.netProfit) > 0 
+                          ? "text-emerald-600" 
+                          : safeNum(bet.netProfit) < 0 
+                            ? "text-rose-600" 
+                            : "text-slate-600"
+                    }`}>
+                      {isSettled 
+                        ? `${safeNum(bet.netProfit) >= 0 ? "+" : ""}${safeNum(bet.netProfit).toFixed(2)}${currency}` 
+                        : `${safeNum(bet.potentialReturn).toFixed(2)}${currency}`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Operations */}
+                <div className="flex items-center gap-1 border-l border-slate-200 pl-4">
+                  {deletingId === bet.id ? (
+                    <div className="flex items-center gap-1 bg-rose-50 border border-rose-150 p-1 rounded-sm animate-pulse">
+                      <span className="text-[9px] text-rose-800 font-bold uppercase tracking-wider mr-1">Apagar?</span>
+                      <button
+                        onClick={() => {
+                          onDeleteBet(bet.id);
+                          setDeletingId(null);
+                        }}
+                        className="p-1 rounded-xs bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer"
+                        title="Confirmar Apagar"
+                      >
+                        <Check size={10} />
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(null)}
+                        className="p-1 rounded-xs bg-slate-200 hover:bg-slate-300 text-slate-700 transition-colors cursor-pointer"
+                        title="Cancelar"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleDuplicate(bet)}
+                        title="Duplicar Aposta"
+                        className="p-1.5 rounded-sm text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                      >
+                        <Copy size={13} />
+                      </button>
+                      <button
+                        onClick={() => openEditModal(bet)}
+                        title="Editar Aposta"
+                        className="p-1.5 rounded-sm text-slate-400 hover:text-amber-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                      >
+                        <Edit size={13} />
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(bet.id)}
+                        title="Apagar Aposta"
+                        className="p-1.5 rounded-sm text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+              </div>
+
+            </div>
+          );
+        })}
+
+        {filteredBets.length === 0 && (
+          <div className="text-center py-12 bg-white rounded-2xl border border-slate-100 text-slate-400">
+            <HelpCircle className="mx-auto text-slate-300 mb-2 stroke-1" size={32} />
+            <p className="text-xs">Nenhuma aposta encontrada com os filtros selecionados.</p>
+            <button
+              onClick={openAddModal}
+              className="mt-3 px-3.5 py-1.5 text-xs text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors font-semibold"
+            >
+              Adicionar Nova Aposta
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Registar/Editar Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto" id="bet-form-modal">
+          <div className="bg-white rounded-3xl w-full max-w-xl shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-6 border-b border-slate-50 shrink-0">
+              <h3 className="text-lg font-bold text-slate-800 font-display">
+                {editingBet ? "Editar Registo de Aposta" : "Registar Nova Aposta"}
+              </h3>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-slate-50 text-slate-400 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
+              
+              {formError && (
+                <div className="p-3 bg-rose-50 text-rose-800 rounded-xl border border-rose-100 flex items-center gap-2 font-medium">
+                  <AlertTriangle size={14} className="text-rose-600 shrink-0" />
+                  <span>{formError}</span>
+                </div>
+              )}
+              
+              {/* Type & Status */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-500 font-semibold mb-1">Tipo de Aposta</label>
+                  <select
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-indigo-500 text-slate-700"
+                    value={formType}
+                    onChange={(e) => {
+                      const newType = e.target.value as BetType;
+                      setFormType(newType);
+                      // Adjust selection counts
+                      if (newType === "SIMPLES" && formSelections.length > 1) {
+                        setFormSelections([formSelections[0]]);
+                      }
+                    }}
+                  >
+                    <option value="SIMPLES">Simples</option>
+                    <option value="MULTIPLA">Múltipla</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-500 font-semibold mb-1">Estado de Liquidação</label>
+                  <select
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-indigo-500 text-slate-700"
+                    value={formStatus}
+                    onChange={(e) => setFormStatus(e.target.value as BetStatus)}
+                  >
+                    <option value="POR_LIQUIDAR">Por Liquidar (Pendente)</option>
+                    <option value="GANHA">Ganha</option>
+                    <option value="PERDIDA">Perdida</option>
+                    <option value="ANULADA">Anulada</option>
+                    <option value="MEIO_GANHA">Meio Ganha</option>
+                    <option value="MEIO_PERDIDA">Meio Perdida</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Bookmaker Choice */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-500 font-semibold mb-1">Casa de Apostas</label>
+                  <select
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-indigo-500 text-slate-700"
+                    value={formBookmaker}
+                    onChange={(e) => setFormBookmaker(e.target.value)}
+                  >
+                    {AVAILABLE_BOOKMAKERS.map((b, idx) => (
+                      <option key={idx} value={b}>{b}</option>
+                    ))}
+                    <option value="Outra">Outra (Escrever...)</option>
+                  </select>
+                </div>
+                {formBookmaker === "Outra" && (
+                  <div>
+                    <label className="block text-slate-500 font-semibold mb-1">Qual?</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-indigo-500 text-slate-700"
+                      placeholder="Ex: Betfair, Betclic.fr"
+                      value={formCustomBookmaker}
+                      onChange={(e) => setFormCustomBookmaker(e.target.value)}
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="block text-slate-500 font-semibold mb-1">Data / Hora</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-indigo-500 text-slate-700 font-mono"
+                    placeholder="YYYY-MM-DD HH:mm"
+                    value={formDateTime}
+                    onChange={(e) => setFormDateTime(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Freebet Checkbox */}
+              <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
+                <label className="flex items-center gap-2 font-semibold text-indigo-900 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                    checked={formIsFreebet}
+                    onChange={(e) => setFormIsFreebet(e.target.checked)}
+                  />
+                  <span>Esta aposta foi colocada com uma Freebet (Aposta Grátis)?</span>
+                </label>
+              </div>
+
+              {/* Stake & Notes */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-500 font-semibold mb-1">Valor da Aposta (Stake)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-indigo-500 text-slate-700 font-mono font-bold"
+                    placeholder="10.00"
+                    value={formStake}
+                    onChange={(e) => setFormStake(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-500 font-semibold mb-1">Notas adicionais (opcional)</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-indigo-500 text-slate-700"
+                    placeholder="Ex: Segui tipster X, jogo crucial"
+                    value={formNotes}
+                    onChange={(e) => setFormNotes(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Selections Section */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-bold text-slate-700 uppercase tracking-wide text-[10px]">
+                    Seleções do Bilhete ({formSelections.length})
+                  </h4>
+                  {formType === "MULTIPLA" && (
+                    <button
+                      type="button"
+                      onClick={addSelection}
+                      className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-semibold"
+                    >
+                      <PlusCircle size={14} /> Adicionar Seleção
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                  {formSelections.map((sel, idx) => (
+                    <div 
+                      key={idx} 
+                      className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-2.5 relative"
+                    >
+                      {formSelections.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeSelection(idx)}
+                          className="absolute right-3 top-3 text-slate-400 hover:text-rose-500"
+                        >
+                          <MinusCircle size={14} />
+                        </button>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-slate-400 text-[10px] uppercase font-bold mb-0.5">Evento / Jogo</label>
+                          <input
+                            type="text"
+                            required
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px]"
+                            placeholder="Ex: Benfica vs Porto"
+                            value={sel.event}
+                            onChange={(e) => handleSelectionChange(idx, "event", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-400 text-[10px] uppercase font-bold mb-0.5">Mercado</label>
+                          <input
+                            type="text"
+                            required
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px]"
+                            placeholder="Ex: Resultado Final, Total de Golos"
+                            value={sel.market}
+                            onChange={(e) => handleSelectionChange(idx, "market", e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="col-span-2">
+                          <label className="block text-slate-400 text-[10px] uppercase font-bold mb-0.5">Escolha / Prognóstico</label>
+                          <input
+                            type="text"
+                            required
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px]"
+                            placeholder="Ex: Benfica, Mais de 2.5"
+                            value={sel.choice}
+                            onChange={(e) => handleSelectionChange(idx, "choice", e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-400 text-[10px] uppercase font-bold mb-0.5">Odd Individual</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="1.01"
+                            required
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-mono text-[11px]"
+                            placeholder="1.80"
+                            value={sel.odd}
+                            onChange={(e) => handleSelectionChange(idx, "odd", e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Live Preview Box */}
+              <div className="p-4 bg-slate-900 text-slate-100 rounded-2xl flex justify-between items-center font-display shadow-inner">
+                <div>
+                  <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Simulação do Boletim</p>
+                  <p className="text-sm font-bold mt-0.5">
+                    Odd Total: <span className="font-mono text-indigo-300">@{calculatedOdd.toFixed(2)}</span>
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
+                    {formStatus === "POR_LIQUIDAR" ? "Retorno Potencial" : "Retorno Liquidado"}
+                  </p>
+                  <p className="text-lg font-black text-emerald-400">
+                    {formStatus === "POR_LIQUIDAR" 
+                      ? `${potentialWinningsInfo.potentialReturn.toFixed(2)}${currency}`
+                      : `${potentialWinningsInfo.finalReturn.toFixed(2)}${currency}`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 text-slate-500 font-semibold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-xs transition-colors"
+                >
+                  {editingBet ? "Guardar Alterações" : "Registar Aposta"}
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
