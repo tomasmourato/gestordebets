@@ -1,6 +1,16 @@
 import { Pool } from "pg";
 
+console.log("========== POOL DEBUG ==========");
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
+console.log("Current working directory:", process.cwd());
+console.log("DATABASE_URL exists:", "DATABASE_URL" in process.env);
+console.log("================================");
+
 const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is undefined inside db/pool.ts");
+}
 
 if (!connectionString) {
   console.error(
