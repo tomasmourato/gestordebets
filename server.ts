@@ -8,7 +8,11 @@ import authRoutes from "./routes/authRoutes";
 import betsRoutes from "./routes/betsRoutes";
 import { authenticateToken, AuthenticatedRequest } from "./middleware/authMiddleware";
 
-dotenv.config();
+// Carrega .env primeiro (se existir) e depois .env.local por cima, com
+// override — dotenv.config() sozinho só lê ".env" por defeito, por isso o
+// DATABASE_URL definido em .env.local nunca estava a ser carregado.
+dotenv.config({ path: ".env" });
+dotenv.config({ path: ".env.local", override: true });
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
