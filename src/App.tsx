@@ -13,7 +13,8 @@ import {
   CloudLightning,
   Coins,
   History,
-  X
+  X,
+  LogOut
 } from "lucide-react";
 
 import { Bet, Preferences, AuditLog } from "./types";
@@ -23,9 +24,15 @@ import Dashboard from "./components/Dashboard";
 import BetsManager from "./components/BetsManager";
 import ScreenshotImporter from "./components/ScreenshotImporter";
 import Settings from "./components/Settings";
+import AuthPage from "./components/AuthPage";
+import { isAuthenticated, logout, getStoredUser } from "./lib/authApi";
 
 export default function App() {
   
+  // Autenticação: gate de login/registo antes de mostrar a app
+  const [authed, setAuthed] = useState<boolean>(isAuthenticated());
+  const [currentUser, setCurrentUser] = useState(getStoredUser());
+
   // Tabs: 'DASHBOARD' | 'BETS' | 'IMPORT' | 'SETTINGS'
   const [activeTab, setActiveTab] = useState<string>("DASHBOARD");
 
@@ -229,6 +236,25 @@ export default function App() {
     addAuditLog("PWA", "Aplicação instalada com sucesso no dispositivo do utilizador.");
   };
 
+  // Logout: termina a sessão e volta a mostrar o ecrã de login
+  const handleLogout = () => {
+    logout();
+    setCurrentUser(null);
+    setAuthed(false);
+  };
+
+  // Gate de autenticação: enquanto não houver sessão válida, mostra só o AuthPage
+  if (!authed) {
+    return (
+      <AuthPage
+        onAuthenticated={(user) => {
+          setCurrentUser(user);
+          setAuthed(true);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 antialiased selection:bg-indigo-600 selection:text-white border-t-4 border-indigo-600" id="main-container">
       
@@ -313,6 +339,16 @@ export default function App() {
                 ✓ APP ATIVA
               </span>
             )}
+
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              title={currentUser ? `Sair (${currentUser.username})` : "Sair"}
+              className="flex items-center gap-1 px-2.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded text-xs font-semibold text-slate-700 transition-colors"
+            >
+              <LogOut size={12} />
+              <span className="hidden sm:inline">Sair</span>
+            </button>
 
           </div>
 
