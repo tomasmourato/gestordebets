@@ -2,8 +2,8 @@
 -- Schema canónico da base de dados (PostgreSQL / Supabase)
 --
 -- Instalações NOVAS devem executar este ficheiro por completo.
--- Bases de dados EXISTENTES devem executar db/migrations/001_sync_bets_schema.sql
--- para acrescentar/renomear apenas o que falta, sem perder dados.
+-- Bases de dados EXISTENTES devem executar as migrações em db/migrations/
+-- por ordem (001, 002, ...) para ajustar apenas o que falta, sem perder dados.
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -23,8 +23,12 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS bets (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL,
-  status TEXT NOT NULL,
+  type TEXT NOT NULL
+    CONSTRAINT bets_bet_type_check CHECK (type IN ('SIMPLES', 'MULTIPLA')),
+  status TEXT NOT NULL DEFAULT 'POR_LIQUIDAR'
+    CONSTRAINT bets_status_check CHECK (
+      status IN ('POR_LIQUIDAR', 'GANHA', 'PERDIDA', 'ANULADA', 'MEIO_GANHA', 'MEIO_PERDIDA')
+    ),
   stake DECIMAL NOT NULL,
   odd DECIMAL NOT NULL,
   is_freebet BOOLEAN DEFAULT FALSE,
