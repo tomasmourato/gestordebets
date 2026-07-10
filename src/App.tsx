@@ -1,23 +1,17 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  TrendingUp, 
-  Layers, 
-  Award, 
-  Sparkles, 
-  Settings as SettingsIcon, 
-  Check, 
-  Wifi, 
-  WifiOff, 
-  Smartphone,
-  CloudLightning,
-  Coins,
-  History,
+import {
+  TrendingUp,
+  Layers,
+  Sparkles,
+  Settings as SettingsIcon,
+  Moon,
+  Sun,
   X,
   LogOut
 } from "lucide-react";
 
-import { Bet, Preferences, AuditLog } from "./types";
+import { Bet, Preferences } from "./types";
 import { INITIAL_BETS, safeNum } from "./utils";
 
 import Dashboard from "./components/Dashboard";
@@ -26,9 +20,13 @@ import ScreenshotImporter from "./components/ScreenshotImporter";
 import Settings from "./components/Settings";
 import AuthPage from "./components/AuthPage";
 import { isAuthenticated, logout, getStoredUser } from "./lib/authApi";
+import { usePreferences } from "./hooks/usePreferences";
+import { useTheme } from "./hooks/useTheme";
+import { useAuditLog } from "./hooks/useAuditLog";
+import { useBets } from "./hooks/useBets";
 
 export default function App() {
-  
+
   // Autenticação: gate de login/registo antes de mostrar a app
   const [authed, setAuthed] = useState<boolean>(isAuthenticated());
   const [currentUser, setCurrentUser] = useState(getStoredUser());
@@ -36,36 +34,40 @@ export default function App() {
   // Tabs: 'DASHBOARD' | 'BETS' | 'IMPORT' | 'SETTINGS'
   const [activeTab, setActiveTab] = useState<string>("DASHBOARD");
 
-  // Primary persistent states
-  const [bets, setBets] = useState<Bet[]>([]);
-  const [preferences, setPreferences] = useState<Preferences>({
-    currency: "€",
-    defaultBookmaker: "Betano",
-    defaultStake: 10
-  });
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  // Preferências (armazenamento local) e auditoria (em memória)
+  const { preferences, updatePreferences } = usePreferences();
+  const { auditLogs, addLog } = useAuditLog();
 
-  // Native PWA Install Flow emulation & Online status
+  // Aplica o tema ao <html> e devolve o tema efetivo (resolve "system")
+  const isDark = useTheme(preferences.theme);
+
+  // Sessão expirada -> termina a sessão e volta ao ecrã de login
+  const handleSessionExpired = () => {
+    logout();
+    setCurrentUser(null);
+    setAuthed(false);
+  };
+
+  // Apostas: PostgreSQL é a única fonte de verdade
+  const {
+    bets,
+    isLoading,
+    error,
+    clearError,
+    addBet,
+    importBets,
+    editBet,
+    removeBet,
+    clearAllBets,
+    replaceAllBets
+  } = useBets(authed, handleSessionExpired);
+
+  // Online status
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [showPWAInstall, setShowPWAInstall] = useState(true);
-  const [pwaInstallStatus, setPwaInstallStatus] = useState<"READY" | "INSTALLED" | "HIDDEN">("READY");
-  const [syncStatus, setSyncStatus] = useState<"SYNCHRONIZED" | "PENDING">("SYNCHRONIZED");
 
-  // Track online/offline status
   useEffect(() => {
-    const goOnline = () => {
-      setIsOnline(true);
-      // Simulate background syncing of pending operations if offline changes were made
-      if (syncStatus === "PENDING") {
-        setTimeout(() => {
-          setSyncStatus("SYNCHRONIZED");
-          addAuditLog("SINCRONIZAÇÃO", "Aplicações sincronizadas com a nuvem após restabelecimento de ligação.");
-        }, 2000);
-      }
-    };
-    const goOffline = () => {
-      setIsOnline(false);
-    };
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
 
     window.addEventListener("online", goOnline);
     window.addEventListener("offline", goOffline);
@@ -73,98 +75,43 @@ export default function App() {
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
     };
-  }, [syncStatus]);
-
-  // Initial state loader
-  useEffect(() => {
-    const savedBets = localStorage.getItem("g_bets");
-    const savedPrefs = localStorage.getItem("g_prefs");
-    const savedLogs = localStorage.getItem("g_logs");
-
-    if (savedBets) {
-      setBets(JSON.parse(savedBets));
-    } else {
-      setBets(INITIAL_BETS);
-      localStorage.setItem("g_bets", JSON.stringify(INITIAL_BETS));
-    }
-
-    if (savedPrefs) {
-      setPreferences(JSON.parse(savedPrefs));
-    }
-
-    if (savedLogs) {
-      setAuditLogs(JSON.parse(savedLogs));
-    } else {
-      const initialLogs: AuditLog[] = [
-        {
-          id: "log-1",
-          timestamp: new Date().toISOString(),
-          action: "SISTEMA",
-          details: "Aplicação inicializada com dados de demonstração."
-        }
-      ];
-      setAuditLogs(initialLogs);
-      localStorage.setItem("g_logs", JSON.stringify(initialLogs));
-    }
   }, []);
 
-  // Save states helper
-  const saveBetsToStorage = (updatedBets: Bet[]) => {
-    setBets(updatedBets);
-    localStorage.setItem("g_bets", JSON.stringify(updatedBets));
-    if (!isOnline) {
-      setSyncStatus("PENDING");
+  // ----------------------------------------------------
+  // BET OPERATIONS (server-first: cada handler é um wrapper fino)
+  // ----------------------------------------------------
+
+  const handleAddBet = async (newBet: Bet) => {
+    const created = await addBet(newBet);
+    if (created) {
+      addLog(
+        "ADICIONAR_APOSTA",
+        `Aposta no evento "${created.selections[0]?.event || "Múltipla"}" registada com stake de ${created.stake}${preferences.currency}.`
+      );
     }
   };
 
-  // Add audit logs
-  const addAuditLog = (action: string, details: string) => {
-    const newLog: AuditLog = {
-      id: "log-" + Date.now(),
-      timestamp: new Date().toISOString(),
-      action,
-      details
-    };
-    const updated = [newLog, ...auditLogs].slice(0, 50); // Keep last 50
-    setAuditLogs(updated);
-    localStorage.setItem("g_logs", JSON.stringify(updated));
+  const handleUpdateBet = async (updatedBet: Bet) => {
+    const updated = await editBet(updatedBet);
+    if (updated) {
+      addLog(
+        "ATUALIZAR_APOSTA",
+        `Aposta #${updated.id.substring(0, 8)} editada e recalculada (Lucro: ${updated.netProfit}${preferences.currency}).`
+      );
+    }
   };
 
-  // ----------------------------------------------------
-  // BET OPERATIONS
-  // ----------------------------------------------------
-  
-  const handleAddBet = (newBet: Bet) => {
-    const updatedBets = [newBet, ...bets];
-    saveBetsToStorage(updatedBets);
-
-    addAuditLog(
-      "ADICIONAR_APOSTA", 
-      `Aposta no evento "${newBet.selections[0]?.event || "Múltipla"}" registada com stake de ${newBet.stake}${preferences.currency}.`
-    );
-  };
-
-  const handleUpdateBet = (updatedBet: Bet) => {
-    const updatedBets = bets.map(b => (b.id === updatedBet.id ? updatedBet : b));
-    saveBetsToStorage(updatedBets);
-
-    addAuditLog(
-      "ATUALIZAR_APOSTA", 
-      `Aposta #${updatedBet.id.substring(0, 8)} editada e recalculada (Lucro: ${updatedBet.netProfit}${preferences.currency}).`
-    );
-  };
-
-  const handleDeleteBet = (id: string) => {
+  const handleDeleteBet = async (id: string) => {
     const betToDelete = bets.find(b => b.id === id);
     if (!betToDelete) return;
 
-    const updatedBets = bets.filter(b => b.id !== id);
-    saveBetsToStorage(updatedBets);
-
-    addAuditLog(
-      "REMOVER_APOSTA", 
-      `Aposta no evento "${betToDelete.selections[0]?.event || "Múltipla"}" apagada com sucesso.`
-    );
+    const ok = await removeBet(id);
+    if (ok) {
+      addLog(
+        "REMOVER_APOSTA",
+        `Aposta no evento "${betToDelete.selections[0]?.event || "Múltipla"}" apagada com sucesso.`
+      );
+    }
   };
 
   // ----------------------------------------------------
@@ -172,68 +119,61 @@ export default function App() {
   // ----------------------------------------------------
 
   const handleUpdatePreferences = (updatedPrefs: Preferences) => {
-    setPreferences(updatedPrefs);
-    localStorage.setItem("g_prefs", JSON.stringify(updatedPrefs));
-    addAuditLog("PREFERENCIAS", "Preferências gerais da aplicação atualizadas.");
+    updatePreferences(updatedPrefs);
+    addLog("PREFERENCIAS", "Preferências gerais da aplicação atualizadas.");
   };
 
-  const handleClearData = () => {
-    saveBetsToStorage([]);
-    addAuditLog("LIMPAR_DADOS", "Base de dados limpa na totalidade.");
+  // Alterna entre claro/escuro a partir do tema efetivo, mesmo que a
+  // preferência atual seja "system".
+  const handleToggleTheme = () => {
+    updatePreferences({ ...preferences, theme: isDark ? "light" : "dark" });
   };
 
-  const handleResetDemoData = () => {
-    saveBetsToStorage(INITIAL_BETS);
-    addAuditLog("REPOR_DADOS", "Dados de demonstração originais repostos com sucesso.");
-  };
-
-  const handleImportCSV = (importedBets: Bet[]) => {
-    if (importedBets.length > 0) {
-      const mergedMap = new Map<string, Bet>();
-      
-      // Populate map with existing bets
-      bets.forEach(b => mergedMap.set(b.id, b));
-
-      // Merge imported bets, filtering duplicates
-      let addedCount = 0;
-      importedBets.forEach(ib => {
-        if (ib.origin === "CSV") {
-          const isDuplicate = bets.some(eb => 
-            eb.dateTime === ib.dateTime &&
-            Math.abs(safeNum(eb.stake) - safeNum(ib.stake)) < 0.01 &&
-            Math.abs(safeNum(eb.odd) - safeNum(ib.odd)) < 0.01 &&
-            eb.selections[0]?.event === ib.selections[0]?.event
-          );
-          if (!isDuplicate) {
-            mergedMap.set(ib.id, ib);
-            addedCount++;
-          }
-        } else {
-          mergedMap.set(ib.id, ib);
-          addedCount++;
-        }
-      });
-
-      const mergedList = Array.from(mergedMap.values());
-      
-      // Sort descending by date
-      mergedList.sort((a, b) => {
-        const timeA = a.dateTime ? new Date(a.dateTime.replace(/-/g, "/")).getTime() : 0;
-        const timeB = b.dateTime ? new Date(b.dateTime.replace(/-/g, "/")).getTime() : 0;
-        return timeB - timeA;
-      });
-
-      saveBetsToStorage(mergedList);
-      addAuditLog("IMPORTACAO", `Sincronizados ${addedCount} novos boletins de aposta via importação de ficheiro.`);
-    } else {
-      addAuditLog("IMPORTACAO", `Nenhum boletim de aposta importado (lista vazia).`);
+  const handleClearData = async () => {
+    const ok = await clearAllBets();
+    if (ok) {
+      addLog("LIMPAR_DADOS", "Dados removidos da base de dados.");
     }
   };
 
-  // PWA Mock install
-  const handleInstallPWA = () => {
-    setPwaInstallStatus("INSTALLED");
-    addAuditLog("PWA", "Aplicação instalada com sucesso no dispositivo do utilizador.");
+  const handleResetDemoData = async () => {
+    const created = await replaceAllBets(INITIAL_BETS);
+    if (created) {
+      addLog("REPOR_DADOS", "Dados de demonstração originais repostos com sucesso.");
+    }
+  };
+
+  const handleImportCSV = async (importedBets: Bet[]) => {
+    if (importedBets.length === 0) {
+      addLog("IMPORTACAO", "Nenhum boletim de aposta importado (lista vazia).");
+      return;
+    }
+
+    // Filtra duplicados de importações CSV contra as apostas atuais.
+    // Com a BD como fonte de verdade, só as apostas genuinamente novas
+    // são enviadas para o servidor (sem merge/sort no cliente).
+    const uniqueNewBets = importedBets.filter(ib => {
+      if (ib.origin === "CSV") {
+        const isDuplicate = bets.some(eb =>
+          eb.dateTime === ib.dateTime &&
+          Math.abs(safeNum(eb.stake) - safeNum(ib.stake)) < 0.01 &&
+          Math.abs(safeNum(eb.odd) - safeNum(ib.odd)) < 0.01 &&
+          eb.selections[0]?.event === ib.selections[0]?.event
+        );
+        return !isDuplicate;
+      }
+      return true;
+    });
+
+    if (uniqueNewBets.length === 0) {
+      addLog("IMPORTACAO", "Nenhum novo boletim importado (todos já existiam).");
+      return;
+    }
+
+    const created = await importBets(uniqueNewBets);
+    if (created) {
+      addLog("IMPORTACAO", `Sincronizados ${created.length} novos boletins de aposta via importação de ficheiro.`);
+    }
   };
 
   // Logout: termina a sessão e volta a mostrar o ecrã de login
@@ -256,95 +196,82 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 antialiased selection:bg-indigo-600 selection:text-white border-t-4 border-indigo-600" id="main-container">
-      
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100 antialiased selection:bg-indigo-600 selection:text-white border-t-4 border-indigo-600" id="main-container">
+
       {/* Top Header Navigation */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shrink-0">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          
+
           {/* Logo Brand */}
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-indigo-600 flex items-center justify-center rounded shadow-xs">
               <div className="w-3.5 h-3.5 bg-white rotate-45"></div>
             </div>
             <div>
-              <h1 className="text-sm font-bold text-slate-900 tracking-tight leading-tight font-display">BetTrackr</h1>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Gestão de Apostas</p>
+              <h1 className="text-sm font-bold text-slate-900 dark:text-slate-50 tracking-tight leading-tight font-display">BetTrackr</h1>
+              <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Gestão de Apostas</p>
             </div>
           </div>
 
           {/* Desktop Navigation Menu */}
-          <nav className="hidden md:flex items-center gap-1 text-xs font-semibold text-slate-500">
+          <nav className="hidden md:flex items-center gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
             <button
               onClick={() => setActiveTab("DASHBOARD")}
-              className={`px-3.5 py-2 rounded transition-colors ${activeTab === "DASHBOARD" ? "bg-indigo-50 text-indigo-700 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 hover:bg-slate-50"}`}
+              className={`px-3.5 py-2 rounded transition-colors ${activeTab === "DASHBOARD" ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
             >
               Visão Geral
             </button>
             <button
               onClick={() => setActiveTab("BETS")}
-              className={`px-3.5 py-2 rounded transition-colors ${activeTab === "BETS" ? "bg-indigo-50 text-indigo-700 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 hover:bg-slate-50"}`}
+              className={`px-3.5 py-2 rounded transition-colors ${activeTab === "BETS" ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
             >
               Meus Boletins
             </button>
             <button
               onClick={() => setActiveTab("IMPORT")}
-              className={`px-3.5 py-2 rounded transition-colors flex items-center gap-1 ${activeTab === "IMPORT" ? "bg-indigo-50 text-indigo-700 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 hover:bg-slate-50"}`}
+              className={`px-3.5 py-2 rounded transition-colors flex items-center gap-1 ${activeTab === "IMPORT" ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
             >
               <Sparkles size={13} className="text-amber-500 animate-pulse" /> Importar com IA
             </button>
             <button
               onClick={() => setActiveTab("SETTINGS")}
-              className={`px-3.5 py-2 rounded transition-colors ${activeTab === "SETTINGS" ? "bg-indigo-50 text-indigo-700 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 hover:bg-slate-50"}`}
+              className={`px-3.5 py-2 rounded transition-colors ${activeTab === "SETTINGS" ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
             >
               Configurações
             </button>
           </nav>
 
-          {/* Connection Status & PWA Emulation Buttons */}
+          {/* Connection Status & Theme Toggle */}
           <div className="flex items-center gap-2">
-            
-            {/* Sync Queue Badge */}
-            {syncStatus === "PENDING" && (
-              <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 font-bold px-2.5 py-0.5 rounded flex items-center gap-1 animate-pulse">
-                Modificações Locais
-              </span>
-            )}
 
             {/* Online Status */}
             {isOnline ? (
               <div className="flex items-center gap-1.5 text-xs text-slate-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span className="text-emerald-600 font-medium hidden sm:inline">Optimized</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium hidden sm:inline">Optimized</span>
               </div>
             ) : (
               <div className="flex items-center gap-1.5 text-xs text-slate-400 animate-pulse">
                 <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                <span className="text-rose-600 font-medium hidden sm:inline">Offline Mode</span>
+                <span className="text-rose-600 dark:text-rose-400 font-medium hidden sm:inline">Offline Mode</span>
               </div>
             )}
 
-            {/* Install PWA Prompt Button */}
-            {pwaInstallStatus === "READY" && showPWAInstall && (
-              <button
-                onClick={handleInstallPWA}
-                className="hidden sm:flex items-center gap-1 px-4 py-1.5 border border-slate-300 hover:bg-slate-50 rounded text-xs font-semibold text-slate-700 transition-colors"
-              >
-                <Smartphone size={12} /> Instalar
-              </button>
-            )}
-            
-            {pwaInstallStatus === "INSTALLED" && (
-              <span className="hidden sm:inline-block px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded text-[10px] font-bold">
-                ✓ APP ATIVA
-              </span>
-            )}
+            {/* Theme Toggle */}
+            <button
+              onClick={handleToggleTheme}
+              title={isDark ? "Mudar para tema claro" : "Mudar para tema escuro"}
+              aria-label={isDark ? "Mudar para tema claro" : "Mudar para tema escuro"}
+              className="flex items-center justify-center p-2 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+            >
+              {isDark ? <Sun size={13} /> : <Moon size={13} />}
+            </button>
 
             {/* Logout */}
             <button
               onClick={handleLogout}
               title={currentUser ? `Sair (${currentUser.username})` : "Sair"}
-              className="flex items-center gap-1 px-2.5 py-1.5 border border-slate-300 hover:bg-slate-50 rounded text-xs font-semibold text-slate-700 transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1.5 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
             >
               <LogOut size={12} />
               <span className="hidden sm:inline">Sair</span>
@@ -355,105 +282,104 @@ export default function App() {
         </div>
       </header>
 
-      {/* PWA Mobile Banner Warning */}
-      {pwaInstallStatus === "READY" && showPWAInstall && (
-        <div className="bg-slate-900 text-white text-xs px-4 py-2.5 flex items-center justify-between gap-3 sm:hidden shadow-md">
-          <div className="flex items-center gap-2">
-            <Smartphone size={16} className="text-indigo-400 shrink-0" />
-            <p>Usa a app no teu ecrã inicial de forma offline e rápida!</p>
-          </div>
-          <div className="flex gap-2">
-            <button 
-              onClick={handleInstallPWA}
-              className="bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded font-bold"
-            >
-              Instalar
-            </button>
-            <button 
-              onClick={() => setShowPWAInstall(false)}
-              className="text-slate-400 hover:text-white"
+      {/* Main Workspace Body */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        {/* Global error banner */}
+        {error && (
+          <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-200 rounded-sm border border-rose-200 dark:border-rose-900 flex items-center justify-between gap-2 text-xs font-medium">
+            <span>{error}</span>
+            <button
+              onClick={clearError}
+              className="p-1 rounded-sm text-rose-500 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors cursor-pointer"
+              title="Fechar"
             >
               <X size={14} />
             </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Main Workspace Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.18 }}
-            className="h-full"
-          >
-            {activeTab === "DASHBOARD" && (
-              <Dashboard 
-                bets={bets} 
-                currency={preferences.currency} 
-              />
-            )}
-            {activeTab === "BETS" && (
-              <BetsManager 
-                bets={bets} 
-                currency={preferences.currency}
-                onAddBet={handleAddBet}
-                onUpdateBet={handleUpdateBet}
-                onDeleteBet={handleDeleteBet}
-              />
-            )}
-            {activeTab === "IMPORT" && (
-              <ScreenshotImporter 
-                currency={preferences.currency}
-                onAddBet={handleAddBet}
-              />
-            )}
-            {activeTab === "SETTINGS" && (
-              <Settings 
-                preferences={preferences}
-                auditLogs={auditLogs}
-                bets={bets}
-                currency={preferences.currency}
-                onUpdatePreferences={handleUpdatePreferences}
-                onClearData={handleClearData}
-                onResetDemoData={handleResetDemoData}
-                onImportCSV={handleImportCSV}
-              />
-            )}
-          </motion.div>
-        </AnimatePresence>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16 text-slate-400 dark:text-slate-500 text-xs gap-2">
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+            A carregar apostas…
+          </div>
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.18 }}
+              className="h-full"
+            >
+              {activeTab === "DASHBOARD" && (
+                <Dashboard
+                  bets={bets}
+                  currency={preferences.currency}
+                  isDark={isDark}
+                />
+              )}
+              {activeTab === "BETS" && (
+                <BetsManager
+                  bets={bets}
+                  currency={preferences.currency}
+                  onAddBet={handleAddBet}
+                  onUpdateBet={handleUpdateBet}
+                  onDeleteBet={handleDeleteBet}
+                />
+              )}
+              {activeTab === "IMPORT" && (
+                <ScreenshotImporter
+                  currency={preferences.currency}
+                  onAddBet={handleAddBet}
+                />
+              )}
+              {activeTab === "SETTINGS" && (
+                <Settings
+                  preferences={preferences}
+                  auditLogs={auditLogs}
+                  bets={bets}
+                  currency={preferences.currency}
+                  onUpdatePreferences={handleUpdatePreferences}
+                  onClearData={handleClearData}
+                  onResetDemoData={handleResetDemoData}
+                  onImportCSV={handleImportCSV}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        )}
       </main>
 
       {/* Mobile Footer Tab Bar */}
-      <footer className="md:hidden bg-white border-t border-slate-100 sticky bottom-0 z-40 shrink-0 shadow-lg">
-        <div className="grid grid-cols-4 h-16 text-[9px] font-bold text-slate-400">
+      <footer className="md:hidden bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 sticky bottom-0 z-40 shrink-0 shadow-lg">
+        <div className="grid grid-cols-4 h-16 text-[9px] font-bold text-slate-400 dark:text-slate-500">
           <button
             onClick={() => setActiveTab("DASHBOARD")}
-            className={`flex flex-col items-center justify-center gap-1 ${activeTab === "DASHBOARD" ? "text-indigo-600" : ""}`}
+            className={`flex flex-col items-center justify-center gap-1 ${activeTab === "DASHBOARD" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
           >
             <TrendingUp size={18} />
             <span>Painel</span>
           </button>
           <button
             onClick={() => setActiveTab("BETS")}
-            className={`flex flex-col items-center justify-center gap-1 ${activeTab === "BETS" ? "text-indigo-600" : ""}`}
+            className={`flex flex-col items-center justify-center gap-1 ${activeTab === "BETS" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
           >
             <Layers size={18} />
             <span>Boletins</span>
           </button>
           <button
             onClick={() => setActiveTab("IMPORT")}
-            className={`flex flex-col items-center justify-center gap-1 ${activeTab === "IMPORT" ? "text-indigo-600" : ""}`}
+            className={`flex flex-col items-center justify-center gap-1 ${activeTab === "IMPORT" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
           >
             <Sparkles size={18} className="text-amber-500 animate-pulse" />
             <span>IA</span>
           </button>
           <button
             onClick={() => setActiveTab("SETTINGS")}
-            className={`flex flex-col items-center justify-center gap-1 ${activeTab === "SETTINGS" ? "text-indigo-600" : ""}`}
+            className={`flex flex-col items-center justify-center gap-1 ${activeTab === "SETTINGS" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
           >
             <SettingsIcon size={18} />
             <span>Ajustes</span>

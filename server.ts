@@ -3,29 +3,24 @@ import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
-// --- NOVO: rotas e middleware de autenticação / bets ---
 import authRoutes from "./routes/authRoutes";
 import betsRoutes from "./routes/betsRoutes";
 import { authenticateToken, AuthenticatedRequest } from "./middleware/authMiddleware";
 
-// Carrega .env primeiro (se existir) e depois .env.local por cima, com
-// override — dotenv.config() sozinho só lê ".env" por defeito, por isso o
-// DATABASE_URL definido em .env.local nunca estava a ser carregado.
+// O .env.local sobrepõe-se ao .env.
 dotenv.config({ path: ".env" });
 dotenv.config({ path: ".env.local", override: true });
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// Limite ideal para payloads na Vercel (máximo suportado por eles é 4.5mb)
+// A Vercel não aceita payloads acima de 4.5mb.
 app.use(express.json({ limit: "4mb" }));
 app.use(express.urlencoded({ limit: "4mb", extended: true }));
 
-// --- NOVO: regista as rotas de autenticação e de bets ---
 app.use("/api/auth", authRoutes);
 app.use("/api/bets", betsRoutes);
 
-// Lazy init of GoogleGenAI
 let aiClient: GoogleGenAI | null = null;
 function getAiClient(): GoogleGenAI {
   if (!aiClient) {
@@ -33,21 +28,13 @@ function getAiClient(): GoogleGenAI {
     if (!key) {
       throw new Error("GEMINI_API_KEY environment variable is missing.");
     }
-    aiClient = new GoogleGenAI({
-      apiKey: key,
-      httpOptions: {
-        headers: {
-          "User-Agent": "aistudio-build",
-        },
-      },
-    });
+    aiClient = new GoogleGenAI({ apiKey: key });
   }
   return aiClient;
 }
 
-// API endpoint to parse betting screenshot with Gemini
-// --- NOVO: authenticateToken garante que só utilizadores com sessão
-// válida podem usar este endpoint (evita que estranhos gastem a tua quota do Gemini)
+// Extrai os dados de um boletim de apostas a partir de um screenshot.
+// Protegida por autenticação para não expor a quota do Gemini.
 app.post("/api/parse-screenshot", authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { imageBase64 } = req.body;
@@ -72,8 +59,44 @@ app.post("/api/parse-screenshot", authenticateToken, async (req: AuthenticatedRe
 És um especialista em apostas desportivas e processamento de imagem de recibos de apostas (boletins).
 Analisa o screenshot do boletim de apostas desportivas fornecido e extrai as informações do boletim estruturadas exatamente de acordo com o esquema JSON pedido.
 Escreve todos os textos extraídos em português (como os nomes dos mercados, escolhas, etc.).
-Formatos comuns de casas de apostas em Portugal: Betano, Betclic, Placard.pt, Bwin, Solverde, Casino Portugal, etc.
+
 Para o campo "type", classifica como "SIMPLES" se for apenas 1 seleção, ou "MULTIPLA" se forem 2 ou mais seleções.
+
+CASA DE APOSTAS ("bookmaker"):
+Identifica a casa de apostas pelo logótipo, nome, tipografia ou cores dominantes da interface.
+Referências das casas mais comuns em Portugal:
+- Betano: laranja (#ff6600) sobre fundo escuro, logótipo "Betano".
+- Betclic: azul-escuro e branco, logótipo "Betclic".
+- Placard: verde e branco, marca dos CTT/Santa Casa ("Placard.pt").
+- Bwin: preto e amarelo-torrado, logótipo "bwin".
+- Solverde: azul e dourado, logótipo "Solverde.pt".
+- Casino Portugal: vermelho e preto.
+- Nossa Aposta: verde-escuro.
+Devolve o nome EXATAMENTE com uma destas grafias quando reconheceres a casa: "Betano", "Betclic", "Placard", "Bwin", "Solverde", "Nossa Aposta", "Casino Portugal".
+Se não reconheceres nenhuma, devolve o nome que conseguires ler no boletim. Nunca inventes.
+
+FREEBET ("isFreebet"):
+Devolve true APENAS se houver evidência visual explícita de que a aposta foi feita com uma aposta grátis / saldo de bónus.
+Indícios: textos como "Freebet", "Aposta Grátis", "Aposta Gratuita", "Bónus", "Bonus", "Aposta Sem Risco",
+"Saldo de Bónus", "Free Bet", um ícone de presente/oferta junto ao valor apostado, ou a stake apresentada como
+riscada/anulada no cálculo do retorno (nas freebets o valor da stake não é devolvido no retorno).
+Se não houver qualquer indício, devolve false.
+
+ESTADO DA APOSTA ("status") — usa exatamente um destes valores:
+- "GANHA": a aposta foi liquidada com ganho. Indícios: visto/check verde, texto "Ganha", "Ganhou", "Vencedora",
+  "Won", valor de retorno a verde, montante creditado.
+- "PERDIDA": a aposta foi liquidada com perda. Indícios: cruz/X vermelho, texto "Perdida", "Perdeu", "Lost",
+  seleções riscadas a vermelho, retorno de 0.00.
+- "ANULADA": aposta anulada/reembolsada. Indícios: "Anulada", "Void", "Reembolsada", "Cancelada", "Push".
+- "MEIO_GANHA": handicap asiático parcialmente ganho ("Meio Ganha", "Half Won").
+- "MEIO_PERDIDA": handicap asiático parcialmente perdido ("Meio Perdida", "Half Lost").
+- "POR_LIQUIDAR": aposta ainda em curso / não resolvida. Indícios: "Em curso", "A decorrer", "Pendente",
+  "Por liquidar", "Open", relógio/ampulheta, jogos com data futura, botão de "Cash Out" ativo,
+  ou ausência de qualquer marca de resultado.
+Se as seleções tiverem resultados mistos (umas ganhas e outras perdidas) numa múltipla, o estado é "PERDIDA".
+Se todas as seleções estiverem ganhas numa múltipla, o estado é "GANHA".
+Na dúvida, devolve "POR_LIQUIDAR" — é o valor seguro, pois o utilizador pode corrigi-lo antes de gravar.
+
 Se não conseguires identificar alguma informação com certeza, faz a melhor estimativa ou deixa em branco.
 `;
 
@@ -112,7 +135,26 @@ Se não conseguires identificar alguma informação com certeza, faz a melhor es
                 },
                 type: {
                   type: Type.STRING,
+                  enum: ["SIMPLES", "MULTIPLA"],
                   description: "Tipo de aposta: SIMPLES ou MULTIPLA",
+                },
+                status: {
+                  type: Type.STRING,
+                  enum: [
+                    "POR_LIQUIDAR",
+                    "GANHA",
+                    "PERDIDA",
+                    "ANULADA",
+                    "MEIO_GANHA",
+                    "MEIO_PERDIDA",
+                  ],
+                  description:
+                    "Estado de liquidação da aposta detetado no boletim. POR_LIQUIDAR se ainda estiver em curso ou na dúvida.",
+                },
+                isFreebet: {
+                  type: Type.BOOLEAN,
+                  description:
+                    "true apenas se o boletim indicar explicitamente que foi usada uma freebet / aposta grátis / saldo de bónus.",
                 },
                 stake: {
                   type: Type.NUMBER,
@@ -157,7 +199,16 @@ Se não conseguires identificar alguma informação com certeza, faz a melhor es
                   },
                 },
               },
-              required: ["bookmaker", "type", "stake", "odd", "potentialReturn", "selections"],
+              required: [
+                "bookmaker",
+                "type",
+                "status",
+                "isFreebet",
+                "stake",
+                "odd",
+                "potentialReturn",
+                "selections",
+              ],
             },
           },
         });

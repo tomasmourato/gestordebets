@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   DollarSign
 } from "lucide-react";
-import { Preferences, AuditLog, Bet, BetStatus, Selection, BetType } from "../types";
+import { Preferences, AuditLog, Bet, BetStatus, Selection, BetType, ThemeMode } from "../types";
 import { calculateBetReturnAndProfit, safeNum } from "../utils";
 
 interface SettingsProps {
@@ -41,7 +41,7 @@ export default function Settings({
   const [localCurrency, setLocalCurrency] = useState(preferences.currency);
   const [localBookmaker, setLocalBookmaker] = useState(preferences.defaultBookmaker);
   const [localStake, setLocalStake] = useState(preferences.defaultStake.toString());
-  
+
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
@@ -58,6 +58,7 @@ export default function Settings({
 
     setErrorMsg(null);
     onUpdatePreferences({
+      ...preferences,
       currency: localCurrency,
       defaultBookmaker: localBookmaker,
       defaultStake: stakeNum
@@ -65,6 +66,13 @@ export default function Settings({
 
     setSuccessMsg("Preferências guardadas com sucesso!");
     setTimeout(() => setSuccessMsg(null), 3000);
+  };
+
+  // O tema aplica-se imediatamente (sem passar pelo botão "Guardar"), para
+  // que o utilizador veja o efeito enquanto escolhe. Também evita que este
+  // formulário reverta uma mudança feita pelo botão de tema no cabeçalho.
+  const handleThemeChange = (theme: ThemeMode) => {
+    onUpdatePreferences({ ...preferences, theme });
   };
 
   // Export Bets and Freebets to CSV
@@ -418,34 +426,34 @@ export default function Settings({
         <div className="space-y-6 lg:col-span-2">
           
           {/* Preferences form */}
-          <div className="bg-white rounded-sm p-5 border border-slate-200">
-            <h4 className="text-base font-semibold text-slate-900 tracking-tight font-display flex items-center gap-2 mb-4">
-              <SettingsIcon size={18} className="text-indigo-600" /> Preferências Gerais
+          <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800">
+            <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-2 mb-4">
+              <SettingsIcon size={18} className="text-indigo-600 dark:text-indigo-400" /> Preferências Gerais
             </h4>
-            
+
             <form onSubmit={handleSavePreferences} className="space-y-4 text-xs">
-              
+
               {successMsg && (
-                <div className="p-3 bg-emerald-50 text-emerald-800 rounded-sm border border-emerald-200 flex items-center gap-2 font-medium">
-                  <CheckCircle2 size={14} className="text-emerald-600 animate-pulse" />
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-200 rounded-sm border border-emerald-200 dark:border-emerald-900 flex items-center gap-2 font-medium">
+                  <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 animate-pulse" />
                   <span>{successMsg}</span>
                 </div>
               )}
 
               {errorMsg && (
-                <div className="p-3 bg-rose-50 text-rose-800 rounded-sm border border-rose-200 flex items-center gap-2 font-medium">
-                  <AlertTriangle size={14} className="text-rose-600 animate-pulse" />
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-200 rounded-sm border border-rose-200 dark:border-rose-900 flex items-center gap-2 font-medium">
+                  <AlertTriangle size={14} className="text-rose-600 dark:text-rose-400 animate-pulse" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
                 {/* Currency */}
                 <div>
-                  <label className="block text-slate-500 font-semibold mb-1">Moeda / Símbolo</label>
+                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Moeda / Símbolo</label>
                   <select
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 bg-white focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800"
+                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100"
                     value={localCurrency}
                     onChange={(e) => setLocalCurrency(e.target.value)}
                   >
@@ -458,10 +466,10 @@ export default function Settings({
 
                 {/* Default bookmaker */}
                 <div>
-                  <label className="block text-slate-500 font-semibold mb-1">Casa de Apostas Padrão</label>
+                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Casa de Apostas Padrão</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 bg-white focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800"
+                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100"
                     value={localBookmaker}
                     onChange={(e) => setLocalBookmaker(e.target.value)}
                   />
@@ -469,15 +477,29 @@ export default function Settings({
 
                 {/* Default stake */}
                 <div>
-                  <label className="block text-slate-500 font-semibold mb-1">Stake Padrão ({currency})</label>
+                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Stake Padrão ({currency})</label>
                   <input
                     type="number"
                     step="0.1"
                     min="0"
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 bg-white focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 font-mono"
+                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100 font-mono"
                     value={localStake}
                     onChange={(e) => setLocalStake(e.target.value)}
                   />
+                </div>
+
+                {/* Theme — aplica-se de imediato */}
+                <div>
+                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Aspeto / Tema</label>
+                  <select
+                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100"
+                    value={preferences.theme}
+                    onChange={(e) => handleThemeChange(e.target.value as ThemeMode)}
+                  >
+                    <option value="system">Automático (Sistema)</option>
+                    <option value="light">Claro</option>
+                    <option value="dark">Escuro</option>
+                  </select>
                 </div>
 
               </div>
@@ -495,33 +517,33 @@ export default function Settings({
           </div>
 
           {/* Backup, CSV and Data actions */}
-          <div className="bg-white rounded-sm p-5 border border-slate-200 space-y-4">
-            <h4 className="text-base font-semibold text-slate-900 tracking-tight font-display flex items-center gap-2">
-              <FileSpreadsheet size={18} className="text-indigo-600" /> Cópia de Segurança, Importar e Exportar
+          <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 space-y-4">
+            <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-2">
+              <FileSpreadsheet size={18} className="text-indigo-600 dark:text-indigo-400" /> Cópia de Segurança, Importar e Exportar
             </h4>
-            
-            <p className="text-xs text-slate-400">
+
+            <p className="text-xs text-slate-400 dark:text-slate-500">
               Mantém os teus dados de apostas seguros. Descarrega backups completos em formato JSON ou exporta as tuas apostas para análise externa em folhas de cálculo Excel/CSV.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              
+
               {/* Exports */}
-              <div className="p-4 bg-slate-50 rounded-sm border border-slate-200 flex flex-col justify-between space-y-3">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-3">
                 <div>
-                  <h5 className="font-bold text-slate-700">Exportar Ficheiros</h5>
-                  <p className="text-[11px] text-slate-400 mt-1">Exporta tabelas estruturadas compatíveis ou cópias completas.</p>
+                  <h5 className="font-bold text-slate-700 dark:text-slate-200">Exportar Ficheiros</h5>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Exporta tabelas estruturadas compatíveis ou cópias completas.</p>
                 </div>
                 <div className="flex flex-col gap-2">
                   <button
                     onClick={handleExportCSV}
-                    className="px-3.5 py-2 rounded-sm bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-sm bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Download size={14} /> Descarregar CSV (.csv)
                   </button>
                   <button
                     onClick={handleExportBackup}
-                    className="px-3.5 py-2 rounded-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/55 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-sm bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/55 dark:border-indigo-900 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Download size={14} /> Descarregar Backup JSON
                   </button>
@@ -529,13 +551,13 @@ export default function Settings({
               </div>
 
               {/* Imports */}
-              <div className="p-4 bg-slate-50 rounded-sm border border-slate-200 flex flex-col justify-between space-y-3">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-3">
                 <div>
-                  <h5 className="font-bold text-slate-700">Restaurar / Importar</h5>
-                  <p className="text-[11px] text-slate-400 mt-1">Sincroniza e restaura backups antigos arrastando o teu ficheiro.</p>
+                  <h5 className="font-bold text-slate-700 dark:text-slate-200">Restaurar / Importar</h5>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Sincroniza e restaura backups antigos arrastando o teu ficheiro.</p>
                 </div>
                 <div>
-                  <label className="px-3.5 py-2.5 rounded-sm bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold flex items-center justify-center gap-1.5 cursor-pointer text-center transition-colors">
+                  <label className="px-3.5 py-2.5 rounded-sm bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold flex items-center justify-center gap-1.5 cursor-pointer text-center transition-colors">
                     <Upload size={14} /> Escolher Ficheiro (.json, .csv)
                     <input
                       type="file"
@@ -550,15 +572,15 @@ export default function Settings({
             </div>
 
             {/* Dangerous Zone */}
-            <div className="pt-4 border-t border-slate-200 space-y-3">
-              <h5 className="font-bold text-rose-600 flex items-center gap-1 text-xs uppercase tracking-wider">
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+              <h5 className="font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1 text-xs uppercase tracking-wider">
                 <AlertTriangle size={14} /> Zona de Risco
               </h5>
-              
+
               <div className="flex flex-wrap items-center gap-3">
                 {showConfirmClear ? (
-                  <div className="flex items-center gap-2 p-2 bg-rose-50 border border-rose-200 rounded-sm">
-                    <span className="text-[11px] text-rose-800 font-medium">Tem a certeza absoluta?</span>
+                  <div className="flex items-center gap-2 p-2 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 rounded-sm">
+                    <span className="text-[11px] text-rose-800 dark:text-rose-200 font-medium">Tem a certeza absoluta?</span>
                     <button
                       onClick={() => {
                         onClearData();
@@ -572,7 +594,7 @@ export default function Settings({
                     </button>
                     <button
                       onClick={() => setShowConfirmClear(false)}
-                      className="px-2.5 py-1 text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded-sm cursor-pointer transition-colors"
+                      className="px-2.5 py-1 text-[10px] bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-sm cursor-pointer transition-colors"
                     >
                       Cancelar
                     </button>
@@ -580,15 +602,15 @@ export default function Settings({
                 ) : (
                   <button
                     onClick={() => setShowConfirmClear(true)}
-                    className="px-3.5 py-2 rounded-sm bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold flex items-center gap-1 text-xs transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-sm bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900 font-semibold flex items-center gap-1 text-xs transition-colors cursor-pointer"
                   >
                     <Trash2 size={14} /> Limpar Todos os Dados
                   </button>
                 )}
 
                 {showConfirmReset ? (
-                  <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-sm">
-                    <span className="text-[11px] text-slate-700 font-medium">Substituir dados atuais?</span>
+                  <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-sm">
+                    <span className="text-[11px] text-slate-700 dark:text-slate-200 font-medium">Substituir dados atuais?</span>
                     <button
                       onClick={() => {
                         onResetDemoData();
@@ -602,7 +624,7 @@ export default function Settings({
                     </button>
                     <button
                       onClick={() => setShowConfirmReset(false)}
-                      className="px-2.5 py-1 text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded-sm cursor-pointer transition-colors"
+                      className="px-2.5 py-1 text-[10px] bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-sm cursor-pointer transition-colors"
                     >
                       Cancelar
                     </button>
@@ -610,7 +632,7 @@ export default function Settings({
                 ) : (
                   <button
                     onClick={() => setShowConfirmReset(true)}
-                    className="px-3.5 py-2 rounded-sm bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-semibold flex items-center gap-1 text-xs transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 font-semibold flex items-center gap-1 text-xs transition-colors cursor-pointer"
                   >
                     <RefreshCw size={14} /> Carregar Dados de Demonstração
                   </button>
@@ -623,28 +645,28 @@ export default function Settings({
         </div>
 
         {/* Right column: Audit logs / Alterações */}
-        <div className="bg-white rounded-sm p-5 border border-slate-200 flex flex-col h-[520px]">
+        <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 flex flex-col h-[520px]">
           <div className="mb-4">
-            <h4 className="text-base font-semibold text-slate-900 tracking-tight font-display flex items-center gap-2">
-              <History size={18} className="text-indigo-600" /> Auditoria de Alterações
+            <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-2">
+              <History size={18} className="text-indigo-600 dark:text-indigo-400" /> Auditoria de Alterações
             </h4>
-            <p className="text-xs text-slate-400 mt-1">Registo detalhado de operações efetuadas nesta sessão</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Registo detalhado de operações efetuadas nesta sessão</p>
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-3 pr-1">
             {auditLogs.map((log) => (
-              <div key={log.id} className="p-3 bg-slate-50 rounded-sm border border-slate-200 space-y-1 text-xs">
-                <div className="flex justify-between text-[10px] text-slate-400">
-                  <span className="font-bold text-indigo-700 uppercase tracking-wide">{log.action}</span>
+              <div key={log.id} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-sm border border-slate-200 dark:border-slate-700 space-y-1 text-xs">
+                <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500">
+                  <span className="font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wide">{log.action}</span>
                   <span className="font-mono">{log.timestamp.split("T")[1].slice(0, 8)}</span>
                 </div>
-                <p className="text-slate-700 leading-normal">{log.details}</p>
+                <p className="text-slate-700 dark:text-slate-300 leading-normal">{log.details}</p>
               </div>
             ))}
 
             {auditLogs.length === 0 && (
-              <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 py-12">
-                <Info className="text-slate-300 stroke-1 mb-1" size={28} />
+              <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 dark:text-slate-500 py-12">
+                <Info className="text-slate-300 dark:text-slate-600 stroke-1 mb-1" size={28} />
                 <p className="text-[11px]">Nenhuma atividade registada ainda.</p>
               </div>
             )}

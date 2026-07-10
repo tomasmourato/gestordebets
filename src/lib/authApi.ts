@@ -1,6 +1,4 @@
-// src/lib/authApi.ts
-// Helper simples para autenticação e chamadas autenticadas à tua API.
-// Ajusta o caminho de import conforme a estrutura da tua pasta src/.
+// Autenticação e wrapper de fetch para as rotas protegidas da API.
 
 const TOKEN_KEY = "gestordebets_token";
 const USER_KEY = "gestordebets_user";
@@ -10,6 +8,10 @@ interface StoredUser {
   username: string;
   email: string;
 }
+
+// Lançado quando o backend responde 401 (token inválido/expirado).
+// Permite às camadas superiores distinguir uma sessão expirada de outros erros.
+export class SessionExpiredError extends Error {}
 
 export function saveToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
@@ -91,28 +93,8 @@ export async function authFetch(url: string, options: RequestInit = {}) {
     // Token inválido ou expirado -> força novo login
     clearToken();
     localStorage.removeItem(USER_KEY);
-    throw new Error("Sessão expirada. Por favor inicia sessão novamente.");
+    throw new SessionExpiredError("Sessão expirada. Por favor inicia sessão novamente.");
   }
 
   return res;
-}
-
-// ------------------------------------------------------------
-// Exemplos de uso com as rotas de bets já protegidas no backend
-// ------------------------------------------------------------
-export async function fetchMyBets() {
-  const res = await authFetch("/api/bets");
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Erro ao obter bets.");
-  return data.bets;
-}
-
-export async function createBet(bet: Record<string, unknown>) {
-  const res = await authFetch("/api/bets", {
-    method: "POST",
-    body: JSON.stringify(bet),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Erro ao criar bet.");
-  return data.bet;
 }

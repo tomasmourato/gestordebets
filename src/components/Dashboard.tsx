@@ -37,10 +37,31 @@ import {
 interface DashboardProps {
   bets: Bet[];
   currency: string;
+  isDark: boolean;
 }
 
-export default function Dashboard({ bets, currency }: DashboardProps) {
+export default function Dashboard({ bets, currency, isDark }: DashboardProps) {
   const stats = useMemo(() => calculateDashboardStats(bets), [bets]);
+
+  // O Recharts é desenhado em SVG com cores explícitas, por isso não reage
+  // às classes `dark:` do Tailwind — as cores dos eixos, grelha e tooltips
+  // têm de ser trocadas manualmente conforme o tema efetivo.
+  const chart = useMemo(
+    () => ({
+      grid: isDark ? "#1E293B" : "#F1F5F9",
+      axis: isDark ? "#64748B" : "#94A3B8",
+      dot: isDark ? "#0F172A" : "#fff",
+      tooltip: {
+        backgroundColor: isDark ? "#0F172A" : "#fff",
+        borderColor: isDark ? "#334155" : "#E2E8F0",
+        borderRadius: "4px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        fontSize: "12px",
+        color: isDark ? "#E2E8F0" : "#0F172A"
+      }
+    }),
+    [isDark]
+  );
 
   // 1. Prepare data for profit history chart
   const profitChartData = useMemo(() => {
@@ -212,9 +233,6 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
     };
   }, [bets, bookmakerData]);
 
-  // Custom tooltips
-  const formatValue = (value: number) => `${safeNum(value).toFixed(2)}${currency}`;
-
   return (
     <div className="space-y-6" id="dashboard-tab">
       
@@ -222,63 +240,63 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* Net Profit Card */}
-        <div className="bg-white rounded-sm p-5 border border-slate-200 flex flex-col justify-between transition-colors hover:bg-slate-50/50" id="card-net-profit">
+        <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40" id="card-net-profit">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Lucro Líquido</p>
-              <h3 className={`text-3xl font-light mt-1.5 tracking-tight font-display ${stats.netProfit >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Lucro Líquido</p>
+              <h3 className={`text-3xl font-light mt-1.5 tracking-tight font-display ${stats.netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                 {stats.netProfit >= 0 ? "+" : ""}{stats.netProfit.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}{currency}
               </h3>
             </div>
-            <div className={`p-2 rounded ${stats.netProfit >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+            <div className={`p-2 rounded ${stats.netProfit >= 0 ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400"}`}>
               {stats.netProfit >= 0 ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Retorno: <strong className="text-slate-700 font-medium">{stats.totalReturn.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}{currency}</strong></span>
-            <span className={`font-semibold flex items-center gap-0.5 ${stats.netProfit >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span>Retorno: <strong className="text-slate-700 dark:text-slate-200 font-medium">{stats.totalReturn.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}{currency}</strong></span>
+            <span className={`font-semibold flex items-center gap-0.5 ${stats.netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
               {stats.netProfit >= 0 ? "+" : ""}{stats.totalStake > 0 ? (safeNum(stats.netProfit / stats.totalStake) * 100).toFixed(1) : "0.0"}%
             </span>
           </div>
         </div>
 
         {/* ROI / Yield Card */}
-        <div className="bg-white rounded-sm p-5 border border-slate-200 flex flex-col justify-between transition-colors hover:bg-slate-50/50" id="card-roi">
+        <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40" id="card-roi">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ROI / Yield</p>
-              <h3 className={`text-3xl font-light mt-1.5 tracking-tight font-display ${stats.yield >= 0 ? "text-indigo-600" : "text-rose-600"}`}>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">ROI / Yield</p>
+              <h3 className={`text-3xl font-light mt-1.5 tracking-tight font-display ${stats.yield >= 0 ? "text-indigo-600 dark:text-indigo-400" : "text-rose-600 dark:text-rose-400"}`}>
                 {stats.yield >= 0 ? "+" : ""}{safeNum(stats.yield).toFixed(2)}%
               </h3>
             </div>
-            <div className={`p-2 rounded ${stats.yield >= 0 ? "bg-indigo-50 text-indigo-600" : "bg-rose-50 text-rose-600"}`}>
+            <div className={`p-2 rounded ${stats.yield >= 0 ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400" : "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400"}`}>
               <Percent size={18} />
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Volume: <strong className="text-slate-700 font-medium">{stats.totalStake.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}{currency}</strong></span>
-            <span className="text-slate-400">Eficiência</span>
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span>Volume: <strong className="text-slate-700 dark:text-slate-200 font-medium">{stats.totalStake.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}{currency}</strong></span>
+            <span className="text-slate-400 dark:text-slate-500">Eficiência</span>
           </div>
         </div>
 
         {/* Win Rate Card */}
-        <div className="bg-white rounded-sm p-5 border border-slate-200 flex flex-col justify-between transition-colors hover:bg-slate-50/50" id="card-winrate">
+        <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40" id="card-winrate">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Taxa de Acerto</p>
-              <h3 className="text-3xl font-light mt-1.5 tracking-tight text-slate-800 font-display">
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Taxa de Acerto</p>
+              <h3 className="text-3xl font-light mt-1.5 tracking-tight text-slate-800 dark:text-slate-100 font-display">
                 {safeNum(stats.winRate).toFixed(1)}%
               </h3>
             </div>
-            <div className="p-2 rounded bg-teal-50 text-teal-600">
+            <div className="p-2 rounded bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400">
               <Award size={18} />
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-1 text-xs">
-            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1 text-xs">
+            <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
               <div className="bg-teal-500 h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, stats.winRate)}%` }} />
             </div>
-            <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+            <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mt-1">
               <span>{stats.wonBets} Ganhas</span>
               <span>{bets.filter(b => b.status !== "POR_LIQUIDAR").length} Resolvidas</span>
             </div>
@@ -286,21 +304,21 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
         </div>
 
         {/* Total Bets Card */}
-        <div className="bg-white rounded-sm p-5 border border-slate-200 flex flex-col justify-between transition-colors hover:bg-slate-50/50" id="card-totalbets">
+        <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40" id="card-totalbets">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total de Apostas</p>
-              <h3 className="text-3xl font-light mt-1.5 tracking-tight text-slate-800 font-display">
-                {stats.totalBets} <span className="text-xs text-slate-400 font-normal">registadas</span>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total de Apostas</p>
+              <h3 className="text-3xl font-light mt-1.5 tracking-tight text-slate-800 dark:text-slate-100 font-display">
+                {stats.totalBets} <span className="text-xs text-slate-400 dark:text-slate-500 font-normal">registadas</span>
               </h3>
             </div>
-            <div className="p-2 rounded bg-blue-50 text-blue-600">
+            <div className="p-2 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
               <Layers size={18} />
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1"><Clock size={12} className="text-blue-500" /> {stats.pendingBets} Pendentes</span>
-            <span className="text-slate-400">Ativas</span>
+            <span className="text-slate-400 dark:text-slate-500">Ativas</span>
           </div>
         </div>
 
@@ -310,11 +328,11 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Evolution Chart */}
-        <div className="bg-white rounded-sm p-5 border border-slate-200 flex flex-col h-[380px]" id="chart-profit-evolution">
+        <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 flex flex-col h-[380px]" id="chart-profit-evolution">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h4 className="text-base font-semibold text-slate-900 tracking-tight font-display">Evolução do Lucro Líquido</h4>
-              <p className="text-xs text-slate-400 mt-0.5">Evolução acumulada ao longo das apostas resolvidas</p>
+              <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display">Evolução do Lucro Líquido</h4>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Evolução acumulada ao longo das apostas resolvidas</p>
             </div>
           </div>
           <div className="flex-1 w-full min-h-0">
@@ -329,17 +347,17 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
                     <stop offset="95%" stopColor="#4F46E5" stopOpacity={0.0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis 
-                  dataKey="data" 
-                  tickLine={false} 
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chart.grid} />
+                <XAxis
+                  dataKey="data"
+                  tickLine={false}
                   axisLine={false}
-                  tick={{ fontSize: 10, fill: "#94A3B8" }}
+                  tick={{ fontSize: 10, fill: chart.axis }}
                 />
-                <YAxis 
-                  tickLine={false} 
+                <YAxis
+                  tickLine={false}
                   axisLine={false}
-                  tick={{ fontSize: 10, fill: "#94A3B8" }}
+                  tick={{ fontSize: 10, fill: chart.axis }}
                   tickFormatter={(v) => `${v}${currency}`}
                 />
                 <Tooltip 
@@ -351,13 +369,7 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
                     }
                     return label;
                   }}
-                  contentStyle={{ 
-                    backgroundColor: "#fff", 
-                    borderColor: "#E2E8F0", 
-                    borderRadius: "4px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                    fontSize: "12px"
-                  }}
+                  contentStyle={chart.tooltip}
                 />
                 <Area 
                   type="monotone" 
@@ -373,9 +385,9 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
         </div>
 
         {/* Status Distribution */}
-        <div className="bg-white rounded-sm p-5 border border-slate-200 flex flex-col h-[380px]" id="chart-status-distribution">
-          <h4 className="text-base font-semibold text-slate-900 tracking-tight font-display mb-1">Distribuição de Resultados</h4>
-          <p className="text-xs text-slate-400 mb-4">Percentagem por estado de aposta</p>
+        <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 flex flex-col h-[380px]" id="chart-status-distribution">
+          <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display mb-1">Distribuição de Resultados</h4>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">Percentagem por estado de aposta</p>
           
           <div className="flex-1 flex flex-col justify-between min-h-0">
             {statusData.length > 0 ? (
@@ -396,31 +408,26 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value: any) => [`${value} Apostas`]}
-                        contentStyle={{ 
-                          backgroundColor: "#fff", 
-                          borderColor: "#E2E8F0", 
-                          borderRadius: "4px",
-                          fontSize: "12px"
-                        }}
+                        contentStyle={chart.tooltip}
                       />
                     </PieChart>
                   </ResponsiveContainer>
                   
                   {/* Central Text */}
                   <div className="absolute text-center">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Resolvidas</p>
-                    <p className="text-3xl font-light text-slate-800 font-display mt-0.5">
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Resolvidas</p>
+                    <p className="text-3xl font-light text-slate-800 dark:text-slate-100 font-display mt-0.5">
                       {bets.filter(b => b.status !== "POR_LIQUIDAR").length}
                     </p>
                   </div>
                 </div>
 
                 {/* Custom Legend */}
-                <div className="grid grid-cols-2 gap-2 text-xs pt-4 border-t border-slate-100">
+                <div className="grid grid-cols-2 gap-2 text-xs pt-4 border-t border-slate-100 dark:border-slate-800">
                   {statusData.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5 text-slate-600">
+                    <div key={idx} className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                       <span className="w-2.5 h-2.5 rounded-xs shrink-0" style={{ backgroundColor: item.color }} />
                       <span className="truncate">{item.name} ({item.value})</span>
                     </div>
@@ -428,8 +435,8 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center text-slate-400">
-                <AlertCircle className="stroke-1 text-slate-300 mb-2" size={32} />
+              <div className="flex-1 flex flex-col items-center justify-center text-center text-slate-400 dark:text-slate-500">
+                <AlertCircle className="stroke-1 text-slate-300 dark:text-slate-600 mb-2" size={32} />
                 <p className="text-xs">Nenhum resultado registado ainda.</p>
               </div>
             )}
@@ -437,11 +444,11 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
         </div>
 
         {/* Monthly Performance Chart */}
-        <div className="bg-white rounded-sm p-5 border border-slate-200 flex flex-col h-[380px]" id="chart-monthly-performance">
+        <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 flex flex-col h-[380px]" id="chart-monthly-performance">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h4 className="text-base font-semibold text-slate-900 tracking-tight font-display">Desempenho Mensal</h4>
-              <p className="text-xs text-slate-400 mt-0.5">Evolução do lucro líquido nos últimos 6 meses</p>
+              <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display">Desempenho Mensal</h4>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Evolução do lucro líquido nos últimos 6 meses</p>
             </div>
           </div>
           <div className="flex-1 w-full min-h-0">
@@ -450,17 +457,17 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
                 data={monthlyPerformanceData}
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis 
-                  dataKey="mes" 
-                  tickLine={false} 
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chart.grid} />
+                <XAxis
+                  dataKey="mes"
+                  tickLine={false}
                   axisLine={false}
-                  tick={{ fontSize: 10, fill: "#94A3B8" }}
+                  tick={{ fontSize: 10, fill: chart.axis }}
                 />
-                <YAxis 
-                  tickLine={false} 
+                <YAxis
+                  tickLine={false}
                   axisLine={false}
-                  tick={{ fontSize: 10, fill: "#94A3B8" }}
+                  tick={{ fontSize: 10, fill: chart.axis }}
                   tickFormatter={(v) => `${v}${currency}`}
                 />
                 <Tooltip 
@@ -472,20 +479,14 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
                     }
                     return label;
                   }}
-                  contentStyle={{ 
-                    backgroundColor: "#fff", 
-                    borderColor: "#E2E8F0", 
-                    borderRadius: "4px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                    fontSize: "12px"
-                  }}
+                  contentStyle={chart.tooltip}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="Lucro Líquido" 
                   stroke="#0D9488" 
                   strokeWidth={3}
-                  dot={{ r: 4, strokeWidth: 2, fill: "#fff" }}
+                  dot={{ r: 4, strokeWidth: 2, fill: chart.dot }}
                   activeDot={{ r: 6 }}
                 />
               </LineChart>
@@ -499,17 +500,17 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Bookmaker Table */}
-        <div className="bg-white rounded-sm p-5 border border-slate-200 lg:col-span-2 flex flex-col" id="bookmakers-performance">
+        <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 lg:col-span-2 flex flex-col" id="bookmakers-performance">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h4 className="text-base font-semibold text-slate-900 tracking-tight font-display">Desempenho por Casa de Apostas</h4>
-              <p className="text-xs text-slate-400 mt-0.5">Análise de rentabilidade e volume por operador</p>
+              <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display">Desempenho por Casa de Apostas</h4>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Análise de rentabilidade e volume por operador</p>
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
                   <th className="py-2.5">Operador</th>
                   <th className="py-2.5 text-center">Apostas</th>
                   <th className="py-2.5 text-right">Volume</th>
@@ -517,18 +518,18 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
                   <th className="py-2.5 text-right">ROI</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {bookmakerData.map((bkm, idx) => {
                   const bkmRoi = bkm.volume > 0 ? (bkm.lucro / bkm.volume) * 100 : 0;
                   return (
-                    <tr key={idx} className="text-slate-600 hover:bg-slate-50/50 transition-colors">
-                      <td className="py-2.5 font-medium text-slate-800">{bkm.name}</td>
+                    <tr key={idx} className="text-slate-600 dark:text-slate-300 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="py-2.5 font-medium text-slate-800 dark:text-slate-100">{bkm.name}</td>
                       <td className="py-2.5 text-center">{bkm.apostas}</td>
                       <td className="py-2.5 text-right font-mono">{bkm.volume.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}{currency}</td>
-                      <td className={`py-2.5 text-right font-semibold font-mono ${bkm.lucro >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                      <td className={`py-2.5 text-right font-semibold font-mono ${bkm.lucro >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                         {bkm.lucro >= 0 ? "+" : ""}{bkm.lucro.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}{currency}
                       </td>
-                      <td className={`py-2.5 text-right font-medium font-mono ${bkmRoi >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                      <td className={`py-2.5 text-right font-medium font-mono ${bkmRoi >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                         {bkmRoi >= 0 ? "+" : ""}{bkmRoi.toFixed(1)}%
                       </td>
                     </tr>
@@ -536,7 +537,7 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
                 })}
                 {bookmakerData.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-4 text-center text-slate-400">Sem registos.</td>
+                    <td colSpan={5} className="py-4 text-center text-slate-400 dark:text-slate-500">Sem registos.</td>
                   </tr>
                 )}
               </tbody>
@@ -545,42 +546,42 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
         </div>
 
         {/* Freebets Overview card */}
-        <div className="bg-white rounded-sm p-5 border border-slate-200 flex flex-col justify-between" id="freebets-performance-summary">
+        <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between" id="freebets-performance-summary">
           <div>
-            <h4 className="text-base font-semibold text-slate-900 tracking-tight font-display mb-1">Análise de Freebets</h4>
-            <p className="text-xs text-slate-400 mb-4">Estatísticas de desempenho das apostas com freebet</p>
-            
+            <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display mb-1">Análise de Freebets</h4>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">Estatísticas de desempenho das apostas com freebet</p>
+
             <div className="space-y-4">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500">Total de Freebets Registadas:</span>
-                <span className="font-semibold text-slate-800">{freebetStats.usageCount}</span>
-              </div>
-              
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500">Total Investido (Freebet):</span>
-                <span className="font-semibold text-slate-800">{freebetStats.totalStakeUsed.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}{currency}</span>
+                <span className="text-slate-500 dark:text-slate-400">Total de Freebets Registadas:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-100">{freebetStats.usageCount}</span>
               </div>
 
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500 font-medium">Lucro Líquido Gerado:</span>
-                <span className="font-bold text-emerald-600">
+                <span className="text-slate-500 dark:text-slate-400">Total Investido (Freebet):</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-100">{freebetStats.totalStakeUsed.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}{currency}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Lucro Líquido Gerado:</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">
                   +{freebetStats.profit.toLocaleString("pt-PT", { minimumFractionDigits: 2 })}{currency}
                 </span>
               </div>
 
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500">Taxa de Acerto (Freebets):</span>
-                <span className="font-semibold text-slate-800">{safeNum(freebetStats.winRate).toFixed(1)}%</span>
+                <span className="text-slate-500 dark:text-slate-400">Taxa de Acerto (Freebets):</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-100">{safeNum(freebetStats.winRate).toFixed(1)}%</span>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2">
-            <div className="flex justify-between text-[11px] text-slate-400">
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+            <div className="flex justify-between text-[11px] text-slate-400 dark:text-slate-500">
               <span>Resolvidas / Total:</span>
               <span>{freebetStats.resolvedCount} de {freebetStats.usageCount}</span>
             </div>
-            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
               <div 
                 className="bg-indigo-600 h-full rounded-full transition-all duration-500" 
                 style={{ 
@@ -597,53 +598,53 @@ export default function Dashboard({ bets, currency }: DashboardProps) {
 
       {/* Insights Row */}
       {insights && (
-        <div className="bg-white rounded-sm p-5 border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-6" id="dashboard-insights">
+        <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-6" id="dashboard-insights">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded mt-0.5 shrink-0">
+            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded mt-0.5 shrink-0">
               <CheckCircle2 size={16} />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-700">Operador Mais Rentável</p>
-              <p className="text-xs text-slate-400 mt-0.5">Onde fazes mais dinheiro</p>
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Operador Mais Rentável</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Onde fazes mais dinheiro</p>
               {insights.bestBkm && insights.bestBkm.lucro > 0 ? (
-                <p className="text-sm font-bold text-slate-800 mt-1">
-                  {insights.bestBkm.name} <span className="text-xs font-normal text-slate-500">({insights.bestBkm.lucro > 0 ? "+" : ""}{safeNum(insights.bestBkm.lucro).toFixed(2)}{currency})</span>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100 mt-1">
+                  {insights.bestBkm.name} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">({insights.bestBkm.lucro > 0 ? "+" : ""}{safeNum(insights.bestBkm.lucro).toFixed(2)}{currency})</span>
                 </p>
               ) : (
-                <p className="text-sm font-semibold text-slate-500 mt-1">Sem dados suficientes</p>
+                <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-1">Sem dados suficientes</p>
               )}
             </div>
           </div>
 
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded mt-0.5 shrink-0">
+            <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded mt-0.5 shrink-0">
               <ArrowUpRight size={16} />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-700">Odd Média das Apostas Ganhas</p>
-              <p className="text-xs text-slate-400 mt-0.5">Nível médio de risco vitorioso</p>
-              <p className="text-sm font-bold text-slate-800 mt-1 font-mono">
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Odd Média das Apostas Ganhas</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Nível médio de risco vitorioso</p>
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-100 mt-1 font-mono">
                 {insights.averageWonOdd > 1 ? safeNum(insights.averageWonOdd).toFixed(2) : "1.00"}
               </p>
             </div>
           </div>
 
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-amber-50 text-amber-600 rounded mt-0.5 shrink-0">
+            <div className="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded mt-0.5 shrink-0">
               <Award size={16} />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-700">Maior Lucro Individual</p>
-              <p className="text-xs text-slate-400 mt-0.5">O teu boletim de maior success</p>
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Maior Lucro Individual</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">O teu boletim de maior sucesso</p>
               {insights.highestWin ? (
-                <p className="text-sm font-bold text-slate-800 mt-1 truncate max-w-[200px]">
-                  +{safeNum(insights.highestWin.netProfit).toFixed(2)}{currency} 
-                  <span className="text-[10px] font-normal text-slate-400 ml-1">
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100 mt-1 truncate max-w-[200px]">
+                  +{safeNum(insights.highestWin.netProfit).toFixed(2)}{currency}
+                  <span className="text-[10px] font-normal text-slate-400 dark:text-slate-500 ml-1">
                     ({insights.highestWin.selections && insights.highestWin.selections[0]?.event || "Múltipla"})
                   </span>
                 </p>
               ) : (
-                <p className="text-sm font-semibold text-slate-500 mt-1">Nenhum prémio ganho.</p>
+                <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mt-1">Nenhum prémio ganho.</p>
               )}
             </div>
           </div>
