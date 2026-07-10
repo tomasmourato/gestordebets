@@ -70,7 +70,7 @@ db/               pool de conexões, schema e migrações
 | Comando         | Descrição                                            |
 | --------------- | ---------------------------------------------------- |
 | `npm run dev`   | Servidor Express com o Vite em middleware mode        |
-| `npm run build` | Compila o frontend e empacota o servidor em `dist/`   |
+|  `npm run build` | Compila o frontend (`dist/`) e o servidor (`dist-server/`)   |
 | `npm start`     | Corre o build de produção                             |
 | `npm run lint`  | Verificação de tipos com o TypeScript                 |
 
@@ -84,6 +84,7 @@ e devolvem apenas as apostas do utilizador autenticado.
 | `POST`   | `/api/auth/register` | Cria uma conta e devolve um JWT |
 | `POST`   | `/api/auth/login`    | Autentica e devolve um JWT      |
 | `GET`    | `/api/auth/me`       | Utilizador autenticado          |
+| `GET`    | `/api/health`        | Estado da função e da BD        |
 | `GET`    | `/api/bets`          | Lista as apostas                |
 | `POST`   | `/api/bets`          | Cria uma aposta                 |
 | `POST`   | `/api/bets/bulk`     | Importa várias apostas (transação) |

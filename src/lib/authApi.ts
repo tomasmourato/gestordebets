@@ -13,6 +13,27 @@ interface StoredUser {
 // Permite às camadas superiores distinguir uma sessão expirada de outros erros.
 export class SessionExpiredError extends Error {}
 
+/**
+ * Lê o corpo da resposta como JSON sem rebentar quando ele não é JSON.
+ * Proxies e plataformas (Vercel, nginx) respondem com páginas HTML/texto em
+ * erros de infraestrutura; chamar res.json() diretamente nesses casos
+ * produzia erros ilegíveis como "Unexpected token 'A' ... is not valid JSON".
+ */
+export async function parseJsonResponse(res: Response): Promise<any> {
+  const text = await res.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return {};
+  }
+}
+
+/** Mensagem de erro a partir da resposta, com fallback legível por status. */
+function errorFrom(data: any, res: Response, fallback: string): Error {
+  return new Error(data?.error || `${fallback} (HTTP ${res.status})`);
+}
+
 export function saveToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
 }
@@ -30,8 +51,14 @@ function saveUser(user: StoredUser) {
 }
 
 export function getStoredUser(): StoredUser | null {
-  const raw = localStorage.getItem(USER_KEY);
-  return raw ? JSON.parse(raw) : null;
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    // JSON corrompido no storage — trata como sessão sem utilizador em cache.
+    localStorage.removeItem(USER_KEY);
+    return null;
+  }
 }
 
 export function isAuthenticated(): boolean {
@@ -47,8 +74,8 @@ export async function register(username: string, email: string, password: string
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, email, password }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Erro ao registar.");
+  const data = await parseJsonResponse(res);
+  if (!res.ok) throw errorFrom(data, res, "Erro ao registar");
   saveToken(data.token);
   saveUser(data.user);
   return data.user;
@@ -63,8 +90,8 @@ export async function login(email: string, password: string) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Erro ao autenticar.");
+  const data = await parseJsonResponse(res);
+  if (!res.ok) throw errorFrom(data, res, "Erro ao autenticar");
   saveToken(data.token);
   saveUser(data.user);
   return data.user;

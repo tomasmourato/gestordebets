@@ -5,7 +5,9 @@ import dotenv from "dotenv";
 
 import authRoutes from "./routes/authRoutes";
 import betsRoutes from "./routes/betsRoutes";
+import pool from "./db/pool";
 import { authenticateToken, AuthenticatedRequest } from "./middleware/authMiddleware";
+import { rateLimit } from "./middleware/rateLimit";
 
 // O .env.local sobrepõe-se ao .env.
 dotenv.config({ path: ".env" });
@@ -14,9 +16,51 @@ dotenv.config({ path: ".env.local", override: true });
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
+// Atrás do proxy da Vercel, o IP real do cliente vem no X-Forwarded-For.
+// Sem isto o rate limiting veria o IP do proxy para todos os pedidos.
+app.set("trust proxy", 1);
+
 // A Vercel não aceita payloads acima de 4.5mb.
 app.use(express.json({ limit: "4mb" }));
 app.use(express.urlencoded({ limit: "4mb", extended: true }));
+
+// Cabeçalhos de segurança básicos; as respostas da API nunca devem ser
+// guardadas em cache (contêm dados privados do utilizador).
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "same-origin");
+  if (req.path.startsWith("/api/")) {
+    res.setHeader("Cache-Control", "no-store");
+  }
+  next();
+});
+
+// Diagnóstico de deploy: confirma que a função arrancou, que variáveis de
+// ambiente estão presentes (nunca os seus valores) e se a BD responde.
+app.get("/api/health", async (_req, res) => {
+  const env = {
+    DATABASE_URL: Boolean(process.env.DATABASE_URL),
+    JWT_SECRET: Boolean(process.env.JWT_SECRET),
+    GEMINI_API_KEY: Boolean(process.env.GEMINI_API_KEY),
+  };
+
+  let database: { ok: boolean; error?: string } = { ok: false };
+  try {
+    await pool.query("SELECT 1");
+    database = { ok: true };
+  } catch (error: any) {
+    // Só o código do erro — a mensagem completa podia expor o host da BD.
+    database = { ok: false, error: error?.code ?? "UNKNOWN" };
+  }
+
+  res.json({ ok: true, env, database });
+});
+
+// Limites por IP: trava força bruta no login/registo e protege a quota do
+// Gemini. Janela de 10 minutos.
+app.use("/api/auth", rateLimit({ windowMs: 10 * 60 * 1000, max: 30 }));
+app.use("/api/parse-screenshot", rateLimit({ windowMs: 10 * 60 * 1000, max: 30 }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/bets", betsRoutes);
@@ -37,9 +81,9 @@ function getAiClient(): GoogleGenAI {
 // Protegida por autenticação para não expor a quota do Gemini.
 app.post("/api/parse-screenshot", authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const { imageBase64 } = req.body;
+    const { imageBase64 } = req.body ?? {};
 
-    if (!imageBase64) {
+    if (!imageBase64 || typeof imageBase64 !== "string") {
       res.status(400).json({ error: "Nenhuma imagem foi fornecida." });
       return;
     }
@@ -235,11 +279,10 @@ Se não conseguires identificar alguma informação com certeza, faz a melhor es
     const parsedData = JSON.parse(textResult.trim());
     res.json({ success: true, data: parsedData });
   } catch (error: any) {
+    // A mensagem interna fica só no log — pode conter detalhes da API/quota
+    // que não devem chegar ao cliente.
     console.error("Erro ao analisar imagem com Gemini:", error);
-    res.status(500).json({
-      error: "Ocorreu um erro ao processar o screenshot.",
-      details: error.message,
-    });
+    res.status(500).json({ error: "Ocorreu um erro ao processar o screenshot." });
   }
 });
 
@@ -248,8 +291,10 @@ async function start() {
   if (process.env.VERCEL) {
     return; // Na Vercel não faz nada, deixa a Vercel servir os estáticos nativamente
   }
-  if (process.env.NODE_ENV !== "production") {
-    // IMPORT DINÂMICO: O Vite só é carregado aqui se estiveres a rodar no teu PC localmente!
+  // Só o bootstrap.ts (npm run dev) define NODE_ENV=development; qualquer
+  // outro arranque (npm start, Docker, etc.) serve o build estático.
+  if (process.env.NODE_ENV === "development") {
+    // Import dinâmico: o Vite é devDependency e só existe em desenvolvimento.
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
