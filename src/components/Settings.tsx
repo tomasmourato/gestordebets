@@ -561,7 +561,12 @@ export default function Settings({
                     <Upload size={14} /> Escolher Ficheiro (.json, .csv)
                     <input
                       type="file"
-                      accept=".json,.csv"
+                      // Além das extensões, inclui os MIME types que o Android/iOS
+                      // atribuem a CSVs (text/comma-separated-values, vnd.ms-excel,
+                      // text/plain…) — só com ".csv" o seletor de ficheiros do
+                      // telemóvel mostra os CSVs acinzentados/impossíveis de escolher.
+                      // O parser valida o conteúdo, por isso ser permissivo é seguro.
+                      accept=".json,.csv,application/json,text/csv,text/comma-separated-values,application/csv,application/vnd.ms-excel,text/plain"
                       className="hidden"
                       onChange={handleImportFile}
                     />
