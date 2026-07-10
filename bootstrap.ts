@@ -8,4 +8,4 @@ process.env.NODE_ENV ??= "development";
 dotenv.config({ path: ".env" });
 dotenv.config({ path: ".env.local", override: true });
 
-await import("./server");
+await import("./server.js");

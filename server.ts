@@ -3,11 +3,11 @@ import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
-import authRoutes from "./routes/authRoutes";
-import betsRoutes from "./routes/betsRoutes";
-import pool from "./db/pool";
-import { authenticateToken, AuthenticatedRequest } from "./middleware/authMiddleware";
-import { rateLimit } from "./middleware/rateLimit";
+import authRoutes from "./routes/authRoutes.js";
+import betsRoutes from "./routes/betsRoutes.js";
+import pool from "./db/pool.js";
+import { authenticateToken, AuthenticatedRequest } from "./middleware/authMiddleware.js";
+import { rateLimit } from "./middleware/rateLimit.js";
 
 // O .env.local sobrepõe-se ao .env.
 dotenv.config({ path: ".env" });

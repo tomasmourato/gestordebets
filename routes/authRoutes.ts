@@ -5,8 +5,8 @@ import { Router } from "express";
 // $2b$ são compatíveis entre os dois pacotes.
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import pool from "../db/pool";
-import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddleware";
+import pool from "../db/pool.js";
+import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddleware.js";
 
 const router = Router();
 const SALT_ROUNDS = 12;
