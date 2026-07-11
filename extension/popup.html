@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <div class="logo"></div>
+      <div>
+        <h1>BetTrackr</h1>
+        <p>Importar do Betclic</p>
+      </div>
+    </header>
+
+    <div class="status">
+      <div class="row">
+        <span class="dot" id="dot-betclic"></span>
+        <span id="txt-betclic">Betclic: à espera…</span>
+      </div>
+      <div class="row">
+        <span class="dot" id="dot-bettrackr"></span>
+        <span id="txt-bettrackr">BetTrackr: à espera…</span>
+      </div>
+    </div>
+
+    <button id="import" disabled>Importar apostas</button>
+
+    <p class="msg" id="msg"></p>
+
+    <details>
+      <summary>Como usar</summary>
+      <ol>
+        <li>Inicia sessão no <strong>BetTrackr</strong> (abre a app uma vez).</li>
+        <li>Abre <strong>betclic.pt</strong>, entra e vai a <em>As minhas apostas</em>.</li>
+        <li>Volta aqui e clica <em>Importar apostas</em>.</li>
+      </ol>
+    </details>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

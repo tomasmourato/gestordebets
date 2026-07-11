@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Preferences, AuditLog, Bet, BetStatus, Selection, BetType, ThemeMode } from "../types";
 import { calculateBetReturnAndProfit, safeNum } from "../utils";
+import BetclicImport from "./BetclicImport";
 
 interface SettingsProps {
   preferences: Preferences;
@@ -515,6 +516,9 @@ export default function Settings({
 
             </form>
           </div>
+
+          {/* Importação do Betclic via extensão de browser */}
+          <BetclicImport />
 
           {/* Backup, CSV and Data actions */}
           <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 space-y-4">
