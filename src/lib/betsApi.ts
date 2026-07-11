@@ -1,0 +1,180 @@
+// src/lib/betsApi.ts
+// Camada de API para as apostas (bets). O PostgreSQL é a única fonte de
+// verdade — estas funções falam com as rotas /api/bets protegidas por JWT
+// e traduzem entre o formato snake_case da BD e o modelo Bet do frontend.
+
+import { authFetch } from "./authApi";
+import { Bet, BetStatus, BetType, Selection } from "../types";
+import { safeNum } from "../utils";
+
+// Linha crua devolvida pela API (colunas em snake_case).
+type ApiBetRow = Record<string, any>;
+
+const VALID_STATUSES: BetStatus[] = [
+  "POR_LIQUIDAR",
+  "GANHA",
+  "PERDIDA",
+  "ANULADA",
+  "MEIO_GANHA",
+  "MEIO_PERDIDA",
+];
+
+const VALID_ORIGINS = ["MANUAL", "SCREENSHOT", "CSV"];
+
+// ------------------------------------------------------------
+// Normaliza as seleções vindas da BD (array, string JSON ou null)
+// para um Selection[] garantindo que cada seleção tem um id.
+// ------------------------------------------------------------
+function normalizeSelections(raw: any, rowId: string): Selection[] {
+  let arr: any = raw;
+
+  if (typeof raw === "string") {
+    try {
+      arr = JSON.parse(raw);
+    } catch {
+      arr = [];
+    }
+  }
+
+  if (!Array.isArray(arr)) return [];
+
+  return arr.map((s: any, idx: number): Selection => ({
+    id: s?.id ?? `sel-${rowId}-${idx}`,
+    event: s?.event ?? "",
+    market: s?.market ?? "",
+    choice: s?.choice ?? "",
+    odd: safeNum(s?.odd),
+    sport: s?.sport,
+    betType: s?.betType,
+  }));
+}
+
+// ------------------------------------------------------------
+// mapBetFromApi: linha snake_case da BD -> modelo Bet (camelCase).
+// ------------------------------------------------------------
+export function mapBetFromApi(row: ApiBetRow): Bet {
+  // Estado: mapeia legado 'PENDENTE' -> 'POR_LIQUIDAR' e valida.
+  let status = row.status as BetStatus;
+  if ((status as string) === "PENDENTE") status = "POR_LIQUIDAR";
+  if (!VALID_STATUSES.includes(status)) status = "POR_LIQUIDAR";
+
+  // Tipo: valida contra SIMPLES/MULTIPLA.
+  let type = row.type as BetType;
+  if (type !== "SIMPLES" && type !== "MULTIPLA") type = "SIMPLES";
+
+  // Origem: valida contra MANUAL/SCREENSHOT/CSV.
+  let origin = row.origin as Bet["origin"];
+  if (!VALID_ORIGINS.includes(origin as string)) origin = "MANUAL";
+
+  return {
+    id: String(row.id),
+    type,
+    status,
+    selections: normalizeSelections(row.selections, String(row.id)),
+    stake: safeNum(row.stake),
+    odd: safeNum(row.odd),
+    isFreebet: row.is_freebet === true,
+    potentialReturn: safeNum(row.potential_return),
+    finalReturn: safeNum(row.final_return),
+    netProfit: safeNum(row.net_profit),
+    bookmaker: row.bookmaker ?? "",
+    dateTime: row.date_time ?? "",
+    notes: row.notes ?? undefined,
+    origin,
+    comment: row.comment ?? undefined,
+    tags: row.tags ?? undefined,
+    metadata: row.metadata ?? undefined,
+  };
+}
+
+// ------------------------------------------------------------
+// mapBetToApi: modelo Bet -> corpo JSON (camelCase) que o backend espera.
+// Sem id: o servidor gera-o na criação; na atualização o id vai no URL.
+// ------------------------------------------------------------
+export function mapBetToApi(bet: Bet) {
+  return {
+    type: bet.type,
+    status: bet.status,
+    stake: bet.stake,
+    odd: bet.odd,
+    isFreebet: bet.isFreebet,
+    potentialReturn: bet.potentialReturn,
+    finalReturn: bet.finalReturn,
+    netProfit: bet.netProfit,
+    bookmaker: bet.bookmaker,
+    dateTime: bet.dateTime,
+    notes: bet.notes,
+    origin: bet.origin,
+    selections: bet.selections,
+    comment: bet.comment,
+    tags: bet.tags,
+    metadata: bet.metadata,
+  };
+}
+
+// ------------------------------------------------------------
+// GET /api/bets -> lista todas as apostas do utilizador.
+// ------------------------------------------------------------
+export async function fetchBets(): Promise<Bet[]> {
+  const res = await authFetch("/api/bets");
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Erro ao obter as apostas.");
+  return (data.bets as ApiBetRow[]).map(mapBetFromApi);
+}
+
+// ------------------------------------------------------------
+// POST /api/bets -> cria uma aposta e devolve-a já mapeada.
+// ------------------------------------------------------------
+export async function createBet(bet: Bet): Promise<Bet> {
+  const res = await authFetch("/api/bets", {
+    method: "POST",
+    body: JSON.stringify(mapBetToApi(bet)),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Erro ao criar a aposta.");
+  return mapBetFromApi(data.bet);
+}
+
+// ------------------------------------------------------------
+// POST /api/bets/bulk -> cria várias apostas numa só transação.
+// ------------------------------------------------------------
+export async function createBets(bets: Bet[]): Promise<Bet[]> {
+  const res = await authFetch("/api/bets/bulk", {
+    method: "POST",
+    body: JSON.stringify({ bets: bets.map(mapBetToApi) }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Erro ao importar as apostas.");
+  return (data.bets as ApiBetRow[]).map(mapBetFromApi);
+}
+
+// ------------------------------------------------------------
+// PUT /api/bets/:id -> atualiza uma aposta e devolve-a já mapeada.
+// ------------------------------------------------------------
+export async function updateBet(bet: Bet): Promise<Bet> {
+  const res = await authFetch(`/api/bets/${bet.id}`, {
+    method: "PUT",
+    body: JSON.stringify(mapBetToApi(bet)),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Erro ao atualizar a aposta.");
+  return mapBetFromApi(data.bet);
+}
+
+// ------------------------------------------------------------
+// DELETE /api/bets/:id -> apaga uma aposta.
+// ------------------------------------------------------------
+export async function deleteBet(id: string): Promise<void> {
+  const res = await authFetch(`/api/bets/${id}`, { method: "DELETE" });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Erro ao apagar a aposta.");
+}
+
+// ------------------------------------------------------------
+// DELETE /api/bets -> apaga todas as apostas do utilizador.
+// ------------------------------------------------------------
+export async function deleteAllBets(): Promise<void> {
+  const res = await authFetch("/api/bets", { method: "DELETE" });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Erro ao apagar as apostas.");
+}

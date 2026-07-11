@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "BetTrackr — Importar do Betclic",
+  "version": "1.0.0",
+  "description": "Importa as tuas apostas do Betclic.pt diretamente para o BetTrackr.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://www.betclic.pt/*",
+    "https://*.begmedia.pt/*",
+    "https://*.begmedia.com/*",
+    "https://gestordebets.vercel.app/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Importar apostas do Betclic"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.betclic.pt/*"],
+      "js": ["src/inject.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://www.betclic.pt/*"],
+      "js": ["src/content-betclic.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://gestordebets.vercel.app/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": ["src/content-bettrackr.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

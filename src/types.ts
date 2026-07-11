@@ -35,10 +35,13 @@ export interface Bet {
   };
 }
 
+export type ThemeMode = 'light' | 'dark' | 'system';
+
 export interface Preferences {
   currency: string;
   defaultBookmaker: string;
   defaultStake: number;
+  theme: ThemeMode;
 }
 
 export interface AuditLog {

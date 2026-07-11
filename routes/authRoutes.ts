@@ -1,5 +1,8 @@
 import { Router } from "express";
-import bcrypt from "bcrypt";
+// bcryptjs (JS puro) em vez de bcrypt: o binário nativo do bcrypt resolve o
+// caminho do .node em runtime, o que impede o bundler da Vercel de o incluir
+// na função serverless. Os hashes são compatíveis entre os dois pacotes.
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "../db/pool";
 import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddleware";

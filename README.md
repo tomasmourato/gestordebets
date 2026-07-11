@@ -1,20 +1,92 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# BetTrackr
 
-# Run and deploy your AI Studio app
+Aplicação web para gestão e análise de boletins de apostas desportivas.
+Permite registar apostas manualmente, importar boletins a partir de um
+screenshot (com extração automática via Gemini) e acompanhar estatísticas de
+desempenho — lucro líquido, ROI/yield, taxa de acerto e análise de freebets.
 
-This contains everything you need to run your app locally.
+## Stack
 
-View your app in AI Studio: https://ai.studio/apps/b44500d1-ccf9-4a26-8939-b10925c50484
+- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS v4, Recharts
+- **Backend:** Express, PostgreSQL (`pg`), autenticação com JWT + bcrypt
+- **IA:** Google Gemini (extração de dados de screenshots de boletins)
 
-## Run Locally
+## Arquitetura
 
-**Prerequisites:**  Node.js
+O PostgreSQL é a única fonte de verdade para as apostas. O armazenamento local
+do browser guarda apenas o token JWT, o utilizador em cache e as preferências
+(`g_prefs`, que inclui o tema claro/escuro).
 
+```
+src/components/   componentes de UI
+src/hooks/        estado da aplicação (apostas, preferências, tema, auditoria)
+src/lib/          camada de API (authApi, betsApi) e mapeamento BD <-> frontend
+routes/           rotas Express (/api/auth, /api/bets)
+middleware/       verificação do JWT
+db/               pool de conexões, schema e migrações
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Configuração
+
+**Requisitos:** Node.js 20+ e uma base de dados PostgreSQL.
+
+1. Instalar as dependências:
+
+   ```bash
+   npm install
+   ```
+
+2. Criar um ficheiro `.env.local` na raiz do projeto (ver [.env.example](.env.example)):
+
+   ```
+   DATABASE_URL=postgres://user:password@host:5432/bettrackr
+   JWT_SECRET=<valor aleatório e longo>
+   GEMINI_API_KEY=<chave da API do Gemini>
+   ```
+
+   Para gerar um `JWT_SECRET`:
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+   ```
+
+3. Preparar a base de dados:
+
+   - Instalações novas: executar [db/schema.sql](db/schema.sql).
+   - Bases de dados existentes: executar a migração idempotente
+     [db/migrations/001_sync_bets_schema.sql](db/migrations/001_sync_bets_schema.sql)
+     (segura para correr várias vezes).
+
+4. Arrancar em modo de desenvolvimento:
+
+   ```bash
+   npm run dev
+   ```
+
+   A app fica disponível em `http://localhost:3000`.
+
+## Scripts
+
+| Comando         | Descrição                                            |
+| --------------- | ---------------------------------------------------- |
+| `npm run dev`   | Servidor Express com o Vite em middleware mode        |
+| `npm run build` | Compila o frontend e empacota o servidor em `dist/`   |
+| `npm start`     | Corre o build de produção                             |
+| `npm run lint`  | Verificação de tipos com o TypeScript                 |
+
+## API
+
+Todas as rotas de `/api/bets` exigem o header `Authorization: Bearer <token>`
+e devolvem apenas as apostas do utilizador autenticado.
+
+| Método   | Endpoint          | Descrição                          |
+| -------- | ----------------- | ---------------------------------- |
+| `POST`   | `/api/auth/register` | Cria uma conta e devolve um JWT |
+| `POST`   | `/api/auth/login`    | Autentica e devolve um JWT      |
+| `GET`    | `/api/auth/me`       | Utilizador autenticado          |
+| `GET`    | `/api/bets`          | Lista as apostas                |
+| `POST`   | `/api/bets`          | Cria uma aposta                 |
+| `POST`   | `/api/bets/bulk`     | Importa várias apostas (transação) |
+| `PUT`    | `/api/bets/:id`      | Atualiza uma aposta             |
+| `DELETE` | `/api/bets/:id`      | Apaga uma aposta                |
+| `DELETE` | `/api/bets`          | Apaga todas as apostas          |
