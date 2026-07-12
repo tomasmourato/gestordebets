@@ -59,8 +59,8 @@ function InstallSteps() {
       )}
       <ol className="text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5 list-decimal list-inside">
         <li>
-          Descarrega e extrai o <code className="font-mono">.zip</code> — a extensão fica na pasta{" "}
-          <code className="font-mono text-indigo-600 dark:text-indigo-300">extension/</code>.
+          Descarrega e extrai o <code className="font-mono">.zip</code> — escolhe a pasta extraída que contém{" "}
+          <code className="font-mono text-indigo-600 dark:text-indigo-300">manifest.json</code>.
         </li>
         <li>
           Abre <code className="font-mono text-indigo-600 dark:text-indigo-300">brave://extensions</code>{" "}

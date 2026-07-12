@@ -25,7 +25,7 @@ A extensão nunca inclui cookies, passwords ou tokens de sessão no código.
 
 1. Abre `chrome://extensions` (ou `brave://extensions`).
 2. Ativa o **Modo de programador**.
-3. **Carregar expandida** → escolhe esta pasta `extension/`.
+3. Extrai o zip e, em **Carregar expandida**, escolhe a pasta extraída que contém `manifest.json`.
 
 ## Utilização
 

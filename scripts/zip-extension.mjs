@@ -25,9 +25,10 @@ try {
   if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
 
   const zip = new AdmZip();
-  // Fica sob uma pasta "extension/" dentro do zip, para extrair de forma
-  // limpa e o utilizador poder escolher essa pasta em "Carregar expandida".
-  zip.addLocalFolder(extDir, "extension");
+  // Put manifest.json at the archive root. This makes the downloaded package
+  // directly usable by browser extension installers and avoids an extra
+  // nested extension/ directory that can be mistaken for a corrupt package.
+  zip.addLocalFolder(extDir);
   zip.writeZip(outFile);
 
   console.log("[zip-extension] criado dist/bettrackr-extension.zip");
