@@ -8,6 +8,7 @@ import { fetchBetanoHistory } from "./betano-history.js";
 const PAGE_SIZE = 20;
 const DEFAULT_BETTRACKR_BASE = "https://gestordebets.vercel.app";
 const pendingBetanoRequests = new Map();
+const betanoTokenWaiters = new Set();
 let betanoSessionTokens = null;
 let requestSequence = 0;
 
@@ -65,6 +66,63 @@ async function findBetanoTab() {
     try { return !new URL(tab.url || "").pathname.startsWith("/myaccount/bethistory"); } catch (_) { return true; }
   });
   return mainTabs.find((tab) => tab.active) || mainTabs[0] || tabs.find((tab) => tab.active) || tabs[0] || null;
+}
+
+function isBetanoHistoryTab(tab) {
+  try { return new URL(tab.url || "").pathname.startsWith("/myaccount/bethistory"); } catch (_) { return false; }
+}
+
+function waitForTabComplete(tabId, timeoutMs = 20000) {
+  return new Promise((resolve, reject) => {
+    let timer;
+    const finish = (error) => {
+      chrome.tabs.onUpdated.removeListener(onUpdated);
+      clearTimeout(timer);
+      if (error) reject(error); else resolve();
+    };
+    const onUpdated = (updatedTabId, changeInfo) => {
+      if (updatedTabId === tabId && changeInfo.status === "complete") finish();
+    };
+    chrome.tabs.onUpdated.addListener(onUpdated);
+    timer = setTimeout(() => finish(new Error("A página do histórico do Betano não terminou de carregar.")), timeoutMs);
+    chrome.tabs.get(tabId).then((tab) => {
+      if (tab.status === "complete") finish();
+    }).catch(finish);
+  });
+}
+
+function waitForBetanoTokens(timeoutMs = 15000) {
+  if (betanoSessionTokens) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const waiter = { resolve, reject, timer: null };
+    waiter.timer = setTimeout(() => {
+      betanoTokenWaiters.delete(waiter);
+      reject(new Error("Sessão Betano ainda não foi capturada. Mantém a página principal aberta e recarrega-a uma vez."));
+    }, timeoutMs);
+    betanoTokenWaiters.add(waiter);
+  });
+}
+
+async function ensureBetanoHistoryTab() {
+  const tabs = await chrome.tabs.query({ url: ["https://www.betano.pt/*", "https://betano.pt/*"] });
+  const existingHistory = tabs.find(isBetanoHistoryTab);
+  if (existingHistory && existingHistory.id !== undefined) {
+    await waitForTabComplete(existingHistory.id).catch(() => {});
+    return { tab: existingHistory, created: false };
+  }
+
+  const source = await findBetanoTab();
+  if (!source || source.id === undefined) throw new Error("Abre a página principal do Betano numa tab aberta.");
+  const origin = (() => {
+    try { return new URL(source.url || "https://www.betano.pt").origin; } catch (_) { return "https://www.betano.pt"; }
+  })();
+  const historyTab = await chrome.tabs.create({
+    url: `${origin}/myaccount/bethistory/open`,
+    active: false,
+  });
+  if (historyTab.id === undefined) throw new Error("Não foi possível abrir o histórico do Betano.");
+  await waitForTabComplete(historyTab.id);
+  return { tab: historyTab, created: true };
 }
 
 function betanoRequestId() {
@@ -260,16 +318,20 @@ async function runBetclicImport(cfg) {
 }
 
 async function runBetanoImport(cfg) {
-  const tab = await findBetanoTab();
-  if (!tab || tab.id === undefined) throw new Error("Abre o Betano.pt numa página com sessão iniciada.");
-  progress("A obter apostas do Betano…");
-  const { open, settled } = await fetchBetanoBets(tab.id);
-  const byRef = new Map();
-  for (const bet of settled) byRef.set(betanoRef(bet), bet);
-  for (const bet of open) if (!byRef.has(betanoRef(bet))) byRef.set(betanoRef(bet), bet);
-  byRef.delete(null);
-  const mapped = mapBetanoBets([...byRef.values()]);
-  return persistMapped(mapped.bets, mapped.unsupported, "Betano", cfg);
+  const { tab, created } = await ensureBetanoHistoryTab();
+  try {
+    if (!betanoSessionTokens) await waitForBetanoTokens();
+    progress("A obter apostas do Betano…");
+    const { open, settled } = await fetchBetanoBets(tab.id);
+    const byRef = new Map();
+    for (const bet of settled) byRef.set(betanoRef(bet), bet);
+    for (const bet of open) if (!byRef.has(betanoRef(bet))) byRef.set(betanoRef(bet), bet);
+    byRef.delete(null);
+    const mapped = mapBetanoBets([...byRef.values()]);
+    return persistMapped(mapped.bets, mapped.unsupported, "Betano", cfg);
+  } finally {
+    if (created && tab.id !== undefined) chrome.tabs.remove(tab.id).catch(() => {});
+  }
 }
 
 async function runImport(source) {
@@ -326,6 +388,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           ? tokens.apiOrigin
           : null,
       };
+      for (const waiter of betanoTokenWaiters) {
+        clearTimeout(waiter.timer);
+        waiter.resolve();
+      }
+      betanoTokenWaiters.clear();
     }
     return false;
   }
