@@ -2,7 +2,7 @@
 // source-specific payloads, updates changed imports, and sends new records to
 // BetTrackr in bounded batches.
 import { mapBetclicBets, betclicRef } from "./mapper.js";
-import { mapBetanoBets, betanoRef } from "./mapper-betano.js";
+import { mapBetanoBets, betanoHistoryStart, betanoRef } from "./mapper-betano.js";
 import { fetchBetanoHistory } from "./betano-history.js";
 
 const PAGE_SIZE = 20;
@@ -78,8 +78,7 @@ function isBetanoSettledTab(tab) {
 
 function settledHistoryUrl(origin) {
   const end = Date.now();
-  const startDate = new Date(end);
-  startDate.setUTCMonth(startDate.getUTCMonth() - 6);
+  const startDate = betanoHistoryStart();
   return `${origin}/myaccount/bethistory/settled?dateFrom=${startDate.getTime()}&dateTo=${end}`;
 }
 
