@@ -7,9 +7,28 @@ import { useBetclicExtension } from "../hooks/useBetclicExtension";
 const WEBSTORE_URL: string | null = null;
 
 // Zip só da extensão, gerado no build e servido pelo próprio app
-// (scripts/zip-extension.mjs -> dist/betclic-extension.zip). O utilizador
+// (scripts/zip-extension.mjs -> dist/bettrackr-extension.zip). O utilizador
 // descarrega apenas a extensão, não o projeto todo.
-const EXTENSION_DOWNLOAD_URL: string | null = "/betclic-extension.zip";
+const EXTENSION_DOWNLOAD_URL: string | null = "/bettrackr-extension.zip";
+
+function importSummary(result: {
+  imported?: number;
+  updated?: number;
+  skipped?: number;
+  unsupported?: number;
+  sourceResults?: Record<string, { ok: boolean; imported?: number; updated?: number; skipped?: number; unsupported?: number; error?: string }>;
+}) {
+  const labels: Record<string, string> = { betclic: "Betclic", betano: "Betano" };
+  const sources = Object.entries(result.sourceResults || {});
+  if (sources.length === 0) {
+    return `${result.imported || 0} importadas${result.updated ? ` · ${result.updated} atualizadas` : ""}${result.skipped ? ` · ${result.skipped} já existentes` : ""}.`;
+  }
+  return sources.map(([source, item]) => {
+    const label = labels[source] || source;
+    if (!item.ok) return `${label}: ${item.error || "indisponível"}`;
+    return `${label}: ${item.imported || 0} importadas${item.updated ? ` · ${item.updated} atualizadas` : ""}${item.skipped ? ` · ${item.skipped} já existentes` : ""}${item.unsupported ? ` · ${item.unsupported} ignoradas` : ""}`;
+  }).join(" · ");
+}
 
 // Passos de instalação manual — reutilizados no estado "não instalada" e no
 // bloco "reinstalar", para que as instruções estejam SEMPRE acessíveis no app.
@@ -32,7 +51,7 @@ function InstallSteps() {
       {EXTENSION_DOWNLOAD_URL && (
         <a
           href={EXTENSION_DOWNLOAD_URL}
-          download="betclic-extension.zip"
+          download="bettrackr-extension.zip"
           className="px-3.5 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs inline-flex items-center gap-1.5 transition-colors"
         >
           <Download size={14} /> Descarregar extensão (.zip)
@@ -69,7 +88,7 @@ export default function BetclicImport() {
     <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 space-y-4">
       <div className="flex items-center justify-between gap-2">
         <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-2">
-          <Puzzle size={18} className="text-indigo-600 dark:text-indigo-400" /> Importar do Betclic
+          <Puzzle size={18} className="text-indigo-600 dark:text-indigo-400" /> Importar apostas
         </h4>
         {installed === true && (
           <span className="text-[9px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider border border-emerald-200 dark:border-emerald-900">
@@ -79,8 +98,8 @@ export default function BetclicImport() {
       </div>
 
       <p className="text-xs text-slate-400 dark:text-slate-500">
-        Com a extensão de browser instalada, importas as tuas apostas do Betclic com um clique —
-        sem exportações manuais. As apostas são lidas da tua própria sessão do Betclic.
+        Com a extensão de browser instalada, importas as tuas apostas do Betclic e Betano com um
+        clique — sem exportações manuais. Cada casa é lida da tua própria sessão.
       </p>
 
       {/* A verificar */}
@@ -99,7 +118,7 @@ export default function BetclicImport() {
             className="px-4 py-2.5 rounded-sm bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             {importing ? <RefreshCw size={14} className="animate-spin" /> : <Download size={14} />}
-            {importing ? "A importar…" : "Importar apostas do Betclic"}
+            {importing ? "A importar…" : "Importar apostas de todas as casas"}
           </button>
 
           {importing && progress && (
@@ -110,8 +129,9 @@ export default function BetclicImport() {
             <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-200 rounded-sm border border-emerald-200 dark:border-emerald-900 flex items-center gap-2 text-xs font-medium">
               <CheckCircle2 size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>
-                {((result.imported || 0) > 0 || (result.updated || 0) > 0)
-                  ? `${result.imported || 0} importadas${result.updated ? ` · ${result.updated} atualizadas` : ""}${result.skipped ? ` · ${result.skipped} já existiam` : ""}.`
+                {(Object.keys(result.sourceResults || {}).length > 0 ||
+                  (result.imported || 0) > 0 || (result.updated || 0) > 0 || (result.unsupported || 0) > 0)
+                  ? importSummary(result)
                   : `Nada novo para importar${result.skipped ? ` (${result.skipped} já existiam)` : ""}.`}
               </span>
             </div>
@@ -125,8 +145,8 @@ export default function BetclicImport() {
           )}
 
           <p className="text-[11px] text-slate-400 dark:text-slate-500">
-            Antes de importar, abre <strong>betclic.pt</strong> e entra em <em>As minhas apostas</em> para a
-            extensão captar a sessão.
+            Antes de importar, abre os históricos em <strong>betclic.pt</strong> e/ou <strong>betano.pt</strong>.
+            Mantém o separador do Betano aberto durante a importação.
           </p>
 
           {/* Instruções continuam acessíveis mesmo com a extensão instalada. */}

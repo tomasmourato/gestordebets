@@ -1,5 +1,5 @@
 // src/hooks/useBetclicExtension.ts
-// Comunica com a extensão de browser "BetTrackr — Importar do Betclic" através
+// Comunica com a extensão de browser BetTrackr através
 // de window.postMessage (a extensão injeta um content script nesta origem que
 // serve de ponte). Não precisa do ID da extensão nem de a publicar.
 //
@@ -12,13 +12,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const APP = "bettrackr-app";
 const EXT = "bettrackr-ext";
 
-export interface BetclicImportResult {
+export interface BookmakerImportResult {
   ok: boolean;
   imported?: number;
   updated?: number;
   skipped?: number;
+  unsupported?: number;
   fetched?: number;
   error?: string;
+}
+
+export interface AllSourcesImportResult extends BookmakerImportResult {
+  sourceResults?: Record<string, BookmakerImportResult>;
 }
 
 export function useBetclicExtension() {
@@ -27,7 +32,7 @@ export function useBetclicExtension() {
   const [version, setVersion] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
-  const [result, setResult] = useState<BetclicImportResult | null>(null);
+  const [result, setResult] = useState<AllSourcesImportResult | null>(null);
   const reloadTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -50,6 +55,8 @@ export function useBetclicExtension() {
           skipped: data.skipped,
           fetched: data.fetched,
           updated: data.updated,
+          unsupported: data.unsupported,
+          sourceResults: data.sourceResults,
           error: data.error,
         });
         // Se entraram apostas novas, recarrega para o dashboard as refletir
@@ -86,12 +93,12 @@ export function useBetclicExtension() {
     setResult(null);
     setProgress(null);
     setImporting(true);
-    window.postMessage({ source: APP, type: "IMPORT" }, window.location.origin);
+    window.postMessage({ source: APP, type: "IMPORT", sourceBookmakers: "all" }, window.location.origin);
     // Salvaguarda: se a extensão nunca responder, não fica preso "a importar".
     window.setTimeout(() => {
       setImporting((busy) => {
         if (busy) {
-          setResult({ ok: false, error: "A extensão não respondeu. Reabre a página das apostas no Betclic." });
+          setResult({ ok: false, error: "A extensão não respondeu. Reabre o histórico do Betclic ou Betano." });
         }
         return false;
       });
