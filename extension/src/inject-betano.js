@@ -4,15 +4,15 @@
 (function () {
   const MARK = "bettrackr-betano-bridge";
   const HISTORY_PATH = "/myaccount/api/ma/bet/bet-history-v3";
-  let requestTokens = {};
+  const BETANO_ORIGINS = new Set(["https://www.betano.pt", "https://betano.pt"]);
+  let requestTokens = { apiOrigin: location.origin };
 
   function isBetanoRequest(url) {
     try {
       const parsed = new URL(url, location.href);
-      // Capture from any same-origin request. Betano can render the history
-      // in a separate browser popup/iframe while the main page owns the
-      // session headers needed for the import.
-      return parsed.origin === location.origin;
+      // Capture from either Betano hostname. Betano can render the history in
+      // a separate browser popup/iframe while the main page owns the session.
+      return BETANO_ORIGINS.has(parsed.origin);
     } catch (_) {
       return false;
     }
@@ -34,6 +34,7 @@
   function rememberHeaders(headers, url) {
     if (!isBetanoRequest(url)) return;
     const captured = headersToObject(headers);
+    try { requestTokens.apiOrigin = new URL(url, location.href).origin; } catch (_) {}
     if (captured.token1) requestTokens.token1 = captured.token1;
     if (captured.token2) requestTokens.token2 = captured.token2;
     if (captured.seontoken !== undefined) requestTokens.seontoken = captured.seontoken;
@@ -89,6 +90,7 @@
           token1: String(data.tokens.token1),
           token2: String(data.tokens.token2),
           seontoken: data.tokens.seontoken ? String(data.tokens.seontoken) : "",
+          apiOrigin: BETANO_ORIGINS.has(data.tokens.apiOrigin) ? data.tokens.apiOrigin : location.origin,
         };
       }
       if (!requestTokens.token1 || !requestTokens.token2) {
@@ -99,7 +101,8 @@
       for (const [key, value] of Object.entries(params)) {
         if (value !== undefined && value !== null && value !== "") query.set(key, String(value));
       }
-      const url = `${location.origin}${HISTORY_PATH}?${query}`;
+      const apiOrigin = BETANO_ORIGINS.has(requestTokens.apiOrigin) ? requestTokens.apiOrigin : location.origin;
+      const url = `${apiOrigin}${HISTORY_PATH}?${query}`;
       const response = await originalFetch(url, {
         credentials: "include",
         headers: {

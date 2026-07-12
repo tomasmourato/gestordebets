@@ -60,7 +60,7 @@ async function fetchBetclicBets(kind, cfg) {
 }
 
 async function findBetanoTab() {
-  const tabs = await chrome.tabs.query({ url: ["https://www.betano.pt/*"] });
+  const tabs = await chrome.tabs.query({ url: ["https://www.betano.pt/*", "https://betano.pt/*"] });
   const mainTabs = tabs.filter((tab) => {
     try { return !new URL(tab.url || "").pathname.startsWith("/myaccount/bethistory"); } catch (_) { return true; }
   });
@@ -302,7 +302,7 @@ async function runImport(source) {
 async function extensionStatus() {
   const [stored, tabs] = await Promise.all([
     chrome.storage.local.get(["betclicToken", "bettrackrToken", "bettrackrBase"]),
-    chrome.tabs.query({ url: ["https://www.betano.pt/*"] }),
+    chrome.tabs.query({ url: ["https://www.betano.pt/*", "https://betano.pt/*"] }),
   ]);
   return {
     betclic: Boolean(stored.betclicToken),
@@ -322,6 +322,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         token1: String(tokens.token1),
         token2: String(tokens.token2),
         seontoken: tokens.seontoken ? String(tokens.seontoken) : "",
+        apiOrigin: tokens.apiOrigin === "https://betano.pt" || tokens.apiOrigin === "https://www.betano.pt"
+          ? tokens.apiOrigin
+          : null,
       };
     }
     return false;
