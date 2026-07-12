@@ -1,4 +1,7 @@
 import express from "express";
+import { existsSync } from "node:fs";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
@@ -15,6 +18,8 @@ dotenv.config({ path: ".env.local", override: true });
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+const execFileAsync = promisify(execFile);
+const extensionZipPath = path.join(process.cwd(), "dist", "bettrackr-extension.zip");
 
 // Atrás do proxy da Vercel, o IP real do cliente vem no X-Forwarded-For.
 // Sem isto o rate limiting veria o IP do proxy para todos os pedidos.
@@ -23,6 +28,23 @@ app.set("trust proxy", 1);
 // A Vercel não aceita payloads acima de 4.5mb.
 app.use(express.json({ limit: "4mb" }));
 app.use(express.urlencoded({ limit: "4mb", extended: true }));
+
+// Local development does not run the Vercel static-build pipeline, so the
+// download link would otherwise fall through to Vite's SPA index.html. Build
+// the archive on demand and return real ZIP bytes from the same URL.
+app.get("/bettrackr-extension.zip", async (_req, res, next) => {
+  try {
+    await execFileAsync(process.execPath, ["scripts/zip-extension.mjs"], {
+      cwd: process.cwd(),
+    });
+    if (!existsSync(extensionZipPath)) {
+      throw new Error("A extensão não foi gerada.");
+    }
+    res.download(extensionZipPath, "bettrackr-extension.zip");
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Cabeçalhos de segurança básicos; as respostas da API nunca devem ser
 // guardadas em cache (contêm dados privados do utilizador).
