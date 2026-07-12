@@ -35,7 +35,9 @@ export function authenticateToken(
   }
 
   try {
-    const payload = jwt.verify(token, getJwtSecret()) as {
+    // Algoritmo fixado explicitamente: sem isto, a verificação aceita
+    // qualquer algoritmo HMAC declarado no próprio token.
+    const payload = jwt.verify(token, getJwtSecret(), { algorithms: ["HS256"] }) as {
       id: string;
       username: string;
     };

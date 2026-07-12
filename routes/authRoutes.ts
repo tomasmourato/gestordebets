@@ -1,15 +1,21 @@
 import { Router } from "express";
 // bcryptjs (JS puro) em vez de bcrypt: o binário nativo do bcrypt resolve o
 // caminho do .node em runtime, o que impede o bundler da Vercel de o incluir
-// na função serverless. Os hashes são compatíveis entre os dois pacotes.
+// na função serverless (FUNCTION_INVOCATION_FAILED no arranque). Os hashes
+// $2b$ são compatíveis entre os dois pacotes.
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import pool from "../db/pool";
-import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddleware";
+import pool from "../db/pool.js";
+import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddleware.js";
 
 const router = Router();
 const SALT_ROUNDS = 12;
 const TOKEN_EXPIRY = "7d";
+
+// Hash pré-calculado de um valor aleatório. Usado no login quando o email não
+// existe, para que o pedido demore o mesmo tempo que uma comparação real —
+// senão a diferença de tempos revelava quais os emails registados.
+const DUMMY_HASH = "$2b$12$N8eQ/Iq6zWr0kJfw.5gQCekaPVYadHUlGBDikr.Qg3ChTNIW6gQUa";
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -18,7 +24,24 @@ function getJwtSecret(): string {
 }
 
 function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return typeof email === "string" && email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// 3–32 caracteres: letras, números, ponto, hífen e underscore.
+function isValidUsername(username: string): boolean {
+  return typeof username === "string" && /^[A-Za-z0-9_.-]{3,32}$/.test(username);
+}
+
+// O algoritmo bcrypt só considera os primeiros 72 bytes da password; aceitar
+// mais do que isso daria uma falsa sensação de segurança.
+function validatePassword(password: unknown): string | null {
+  if (typeof password !== "string" || password.length < 8) {
+    return "A password deve ter pelo menos 8 caracteres.";
+  }
+  if (Buffer.byteLength(password, "utf8") > 72) {
+    return "A password não pode exceder 72 bytes.";
+  }
+  return null;
 }
 
 function signToken(user: { id: string; username: string }): string {
@@ -40,12 +63,17 @@ router.post("/register", async (req, res) => {
       res.status(400).json({ error: "username, email e password são obrigatórios." });
       return;
     }
+    if (!isValidUsername(username)) {
+      res.status(400).json({ error: "Username inválido: 3 a 32 caracteres (letras, números, '.', '-' ou '_')." });
+      return;
+    }
     if (!isValidEmail(email)) {
       res.status(400).json({ error: "Email inválido." });
       return;
     }
-    if (typeof password !== "string" || password.length < 8) {
-      res.status(400).json({ error: "A password deve ter pelo menos 8 caracteres." });
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      res.status(400).json({ error: passwordError });
       return;
     }
 
@@ -89,7 +117,7 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body ?? {};
 
-    if (!email || !password) {
+    if (!email || !password || typeof email !== "string" || typeof password !== "string") {
       res.status(400).json({ error: "email e password são obrigatórios." });
       return;
     }
@@ -101,15 +129,13 @@ router.post("/login", async (req, res) => {
 
     // Mensagem genérica de propósito: não revelar se foi o email ou a
     // password que falhou, para não facilitar enumeração de contas.
-    if (result.rows.length === 0) {
-      res.status(401).json({ error: "Credenciais inválidas." });
-      return;
-    }
-
     const user = result.rows[0];
-    const passwordMatches = await bcrypt.compare(password, user.password_hash);
+    const passwordMatches = await bcrypt.compare(
+      password,
+      user ? user.password_hash : DUMMY_HASH
+    );
 
-    if (!passwordMatches) {
+    if (!user || !passwordMatches) {
       res.status(401).json({ error: "Credenciais inválidas." });
       return;
     }

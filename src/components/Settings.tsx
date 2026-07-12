@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Preferences, AuditLog, Bet, BetStatus, Selection, BetType, ThemeMode } from "../types";
 import { calculateBetReturnAndProfit, safeNum } from "../utils";
+import BetclicImport from "./BetclicImport";
 
 interface SettingsProps {
   preferences: Preferences;
@@ -516,6 +517,9 @@ export default function Settings({
             </form>
           </div>
 
+          {/* Importação do Betclic via extensão de browser */}
+          <BetclicImport />
+
           {/* Backup, CSV and Data actions */}
           <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 space-y-4">
             <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-2">
@@ -561,7 +565,12 @@ export default function Settings({
                     <Upload size={14} /> Escolher Ficheiro (.json, .csv)
                     <input
                       type="file"
-                      accept=".json,.csv"
+                      // Além das extensões, inclui os MIME types que o Android/iOS
+                      // atribuem a CSVs (text/comma-separated-values, vnd.ms-excel,
+                      // text/plain…) — só com ".csv" o seletor de ficheiros do
+                      // telemóvel mostra os CSVs acinzentados/impossíveis de escolher.
+                      // O parser valida o conteúdo, por isso ser permissivo é seguro.
+                      accept=".json,.csv,application/json,text/csv,text/comma-separated-values,application/csv,application/vnd.ms-excel,text/plain"
                       className="hidden"
                       onChange={handleImportFile}
                     />

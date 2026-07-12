@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Bet, Selection, BetStatus, BetType } from "../types";
 import { AVAILABLE_BOOKMAKERS, calculateBetReturnAndProfit } from "../utils";
-import { authFetch } from "../lib/authApi";
+import { authFetch, parseJsonResponse } from "../lib/authApi";
 
 interface ScreenshotImporterProps {
   currency: string;
@@ -214,7 +214,7 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
         body: JSON.stringify({ imageBase64 }),
       });
 
-      const resData = await response.json();
+      const resData = await parseJsonResponse(response);
 
       if (!response.ok || !resData.success) {
         throw new Error(resData.error || "Não foi possível extrair os dados da imagem.");

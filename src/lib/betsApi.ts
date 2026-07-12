@@ -3,7 +3,7 @@
 // verdade — estas funções falam com as rotas /api/bets protegidas por JWT
 // e traduzem entre o formato snake_case da BD e o modelo Bet do frontend.
 
-import { authFetch } from "./authApi";
+import { authFetch, parseJsonResponse } from "./authApi";
 import { Bet, BetStatus, BetType, Selection } from "../types";
 import { safeNum } from "../utils";
 
@@ -117,7 +117,7 @@ export function mapBetToApi(bet: Bet) {
 // ------------------------------------------------------------
 export async function fetchBets(): Promise<Bet[]> {
   const res = await authFetch("/api/bets");
-  const data = await res.json();
+  const data = await parseJsonResponse(res);
   if (!res.ok) throw new Error(data.error || "Erro ao obter as apostas.");
   return (data.bets as ApiBetRow[]).map(mapBetFromApi);
 }
@@ -130,7 +130,7 @@ export async function createBet(bet: Bet): Promise<Bet> {
     method: "POST",
     body: JSON.stringify(mapBetToApi(bet)),
   });
-  const data = await res.json();
+  const data = await parseJsonResponse(res);
   if (!res.ok) throw new Error(data.error || "Erro ao criar a aposta.");
   return mapBetFromApi(data.bet);
 }
@@ -143,7 +143,7 @@ export async function createBets(bets: Bet[]): Promise<Bet[]> {
     method: "POST",
     body: JSON.stringify({ bets: bets.map(mapBetToApi) }),
   });
-  const data = await res.json();
+  const data = await parseJsonResponse(res);
   if (!res.ok) throw new Error(data.error || "Erro ao importar as apostas.");
   return (data.bets as ApiBetRow[]).map(mapBetFromApi);
 }
@@ -156,7 +156,7 @@ export async function updateBet(bet: Bet): Promise<Bet> {
     method: "PUT",
     body: JSON.stringify(mapBetToApi(bet)),
   });
-  const data = await res.json();
+  const data = await parseJsonResponse(res);
   if (!res.ok) throw new Error(data.error || "Erro ao atualizar a aposta.");
   return mapBetFromApi(data.bet);
 }
@@ -166,7 +166,7 @@ export async function updateBet(bet: Bet): Promise<Bet> {
 // ------------------------------------------------------------
 export async function deleteBet(id: string): Promise<void> {
   const res = await authFetch(`/api/bets/${id}`, { method: "DELETE" });
-  const data = await res.json();
+  const data = await parseJsonResponse(res);
   if (!res.ok) throw new Error(data.error || "Erro ao apagar a aposta.");
 }
 
@@ -175,6 +175,6 @@ export async function deleteBet(id: string): Promise<void> {
 // ------------------------------------------------------------
 export async function deleteAllBets(): Promise<void> {
   const res = await authFetch("/api/bets", { method: "DELETE" });
-  const data = await res.json();
+  const data = await parseJsonResponse(res);
   if (!res.ok) throw new Error(data.error || "Erro ao apagar as apostas.");
 }

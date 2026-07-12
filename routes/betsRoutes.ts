@@ -1,6 +1,6 @@
 import { Router } from "express";
-import pool from "../db/pool";
-import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddleware";
+import pool from "../db/pool.js";
+import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
@@ -134,6 +134,26 @@ function parseBetPayload(body: any): ParsedPayload {
 }
 
 // ============================================================
+// Erros do Postgres causados pelo payload (e não pelo servidor):
+// devolvê-los como 400 com mensagem legível em vez de um 500 opaco.
+// Foi um destes (23514, constraint de status desatualizada) que
+// mascarou a falha da importação em bloco durante dias.
+// ============================================================
+function dbErrorMessage(error: any): string | null {
+  switch (error?.code) {
+    case "23514": // check_violation
+      return "A aposta tem valores não permitidos pela base de dados (estado ou tipo). Corre as migrações em db/migrations/.";
+    case "23502": // not_null_violation
+      return `Campo obrigatório em falta na aposta (${error?.column ?? "desconhecido"}).`;
+    case "22007": // invalid_datetime_format
+    case "22008": // datetime_field_overflow
+      return "Data/hora da aposta em formato inválido (usa YYYY-MM-DD HH:mm).";
+    default:
+      return null;
+  }
+}
+
+// ============================================================
 // GET /api/bets  -> lista só as bets do utilizador autenticado
 // ============================================================
 router.get("/", async (req: AuthenticatedRequest, res) => {
@@ -174,7 +194,12 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
     );
 
     res.status(201).json({ success: true, bet: result.rows[0] });
-  } catch (error) {
+  } catch (error: any) {
+    const payloadError = dbErrorMessage(error);
+    if (payloadError) {
+      res.status(400).json({ error: payloadError });
+      return;
+    }
     console.error("Erro ao criar bet:", error);
     res.status(500).json({ error: "Erro ao guardar a bet." });
   }
@@ -227,6 +252,11 @@ router.post("/bulk", async (req: AuthenticatedRequest, res) => {
       res.status(400).json({ error: error.message });
       return;
     }
+    const payloadError = dbErrorMessage(error);
+    if (payloadError) {
+      res.status(400).json({ error: payloadError });
+      return;
+    }
     console.error("Erro ao importar bets em lote:", error);
     res.status(500).json({ error: "Erro ao importar as bets." });
   } finally {
@@ -266,7 +296,12 @@ router.put("/:id", async (req: AuthenticatedRequest, res) => {
       return;
     }
     res.json({ success: true, bet: result.rows[0] });
-  } catch (error) {
+  } catch (error: any) {
+    const payloadError = dbErrorMessage(error);
+    if (payloadError) {
+      res.status(400).json({ error: payloadError });
+      return;
+    }
     console.error("Erro ao atualizar bet:", error);
     res.status(500).json({ error: "Erro ao atualizar a bet." });
   }
