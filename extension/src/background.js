@@ -8,6 +8,7 @@ import { fetchBetanoHistory } from "./betano-history.js";
 const PAGE_SIZE = 20;
 const DEFAULT_BETTRACKR_BASE = "https://gestordebets.vercel.app";
 const pendingBetanoRequests = new Map();
+let betanoSessionTokens = null;
 let requestSequence = 0;
 
 function progress(text) {
@@ -60,7 +61,10 @@ async function fetchBetclicBets(kind, cfg) {
 
 async function findBetanoTab() {
   const tabs = await chrome.tabs.query({ url: ["https://www.betano.pt/*"] });
-  return tabs.find((tab) => tab.active) || tabs[0] || null;
+  const mainTabs = tabs.filter((tab) => {
+    try { return !new URL(tab.url || "").pathname.startsWith("/myaccount/bethistory"); } catch (_) { return true; }
+  });
+  return mainTabs.find((tab) => tab.active) || mainTabs[0] || tabs.find((tab) => tab.active) || tabs[0] || null;
 }
 
 function betanoRequestId() {
@@ -79,7 +83,12 @@ function requestBetanoPage(tabId, params) {
       resolve: (value) => { clearTimeout(timer); resolve(value); },
       reject: (error) => { clearTimeout(timer); reject(error); },
     });
-    chrome.tabs.sendMessage(tabId, { type: "BETANO_FETCH_PAGE", requestId, params })
+    chrome.tabs.sendMessage(tabId, {
+      type: "BETANO_FETCH_PAGE",
+      requestId,
+      params,
+      tokens: betanoSessionTokens,
+    })
       .catch((error) => {
         pendingBetanoRequests.delete(requestId);
         clearTimeout(timer);
@@ -306,6 +315,17 @@ async function extensionStatus() {
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg && msg.type === "BETANO_SESSION") {
+    const tokens = msg.tokens;
+    if (tokens && tokens.token1 && tokens.token2) {
+      betanoSessionTokens = {
+        token1: String(tokens.token1),
+        token2: String(tokens.token2),
+        seontoken: tokens.seontoken ? String(tokens.seontoken) : "",
+      };
+    }
+    return false;
+  }
   if (msg && msg.type === "BETANO_PAGE_RESULT") {
     const pending = pendingBetanoRequests.get(msg.requestId);
     if (!pending) return false;

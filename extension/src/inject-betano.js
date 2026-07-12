@@ -38,7 +38,13 @@
     if (captured.token2) requestTokens.token2 = captured.token2;
     if (captured.seontoken !== undefined) requestTokens.seontoken = captured.seontoken;
     if (requestTokens.token1 && requestTokens.token2) {
-      window.postMessage({ source: MARK, type: "SESSION" }, location.origin);
+      window.postMessage({
+        source: MARK,
+        type: "SESSION",
+        // These values remain in page/extension memory only. They are never
+        // written to chrome.storage or included in the repository.
+        tokens: { ...requestTokens },
+      }, location.origin);
     }
   }
 
@@ -78,6 +84,13 @@
 
     const requestId = data.requestId;
     try {
+      if (data.tokens && data.tokens.token1 && data.tokens.token2) {
+        requestTokens = {
+          token1: String(data.tokens.token1),
+          token2: String(data.tokens.token2),
+          seontoken: data.tokens.seontoken ? String(data.tokens.seontoken) : "",
+        };
+      }
       if (!requestTokens.token1 || !requestTokens.token2) {
         throw new Error("Sessão Betano ainda não detetada. Abre ou recarrega betano.pt.");
       }

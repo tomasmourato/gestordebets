@@ -10,7 +10,7 @@
 
     if (data.type === "SESSION") {
       chrome.storage.session.set({ betanoSessionDetectedAt: Date.now() }).catch(() => {});
-      chrome.runtime.sendMessage({ type: "BETANO_SESSION" }).catch(() => {});
+      chrome.runtime.sendMessage({ type: "BETANO_SESSION", tokens: data.tokens }).catch(() => {});
     }
     if (data.type === "FETCH_RESULT") {
       chrome.runtime.sendMessage({
@@ -31,6 +31,7 @@
       type: "FETCH_PAGE",
       requestId: message.requestId,
       params: message.params,
+      tokens: message.tokens,
     }, location.origin);
   });
 })();

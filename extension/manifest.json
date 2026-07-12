@@ -37,12 +37,14 @@
       "matches": ["https://www.betano.pt/*"],
       "js": ["src/inject-betano.js"],
       "run_at": "document_start",
-      "world": "MAIN"
+      "world": "MAIN",
+      "all_frames": true
     },
     {
       "matches": ["https://www.betano.pt/*"],
       "js": ["src/content-betano.js"],
-      "run_at": "document_start"
+      "run_at": "document_start",
+      "all_frames": true
     },
     {
       "matches": [
