@@ -9,7 +9,9 @@
     if (!data || data.source !== MARK) return;
 
     if (data.type === "SESSION") {
-      chrome.storage.session.set({ betanoSessionDetectedAt: Date.now() }).catch(() => {});
+      // Do not use chrome.storage.session here: Chrome content scripts do not
+      // expose that area by default. The service worker keeps the short-lived
+      // API tokens in memory and the popup detects Betano tabs directly.
       chrome.runtime.sendMessage({ type: "BETANO_SESSION", tokens: data.tokens }).catch(() => {});
     }
     if (data.type === "FETCH_RESULT") {
