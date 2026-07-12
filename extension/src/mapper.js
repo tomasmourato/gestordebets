@@ -128,6 +128,9 @@ export function mapBet(bet) {
     metadata: {
       source: "betclic",
       ref,
+      importKey: ref ? `betclic:${ref}` : null,
+      originalStatus: bet.result ?? null,
+      originalReturn: typeof bet.winnings === "number" ? bet.winnings : null,
       betclicResult: bet.result ?? null,
       betclicWinnings: typeof bet.winnings === "number" ? bet.winnings : null,
     },
@@ -138,3 +141,6 @@ export function mapBet(bet) {
 export function mapBets(betclicBets) {
   return (betclicBets || []).filter(betclicRef).map(mapBet);
 }
+
+export const mapBetclicBet = mapBet;
+export const mapBetclicBets = mapBets;

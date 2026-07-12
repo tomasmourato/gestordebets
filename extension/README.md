@@ -1,26 +1,25 @@
-# BetTrackr — Extensão de importação do Betclic
+# BetTrackr — Extensão de importação de apostas
 
 Extensão de browser (Manifest V3, Chrome/Edge/Brave) que importa as tuas
-apostas do Betclic.pt diretamente para o BetTrackr, sem exportações manuais.
+apostas do Betclic.pt e Betano.pt diretamente para o BetTrackr.
 
 ## Como funciona
 
-O Betclic não oferece exportação de apostas, mas o site consome uma API JSON
-interna (`betting.begmedia.pt/api/v2/me/bets/...`). A extensão:
+Os sites consomem APIs JSON internas. A extensão:
 
-1. **Captura a sessão** — na página do Betclic, um script no contexto da página
-   observa o header `Authorization` que a própria página já envia à API e
-   reutiliza-o. Não lê passwords nem nada que digites.
-2. **Lê as apostas** — o service worker pagina os endpoints `ended` (liquidadas)
-   e `ongoing` (em curso).
-3. **Traduz** — cada aposta do Betclic é mapeada para o modelo do BetTrackr
-   (`src/mapper.js`), reutilizando a mesma matemática de lucro/retorno da app.
-4. **Deduplica** — pela `bet_reference` do Betclic (guardada em `metadata.ref`),
-   por isso reimportar não cria duplicados.
-5. **Envia** — as apostas novas vão para `POST /api/bets/bulk` do BetTrackr.
+1. **Captura a sessão** — scripts no contexto de cada página observam apenas
+   os headers que o próprio site envia. No Betano, os pedidos são executados na
+   página aberta para reutilizar cookies e contexto anti-bot.
+2. **Lê as apostas** — pagina Betclic (`ended`/`ongoing`) e Betano (abertas e
+   janelas de seis meses até 2012).
+3. **Traduz** — cada casa tem um mapper próprio, incluindo regras próprias para
+   freebets e promoções.
+4. **Deduplica e atualiza** — usa chaves `betclic:<ref>` ou `betano:<BetId>`;
+   uma aposta aberta é atualizada quando passa a estar liquidada.
+5. **Envia** — cria novas apostas em lote e atualiza as existentes pela API do
+   BetTrackr.
 
-Nenhuma alteração à app é necessária: a `metadata` é guardada e devolvida
-opaca pela API, o que basta para a deduplicação.
+A extensão nunca inclui cookies, passwords ou tokens de sessão no código.
 
 ## Instalação (modo programador)
 
@@ -32,31 +31,29 @@ opaca pela API, o que basta para a deduplicação.
 
 1. Inicia sessão no **BetTrackr** (basta abrir a app uma vez — a extensão
    capta o token e a origem automaticamente; em local usa `http://localhost`).
-2. Abre **betclic.pt**, entra e vai a **As minhas apostas**.
-3. Clica no ícone da extensão → **Importar apostas**.
-
-Os dois pontos no popup ficam verdes quando ambas as sessões são detetadas.
+2. Abre **betclic.pt** ou **betano.pt**, entra e visita o histórico de apostas.
+3. Mantém o separador do Betano aberto durante a importação.
+4. Clica no ícone da extensão e escolhe **Importar Betclic**, **Importar Betano**
+   ou **Importar tudo**.
 
 ## Limitações conhecidas
 
-- **Histórico** — a API do Betclic só expõe as apostas mais recentes; apostas
-  muito antigas podem não estar disponíveis (limitação do Betclic, não da
-  extensão).
-- **Estados** — `NotSet`/`Win`/`Lose` estão confirmados. Cashout, anuladas e
-  meio-ganhas/perdidas são mapeados por aproximação até haver amostra real; o
-  resultado original do Betclic fica em `metadata` para correção posterior.
-- **Termos do Betclic** — o acesso automatizado pode violar os termos do
-  Betclic (uso pessoal, só da tua conta e dos teus dados, mas ainda assim
-  automatizado). Usa por tua conta e risco.
+- **Histórico** — os sites podem limitar o histórico ou alterar as APIs internas.
+- **Estados** — estados desconhecidos do Betano não são importados sem evidência
+  suficiente para evitar distorcer os resultados.
+- **Freebets** — no Betano, `FullBet` é freebet; `RiskFree` mantém-se como stake
+  monetária e o tipo da promoção fica guardado em metadata.
+- **Termos dos sites** — o acesso automatizado pode violar os termos dos
+  bookmakers. Usa por tua conta e risco.
 
 ## Ficheiros
 
 | Ficheiro | Papel |
 | --- | --- |
 | `manifest.json` | Configuração MV3, permissões e content scripts |
-| `src/inject.js` | Capta o token no contexto da página do Betclic (MAIN world) |
-| `src/content-betclic.js` | Guarda o token captado no armazenamento da extensão |
+| `src/inject.js` / `src/inject-betano.js` | Bridges no contexto das páginas dos bookmakers |
+| `src/content-betclic.js` / `src/content-betano.js` | Bridges isolados para o service worker |
 | `src/content-bettrackr.js` | Lê o token do BetTrackr do `localStorage` |
-| `src/background.js` | Pagina, mapeia, deduplica e importa |
-| `src/mapper.js` | Betclic → modelo Bet do BetTrackr |
-| `popup.*` | Interface: estado das sessões + botão de importação |
+| `src/background.js` | Pagina, mapeia, deduplica, atualiza e importa |
+| `src/mapper.js` / `src/mapper-betano.js` | Mappers específicos para o modelo BetTrackr |
+| `popup.*` | Interface: estado das sessões e ações por bookmaker |

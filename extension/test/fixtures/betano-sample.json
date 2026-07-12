@@ -1,0 +1,69 @@
+{
+  "Bets": [
+    {
+      "BetId": 20012242421,
+      "Type": "Single",
+      "PlacedAt": "2026-07-12T00:53:41.12Z",
+      "SettledAt": "2026-07-12T03:01:02.94Z",
+      "Stake": "5,00 €",
+      "Status": 3,
+      "Return": "0,00 €",
+      "PossibleWinnings": "0,00 €",
+      "DecimalOdds": 2.12,
+      "Settled": true,
+      "BonusType": 3,
+      "BonusTokens": [{ "Type": "RiskFree", "Amount": "5,00 €" }],
+      "Legs": [{ "LegItems": [{ "Selections": [{
+        "Title": "Mais de 9", "Sport": "Futebol", "Game": "Argentina - Suíça",
+        "Odd": "2.12", "Market": "Total Cantos"
+      }] }] }]
+    },
+    {
+      "BetId": 2291788488,
+      "Type": "Accumulator4",
+      "PlacedAt": "2026-05-01T10:00:00Z",
+      "Stake": "5,00 €",
+      "Status": 2,
+      "Return": "10,20 €",
+      "PossibleWinnings": "10,20 €",
+      "DecimalOdds": 2.04,
+      "Settled": true,
+      "BonusType": 3,
+      "BonusTokens": [{ "Type": "RiskFree", "Amount": "5,00 €" }],
+      "Legs": [{ "LegItems": [{ "Selections": [{
+        "Title": "Equipa A", "Sport": "Futebol", "Game": "Equipa A - Equipa B",
+        "Odd": "2.04", "Market": "Resultado Final"
+      }] }] }]
+    },
+    {
+      "BetId": 20008379487,
+      "Type": "Triple",
+      "PlacedAt": "2026-06-19T18:54:56.65Z",
+      "Stake": "10,00 €",
+      "Status": 3,
+      "Return": "0,00 €",
+      "PossibleWinnings": "0,00 €",
+      "DecimalOdds": 2.03,
+      "Settled": true,
+      "BonusType": 1,
+      "BonusTokens": [{ "Type": "FullBet", "Amount": "10,00 €" }],
+      "Legs": [{ "LegItems": [{ "Selections": [
+        { "Title": "X2", "Sport": "Futebol", "Game": "Escócia - Marrocos", "Odd": "1.62", "Market": "Hipótese Dupla" },
+        { "Title": "Mais de 1.5", "Sport": "Futebol", "Game": "Brasil - Haiti", "Odd": "1.18", "Market": "Total de Golos" }
+      ] }] }]
+    },
+    {
+      "BetId": 30000000001,
+      "Type": "Single",
+      "PlacedAt": "2026-07-12T10:00:00Z",
+      "Stake": "2,50 €",
+      "Status": 1,
+      "Return": "0,00 €",
+      "PossibleWinnings": "5,00 €",
+      "DecimalOdds": 2,
+      "Settled": false,
+      "BonusTokens": [],
+      "Legs": []
+    }
+  ]
+}

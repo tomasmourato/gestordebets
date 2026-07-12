@@ -11,6 +11,22 @@ export interface Selection {
   betType?: string;
 }
 
+export interface BetMetadata {
+  screenshotConfidence?: number;
+  detectedFields?: string[];
+  correctedFields?: string[];
+  source?: 'betclic' | 'betano' | string;
+  ref?: string | null;
+  importKey?: string | null;
+  originalStatus?: string | number | null;
+  originalReturn?: number | string | null;
+  promotionType?: string | null;
+  promotionAmount?: number | null;
+  bonusType?: string | number | null;
+  bonusTokens?: Array<{ type?: string | null; amount?: number | null }>;
+  [key: string]: unknown;
+}
+
 export interface Bet {
   id: string;
   type: BetType;
@@ -28,11 +44,7 @@ export interface Bet {
   origin: 'MANUAL' | 'SCREENSHOT' | 'CSV';
   comment?: string;
   tags?: string;
-  metadata?: {
-    screenshotConfidence?: number;
-    detectedFields?: string[];
-    correctedFields?: string[];
-  };
+  metadata?: BetMetadata;
 }
 
 export type ThemeMode = 'light' | 'dark' | 'system';
