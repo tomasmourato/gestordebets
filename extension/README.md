@@ -31,8 +31,8 @@ A extensão nunca inclui cookies, passwords ou tokens de sessão no código.
 
 1. Inicia sessão no **BetTrackr** (basta abrir a app uma vez — a extensão
    capta o token e a origem automaticamente; em local usa `http://localhost`).
-2. Abre **betclic.pt** ou **betano.pt**, entra e visita o histórico de apostas.
-3. Mantém o separador do Betano aberto durante a importação.
+2. Abre **betclic.pt** ou a página principal de **betano.pt** e entra.
+3. Mantém o separador principal do Betano aberto durante a importação; não é necessário abrir a janela do histórico.
 4. Clica no ícone da extensão e escolhe **Importar Betclic**, **Importar Betano**
    ou **Importar tudo**.
 

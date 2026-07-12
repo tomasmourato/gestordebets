@@ -6,10 +6,13 @@
   const HISTORY_PATH = "/myaccount/api/ma/bet/bet-history-v3";
   let requestTokens = {};
 
-  function isHistoryRequest(url) {
+  function isBetanoRequest(url) {
     try {
       const parsed = new URL(url, location.href);
-      return parsed.origin === location.origin && parsed.pathname === HISTORY_PATH;
+      // Capture from any same-origin request. Betano can render the history
+      // in a separate browser popup/iframe while the main page owns the
+      // session headers needed for the import.
+      return parsed.origin === location.origin;
     } catch (_) {
       return false;
     }
@@ -29,7 +32,7 @@
   }
 
   function rememberHeaders(headers, url) {
-    if (!isHistoryRequest(url)) return;
+    if (!isBetanoRequest(url)) return;
     const captured = headersToObject(headers);
     if (captured.token1) requestTokens.token1 = captured.token1;
     if (captured.token2) requestTokens.token2 = captured.token2;
@@ -76,7 +79,7 @@
     const requestId = data.requestId;
     try {
       if (!requestTokens.token1 || !requestTokens.token2) {
-        throw new Error("Sessão Betano ainda não detetada. Abre o histórico de apostas.");
+        throw new Error("Sessão Betano ainda não detetada. Abre ou recarrega betano.pt.");
       }
       const params = data.params || {};
       const query = new URLSearchParams();

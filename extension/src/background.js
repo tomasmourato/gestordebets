@@ -83,7 +83,7 @@ function requestBetanoPage(tabId, params) {
       .catch((error) => {
         pendingBetanoRequests.delete(requestId);
         clearTimeout(timer);
-        reject(new Error("Abre ou recarrega uma página do histórico do Betano antes de importar."));
+        reject(new Error("Abre ou recarrega a página principal do Betano antes de importar."));
       });
   });
 }
@@ -295,11 +295,11 @@ async function extensionStatus() {
     chrome.storage.local.get(["betclicToken", "bettrackrToken", "bettrackrBase"]),
     chrome.tabs.query({ url: ["https://www.betano.pt/*"] }),
   ]);
-  const session = await chrome.storage.session.get(["betanoSessionDetectedAt"]);
-  const detectedAt = Number(session.betanoSessionDetectedAt) || 0;
   return {
     betclic: Boolean(stored.betclicToken),
-    betano: tabs.length > 0 && detectedAt > Date.now() - 24 * 60 * 60 * 1000,
+    // A Betano tab enables the action. The page bridge reports a useful
+    // authentication error if the user is not logged in or needs a reload.
+    betano: tabs.length > 0,
     bettrackr: Boolean(stored.bettrackrToken),
     bettrackrBase: stored.bettrackrBase || DEFAULT_BETTRACKR_BASE,
   };

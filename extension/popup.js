@@ -25,7 +25,7 @@ function setStatus(dot, text, ready, readyText, waitingText) {
 async function refreshStatus() {
   const status = await chrome.runtime.sendMessage({ type: "GET_STATUS" });
   setStatus(dotBetclic, txtBetclic, status.betclic, "Betclic: sessão detetada", "Betclic: abre 'As minhas apostas'");
-  setStatus(dotBetano, txtBetano, status.betano, "Betano: sessão detetada", "Betano: abre o histórico");
+  setStatus(dotBetano, txtBetano, status.betano, "Betano: página detetada", "Betano: abre betano.pt");
   setStatus(dotBettrackr, txtBettrackr, status.bettrackr, "BetTrackr: sessão detetada", "BetTrackr: inicia sessão na app");
   buttons.betclic.disabled = !(status.betclic && status.bettrackr);
   buttons.betano.disabled = !(status.betano && status.bettrackr);

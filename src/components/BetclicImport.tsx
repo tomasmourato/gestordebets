@@ -145,8 +145,8 @@ export default function BetclicImport() {
           )}
 
           <p className="text-[11px] text-slate-400 dark:text-slate-500">
-            Antes de importar, abre os históricos em <strong>betclic.pt</strong> e/ou <strong>betano.pt</strong>.
-            Mantém o separador do Betano aberto durante a importação.
+            Antes de importar, abre <strong>betclic.pt</strong> e/ou a página principal de <strong>betano.pt</strong>.
+            Mantém o separador principal do Betano aberto durante a importação.
           </p>
 
           {/* Instruções continuam acessíveis mesmo com a extensão instalada. */}
