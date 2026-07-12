@@ -113,16 +113,19 @@ async function ensureBetanoHistoryTab() {
 
   const source = await findBetanoTab();
   if (!source || source.id === undefined) throw new Error("Abre a página principal do Betano numa tab aberta.");
+  const restoreUrl = source.url || null;
   const origin = (() => {
     try { return new URL(source.url || "https://www.betano.pt").origin; } catch (_) { return "https://www.betano.pt"; }
   })();
-  const historyTab = await chrome.tabs.create({
+  // Keep the same tab so Betano's tab-scoped sessionStorage/auth state is
+  // preserved. A newly created tab can look logged in but cannot call the
+  // history API until the user manually opens the history view.
+  const historyTab = await chrome.tabs.update(source.id, {
     url: `${origin}/myaccount/bethistory/open`,
-    active: false,
   });
-  if (historyTab.id === undefined) throw new Error("Não foi possível abrir o histórico do Betano.");
+  if (!historyTab || historyTab.id === undefined) throw new Error("Não foi possível abrir o histórico do Betano.");
   await waitForTabComplete(historyTab.id);
-  return { tab: historyTab, created: true };
+  return { tab: historyTab, restoreUrl, created: true };
 }
 
 function betanoRequestId() {
@@ -318,7 +321,7 @@ async function runBetclicImport(cfg) {
 }
 
 async function runBetanoImport(cfg) {
-  const { tab, created } = await ensureBetanoHistoryTab();
+  const { tab, restoreUrl, created } = await ensureBetanoHistoryTab();
   try {
     if (!betanoSessionTokens) await waitForBetanoTokens();
     progress("A obter apostas do Betano…");
@@ -330,7 +333,9 @@ async function runBetanoImport(cfg) {
     const mapped = mapBetanoBets([...byRef.values()]);
     return persistMapped(mapped.bets, mapped.unsupported, "Betano", cfg);
   } finally {
-    if (created && tab.id !== undefined) chrome.tabs.remove(tab.id).catch(() => {});
+    if (created && tab.id !== undefined && restoreUrl) {
+      await chrome.tabs.update(tab.id, { url: restoreUrl }).catch(() => {});
+    }
   }
 }
 
