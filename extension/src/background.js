@@ -72,6 +72,17 @@ function isBetanoHistoryTab(tab) {
   try { return new URL(tab.url || "").pathname.startsWith("/myaccount/bethistory"); } catch (_) { return false; }
 }
 
+function isBetanoSettledTab(tab) {
+  try { return new URL(tab.url || "").pathname === "/myaccount/bethistory/settled"; } catch (_) { return false; }
+}
+
+function settledHistoryUrl(origin) {
+  const end = Date.now();
+  const startDate = new Date(end);
+  startDate.setUTCMonth(startDate.getUTCMonth() - 6);
+  return `${origin}/myaccount/bethistory/settled?dateFrom=${startDate.getTime()}&dateTo=${end}`;
+}
+
 function waitForTabComplete(tabId, timeoutMs = 20000) {
   return new Promise((resolve, reject) => {
     let timer;
@@ -105,23 +116,23 @@ function waitForBetanoTokens(timeoutMs = 15000) {
 
 async function ensureBetanoHistoryTab() {
   const tabs = await chrome.tabs.query({ url: ["https://www.betano.pt/*", "https://betano.pt/*"] });
-  const existingHistory = tabs.find(isBetanoHistoryTab);
-  if (existingHistory && existingHistory.id !== undefined) {
-    await waitForTabComplete(existingHistory.id).catch(() => {});
-    return { tab: existingHistory, created: false };
+  const existingSettled = tabs.find(isBetanoSettledTab);
+  if (existingSettled && existingSettled.id !== undefined) {
+    await waitForTabComplete(existingSettled.id).catch(() => {});
+    return { tab: existingSettled, created: false };
   }
 
-  const source = await findBetanoTab();
+  const source = tabs.find(isBetanoHistoryTab) || await findBetanoTab();
   if (!source || source.id === undefined) throw new Error("Abre a página principal do Betano numa tab aberta.");
   const restoreUrl = source.url || null;
   const origin = (() => {
     try { return new URL(source.url || "https://www.betano.pt").origin; } catch (_) { return "https://www.betano.pt"; }
   })();
   // Keep the same tab so Betano's tab-scoped sessionStorage/auth state is
-  // preserved. A newly created tab can look logged in but cannot call the
-  // history API until the user manually opens the history view.
+  // preserved. The settled view initializes the API context required by the
+  // settled-history endpoint; open bets are still fetched separately below.
   const historyTab = await chrome.tabs.update(source.id, {
-    url: `${origin}/myaccount/bethistory/open`,
+    url: settledHistoryUrl(origin),
   });
   if (!historyTab || historyTab.id === undefined) throw new Error("Não foi possível abrir o histórico do Betano.");
   await waitForTabComplete(historyTab.id);
