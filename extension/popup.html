@@ -10,7 +10,7 @@
       <div class="logo"></div>
       <div>
         <h1>BetTrackr</h1>
-        <p>Importar do Betclic</p>
+        <p>Importar apostas</p>
       </div>
     </header>
 
@@ -20,12 +20,20 @@
         <span id="txt-betclic">Betclic: à espera…</span>
       </div>
       <div class="row">
+        <span class="dot" id="dot-betano"></span>
+        <span id="txt-betano">Betano: à espera…</span>
+      </div>
+      <div class="row">
         <span class="dot" id="dot-bettrackr"></span>
         <span id="txt-bettrackr">BetTrackr: à espera…</span>
       </div>
     </div>
 
-    <button id="import" disabled>Importar apostas</button>
+    <div class="actions">
+      <button id="import-betclic" disabled>Importar Betclic</button>
+      <button id="import-betano" disabled>Importar Betano</button>
+      <button id="import-all" disabled>Importar tudo</button>
+    </div>
 
     <p class="msg" id="msg"></p>
 
@@ -33,8 +41,9 @@
       <summary>Como usar</summary>
       <ol>
         <li>Inicia sessão no <strong>BetTrackr</strong> (abre a app uma vez).</li>
-        <li>Abre <strong>betclic.pt</strong>, entra e vai a <em>As minhas apostas</em>.</li>
-        <li>Volta aqui e clica <em>Importar apostas</em>.</li>
+        <li>Abre <strong>betclic.pt</strong> ou a página principal de <strong>betano.pt</strong> e entra.</li>
+        <li>O separador principal do Betano deve ficar aberto durante a importação.</li>
+        <li>Volta aqui e escolhe a casa de apostas ou <em>Importar tudo</em>.</li>
       </ol>
     </details>
 

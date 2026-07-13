@@ -80,6 +80,10 @@ button {
 button:hover:not(:disabled) { background: #4338ca; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.actions { display: grid; gap: 7px; }
+.actions button:nth-child(3) { background: #334155; }
+.actions button:nth-child(3):hover:not(:disabled) { background: #475569; }
+
 .msg {
   font-size: 12px;
   margin-top: 12px;

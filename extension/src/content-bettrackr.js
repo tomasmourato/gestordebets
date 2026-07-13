@@ -49,7 +49,9 @@
     }
 
     if (data.type === "IMPORT") {
-      chrome.runtime.sendMessage({ type: "IMPORT" }, (result) => {
+      // The website action imports every bookmaker detected by the extension.
+      // The popup can still request a single source explicitly.
+      chrome.runtime.sendMessage({ type: "IMPORT", source: data.sourceBookmakers || "all" }, (result) => {
         if (chrome.runtime.lastError) {
           toPage({ type: "RESULT", ok: false, error: chrome.runtime.lastError.message });
           return;

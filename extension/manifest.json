@@ -1,11 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "BetTrackr — Importar do Betclic",
-  "version": "1.0.0",
-  "description": "Importa as tuas apostas do Betclic.pt diretamente para o BetTrackr.",
-  "permissions": ["storage"],
+  "name": "BetTrackr — Importar apostas",
+  "version": "1.0.1",
+  "description": "Importa as tuas apostas do Betclic.pt e Betano.pt diretamente para o BetTrackr.",
+  "permissions": ["storage", "tabs"],
   "host_permissions": [
     "https://www.betclic.pt/*",
+    "https://www.betano.pt/*",
+    "https://betano.pt/*",
     "https://*.begmedia.pt/*",
     "https://*.begmedia.com/*",
     "https://gestordebets.vercel.app/*",
@@ -18,7 +20,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Importar apostas do Betclic"
+    "default_title": "Importar apostas"
   },
   "content_scripts": [
     {
@@ -31,6 +33,19 @@
       "matches": ["https://www.betclic.pt/*"],
       "js": ["src/content-betclic.js"],
       "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.betano.pt/*", "https://betano.pt/*"],
+      "js": ["src/inject-betano.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": ["https://www.betano.pt/*", "https://betano.pt/*"],
+      "js": ["src/content-betano.js"],
+      "run_at": "document_start",
+      "all_frames": true
     },
     {
       "matches": [

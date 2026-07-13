@@ -14,7 +14,10 @@ import {
   Eye,
   Trash,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  ArrowUp,
+  ArrowDown,
+  CheckSquare
 } from "lucide-react";
 import { Bet, Selection, BetStatus, BetType, FreebetType } from "../types";
 import { calculateBetReturnAndProfit, AVAILABLE_BOOKMAKERS, safeNum } from "../utils";
@@ -23,17 +26,22 @@ import { defaultFreebetTypeFor } from "../lib/bookmakers";
 interface BetsManagerProps {
   bets: Bet[];
   currency: string;
-  onAddBet: (bet: Bet) => void;
-  onUpdateBet: (bet: Bet) => void;
-  onDeleteBet: (id: string) => void;
+  onAddBet: (bet: Bet) => void | Promise<void>;
+  onAddBets: (bets: Bet[]) => void | Promise<void>;
+  onUpdateBet: (bet: Bet) => void | Promise<void>;
+  onDeleteBet: (id: string) => void | Promise<void>;
 }
+
+type SortField = "date" | "stake" | "odd" | "profit";
+type SortDirection = "asc" | "desc";
 
 export default function BetsManager({ 
   bets, 
   currency, 
   onAddBet, 
+  onAddBets,
   onUpdateBet, 
-  onDeleteBet 
+  onDeleteBet
 }: BetsManagerProps) {
   
   // Search & Filter state
@@ -42,6 +50,12 @@ export default function BetsManager({
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
   const [freebetFilter, setFreebetFilter] = useState<string>("ALL");
   const [bookmakerFilter, setBookmakerFilter] = useState<string>("ALL");
+  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectedBetIds, setSelectedBetIds] = useState<Set<string>>(new Set());
+  const [isConfirmingBulkDelete, setIsConfirmingBulkDelete] = useState(false);
+  const [isBulkActionRunning, setIsBulkActionRunning] = useState(false);
 
   // Form / Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,6 +74,7 @@ export default function BetsManager({
   const [formCashoutReturn, setFormCashoutReturn] = useState<string>("");
   const [formDateTime, setFormDateTime] = useState("");
   const [formNotes, setFormNotes] = useState("");
+  const [formSettledReturn, setFormSettledReturn] = useState("");
   const [formSelections, setFormSelections] = useState<Array<{
     event: string;
     market: string;
@@ -92,12 +107,27 @@ export default function BetsManager({
       parseFloat(formCashoutReturn) || 0,
       formFreebetType
     );
-    return calcs;
-  }, [formStake, calculatedOdd, formStatus, formIsFreebet, formCashoutReturn, formFreebetType]);
 
-  // Filtered bets
+    // Meio-ganha/meio-perdida: o utilizador pode indicar o retorno liquidado
+    // manualmente (fork). O cashout usa o seu próprio campo (formCashoutReturn).
+    if (formStatus === "MEIO_GANHA" || formStatus === "MEIO_PERDIDA") {
+      const customReturn = Number(formSettledReturn.replace(",", "."));
+      if (formSettledReturn.trim() !== "" && Number.isFinite(customReturn) && customReturn >= 0) {
+        const finalReturn = Number(customReturn.toFixed(2));
+        return {
+          ...calcs,
+          finalReturn,
+          netProfit: Number((formIsFreebet ? finalReturn : finalReturn - stakeNum).toFixed(2)),
+        };
+      }
+    }
+
+    return calcs;
+  }, [formStake, calculatedOdd, formStatus, formIsFreebet, formSettledReturn, formCashoutReturn, formFreebetType]);
+
+  // Filtered and sorted bets
   const filteredBets = useMemo(() => {
-    return bets.filter(bet => {
+    const visibleBets = bets.filter(bet => {
       // Search matches event, market, choice, bookmaker, or notes
       const matchesSearch = search === "" || bet.selections.some(s => 
         s.event.toLowerCase().includes(search.toLowerCase()) ||
@@ -116,8 +146,139 @@ export default function BetsManager({
       const matchesBookmaker = bookmakerFilter === "ALL" || bet.bookmaker === bookmakerFilter;
 
       return matchesSearch && matchesStatus && matchesType && matchesFreebet && matchesBookmaker;
-    }).sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
-  }, [bets, search, statusFilter, typeFilter, freebetFilter, bookmakerFilter]);
+    });
+
+    return visibleBets.sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortField) {
+        case "stake":
+          comparison = safeNum(a.stake) - safeNum(b.stake);
+          break;
+        case "odd":
+          comparison = safeNum(a.odd) - safeNum(b.odd);
+          break;
+        case "profit":
+          comparison = safeNum(a.netProfit) - safeNum(b.netProfit);
+          break;
+        case "date":
+        default:
+          comparison = new Date(a.dateTime.replace(" ", "T")).getTime() - new Date(b.dateTime.replace(" ", "T")).getTime();
+      }
+
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [bets, search, statusFilter, typeFilter, freebetFilter, bookmakerFilter, sortField, sortDirection]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(current => current === "asc" ? "desc" : "asc");
+      return;
+    }
+
+    setSortField(field);
+    setSortDirection("desc");
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelecting(current => {
+      if (current) {
+        setSelectedBetIds(new Set());
+        setIsConfirmingBulkDelete(false);
+      }
+      return !current;
+    });
+  };
+
+  const toggleBetSelection = (id: string) => {
+    setIsConfirmingBulkDelete(false);
+    setSelectedBetIds(current => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const allFilteredBetsSelected = filteredBets.length > 0 && filteredBets.every(bet => selectedBetIds.has(bet.id));
+
+  const toggleAllFilteredBets = () => {
+    setIsConfirmingBulkDelete(false);
+    setSelectedBetIds(current => {
+      const next = new Set(current);
+      if (allFilteredBetsSelected) filteredBets.forEach(bet => next.delete(bet.id));
+      else filteredBets.forEach(bet => next.add(bet.id));
+      return next;
+    });
+  };
+
+  const finishBulkAction = () => {
+    setSelectedBetIds(new Set());
+    setIsConfirmingBulkDelete(false);
+    setIsSelecting(false);
+    setIsBulkActionRunning(false);
+  };
+
+  const handleBulkDuplicate = async () => {
+    const selectedBets = bets.filter(bet => selectedBetIds.has(bet.id));
+    if (selectedBets.length === 0) return;
+
+    setIsBulkActionRunning(true);
+    const timestamp = Date.now();
+    const duplicatedAt = new Date().toISOString().replace("T", " ").slice(0, 16);
+
+    const duplicatedBets = selectedBets.map((bet, betIndex) => {
+      const duplicateId = `bet-${timestamp}-${betIndex}`;
+      return {
+        ...bet,
+        id: duplicateId,
+        selections: bet.selections.map((selection, selectionIndex) => ({
+          ...selection,
+          id: `${duplicateId}-sel-${selectionIndex}`
+        })),
+        dateTime: duplicatedAt,
+        notes: bet.notes ? `[Duplicado] ${bet.notes}` : "Aposta duplicada.",
+        origin: "MANUAL"
+      } as Bet;
+    });
+
+    await onAddBets(duplicatedBets);
+
+    finishBulkAction();
+  };
+
+  const handleBulkDelete = async () => {
+    const selectedIds = bets.filter(bet => selectedBetIds.has(bet.id)).map(bet => bet.id);
+    if (selectedIds.length === 0) return;
+
+    setIsBulkActionRunning(true);
+    for (const id of selectedIds) {
+      await onDeleteBet(id);
+    }
+    finishBulkAction();
+  };
+
+  const sortButton = (label: string, field: SortField, extraClasses = "") => {
+    const isActive = sortField === field;
+    const DirectionIcon = sortDirection === "asc" ? ArrowUp : ArrowDown;
+
+    return (
+      <button
+        type="button"
+        onClick={() => handleSort(field)}
+        className={`inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-widest transition-colors cursor-pointer ${
+          isActive
+            ? "text-indigo-600 dark:text-indigo-300"
+            : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+        } ${extraClasses}`}
+        aria-label={`Ordenar por ${label}${isActive ? `, direção ${sortDirection === "asc" ? "ascendente" : "descendente"}` : ""}`}
+        title={`Ordenar por ${label}`}
+      >
+        {label}
+        {isActive && <DirectionIcon size={9} strokeWidth={2.5} />}
+      </button>
+    );
+  };
 
   // Reset Form
   const resetForm = () => {
@@ -132,6 +293,7 @@ export default function BetsManager({
     setFormCashoutReturn("");
     setFormDateTime(new Date().toISOString().replace("T", " ").slice(0, 16));
     setFormNotes("");
+    setFormSettledReturn("");
     setFormSelections([{ event: "", market: "", choice: "", odd: "1.80" }]);
     setFormError(null);
   };
@@ -163,6 +325,11 @@ export default function BetsManager({
     setFormCashoutReturn(bet.status === "CASHOUT" ? String(bet.finalReturn ?? "") : "");
     setFormDateTime(bet.dateTime);
     setFormNotes(bet.notes || "");
+    setFormSettledReturn(
+      bet.status === "MEIO_GANHA" || bet.status === "MEIO_PERDIDA"
+        ? safeNum(bet.finalReturn).toFixed(2)
+        : ""
+    );
     setFormSelections(bet.selections.map(s => ({
       event: s.event,
       market: s.market,
@@ -245,14 +412,10 @@ export default function BetsManager({
 
     setFormError(null);
 
-    const { potentialReturn, finalReturn, netProfit } = calculateBetReturnAndProfit(
-      stakeNum,
-      calculatedOdd,
-      formStatus,
-      formIsFreebet,
-      parseFloat(formCashoutReturn) || 0,
-      formFreebetType
-    );
+    // Reutiliza o memo (já inclui cashout, tipo de freebet e o retorno
+    // liquidado manual de meio-ganha/perdida) para o valor gravado bater
+    // exatamente com o que a pré-visualização mostra.
+    const { potentialReturn, finalReturn, netProfit } = potentialWinningsInfo;
 
     const betData: Bet = {
       id: editingBet ? editingBet.id : "bet-" + Date.now(),
@@ -373,6 +536,31 @@ export default function BetsManager({
             ))}
           </select>
 
+          {/* Multiple selection */}
+          <button
+            type="button"
+            onClick={toggleSelectionMode}
+            className={`px-3 py-2 rounded-sm border font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+              isSelecting
+                ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-900 text-indigo-700 dark:text-indigo-300"
+                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600"
+            }`}
+          >
+            <CheckSquare size={14} />
+            {isSelecting ? "Cancelar seleção" : "Selecionar várias"}
+          </button>
+
+          {isSelecting && (
+            <button
+              type="button"
+              onClick={toggleAllFilteredBets}
+              disabled={filteredBets.length === 0}
+              className="px-3 py-2 rounded-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed font-semibold text-xs transition-colors cursor-pointer"
+            >
+              {allFilteredBetsSelected ? "Desmarcar filtradas" : `Selecionar filtradas (${filteredBets.length})`}
+            </button>
+          )}
+
           {/* New Bet Button */}
           <button
             onClick={openAddModal}
@@ -385,6 +573,61 @@ export default function BetsManager({
 
       </div>
 
+      {isSelecting && selectedBetIds.size > 0 && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-sm px-3 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <span>
+            <strong className="text-indigo-600 dark:text-indigo-300">{selectedBetIds.size}</strong>{" "}
+            {selectedBetIds.size === 1 ? "aposta selecionada" : "apostas selecionadas"}
+          </span>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {isConfirmingBulkDelete ? (
+              <div className="inline-flex items-center gap-2 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 px-2 py-1">
+                <span className="font-semibold text-rose-700 dark:text-rose-300">
+                  Apagar {selectedBetIds.size} {selectedBetIds.size === 1 ? "aposta" : "apostas"}?
+                </span>
+                <button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  disabled={isBulkActionRunning}
+                  className="px-2.5 py-1 rounded-sm bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed"
+                >
+                  Confirmar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsConfirmingBulkDelete(false)}
+                  disabled={isBulkActionRunning}
+                  className="p-1 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  aria-label="Cancelar eliminação"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleBulkDuplicate}
+                  disabled={isBulkActionRunning}
+                  className="px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <Copy size={13} /> Duplicar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsConfirmingBulkDelete(true)}
+                  disabled={isBulkActionRunning}
+                  className="px-3 py-1.5 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <Trash2 size={13} /> Apagar
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Bets List / Grid */}
       <div className="space-y-3" id="bets-list">
         {filteredBets.map((bet) => {
@@ -392,8 +635,24 @@ export default function BetsManager({
           return (
             <div
               key={bet.id}
-              className="bg-white dark:bg-slate-900 rounded-sm border border-slate-200 dark:border-slate-800 p-4 md:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors"
+              className={`bg-white dark:bg-slate-900 rounded-sm border p-4 md:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors ${
+                selectedBetIds.has(bet.id)
+                  ? "border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-100 dark:ring-indigo-950"
+                  : "border-slate-200 dark:border-slate-800"
+              }`}
             >
+
+              {isSelecting && (
+                <label className="flex items-center self-start md:self-center cursor-pointer" title="Selecionar aposta">
+                  <input
+                    type="checkbox"
+                    checked={selectedBetIds.has(bet.id)}
+                    onChange={() => toggleBetSelection(bet.id)}
+                    className="h-4 w-4 rounded-sm border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    aria-label={`Selecionar aposta de ${bet.dateTime}`}
+                  />
+                </label>
+              )}
 
               {/* Left Column: Selections and Details */}
               <div className="space-y-2 flex-1">
@@ -401,8 +660,9 @@ export default function BetsManager({
                   <span className="text-[9px] font-bold text-indigo-700 dark:text-indigo-300 tracking-wider uppercase bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900 px-2 py-0.5 rounded-sm font-mono">
                     {bet.type}
                   </span>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
-                    {bet.dateTime}
+                  <span className="inline-flex items-center gap-1 font-mono">
+                    {sortButton("Data", "date")}
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">{bet.dateTime}</span>
                   </span>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-sm">
                     {bet.bookmaker}
@@ -442,21 +702,19 @@ export default function BetsManager({
                 {/* Financial Summary */}
                 <div className="flex gap-4 text-right pr-2">
                   <div className="flex flex-col">
-                    <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Stake</span>
+                    {sortButton("Stake", "stake", "self-end")}
                     <span className="text-xs font-bold text-slate-800 dark:text-slate-100 font-mono mt-0.5">
                       {safeNum(bet.stake).toFixed(2)}{currency}
                     </span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Odd</span>
+                    {sortButton("Odd", "odd", "self-end")}
                     <span className="text-xs font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900 px-1.5 py-0.5 rounded-sm self-end mt-0.5">
                       {safeNum(bet.odd).toFixed(2)}
                     </span>
                   </div>
                   <div className="flex flex-col min-w-[75px]">
-                    <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">
-                      {isSettled ? "Lucro" : "Potencial"}
-                    </span>
+                    {sortButton(isSettled ? "Lucro" : "Potencial", "profit", "self-end")}
                     <span className={`text-xs font-bold font-mono mt-0.5 ${
                       !isSettled
                         ? "text-slate-500 dark:text-slate-400"
@@ -596,7 +854,11 @@ export default function BetsManager({
                   <select
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
                     value={formStatus}
-                    onChange={(e) => setFormStatus(e.target.value as BetStatus)}
+                    onChange={(e) => {
+                      const nextStatus = e.target.value as BetStatus;
+                      setFormStatus(nextStatus);
+                      setFormSettledReturn("");
+                    }}
                   >
                     <option value="POR_LIQUIDAR">Por Liquidar (Pendente)</option>
                     <option value="GANHA">Ganha</option>
@@ -833,11 +1095,27 @@ export default function BetsManager({
                   <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
                     {formStatus === "POR_LIQUIDAR" ? "Retorno Potencial" : "Retorno Liquidado"}
                   </p>
-                  <p className="text-lg font-black text-emerald-400">
-                    {formStatus === "POR_LIQUIDAR" 
-                      ? `${potentialWinningsInfo.potentialReturn.toFixed(2)}${currency}`
-                      : `${potentialWinningsInfo.finalReturn.toFixed(2)}${currency}`}
-                  </p>
+                  {formStatus === "MEIO_GANHA" || formStatus === "MEIO_PERDIDA" ? (
+                    <div className="mt-1 flex items-center justify-end gap-1">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                        value={formSettledReturn !== "" ? formSettledReturn : potentialWinningsInfo.finalReturn.toFixed(2)}
+                        onChange={(e) => setFormSettledReturn(e.target.value)}
+                        className="w-24 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-right font-mono text-base font-black text-emerald-400 focus:border-indigo-400 focus:outline-none"
+                        aria-label="Retorno liquidado"
+                      />
+                      <span className="text-lg font-black text-emerald-400">{currency}</span>
+                    </div>
+                  ) : (
+                    <p className="text-lg font-black text-emerald-400">
+                      {formStatus === "POR_LIQUIDAR"
+                        ? `${potentialWinningsInfo.potentialReturn.toFixed(2)}${currency}`
+                        : `${potentialWinningsInfo.finalReturn.toFixed(2)}${currency}`}
+                    </p>
+                  )}
                 </div>
               </div>
 

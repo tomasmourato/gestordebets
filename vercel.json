@@ -33,6 +33,15 @@
       "dest": "server.ts"
     },
     {
+      "src": "/bettrackr-extension\\.zip",
+      "headers": {
+        "Content-Type": "application/zip",
+        "Content-Disposition": "attachment; filename=bettrackr-extension.zip",
+        "Cache-Control": "public, max-age=0, must-revalidate"
+      },
+      "continue": true
+    },
+    {
       "handle": "filesystem"
     },
     {
