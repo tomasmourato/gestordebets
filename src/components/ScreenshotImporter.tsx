@@ -15,21 +15,12 @@ import { Bet, Selection, BetStatus, BetType, FreebetType } from "../types";
 import { AVAILABLE_BOOKMAKERS, calculateBetReturnAndProfit } from "../utils";
 import { defaultFreebetTypeFor } from "../lib/bookmakers";
 import { authFetch, parseJsonResponse } from "../lib/authApi";
+import { normalizeBetStatus } from "../lib/betStatus";
 
 interface ScreenshotImporterProps {
   currency: string;
   onAddBet: (bet: Bet) => void;
 }
-
-const VALID_STATUSES: BetStatus[] = [
-  "POR_LIQUIDAR",
-  "GANHA",
-  "PERDIDA",
-  "ANULADA",
-  "MEIO_GANHA",
-  "MEIO_PERDIDA",
-  "CASHOUT"
-];
 
 /**
  * A IA devolve o nome da casa de apostas em texto livre ("Placard.pt",
@@ -59,7 +50,7 @@ function matchBookmaker(raw?: string): string {
 
 /** Valida o estado devolvido pela IA; na dúvida, a aposta fica por liquidar. */
 function matchStatus(raw?: string): BetStatus {
-  return VALID_STATUSES.includes(raw as BetStatus) ? (raw as BetStatus) : "POR_LIQUIDAR";
+  return normalizeBetStatus(raw);
 }
 
 /** Marca os campos que foram pré-preenchidos automaticamente pela IA. */
@@ -92,6 +83,7 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
     stake: number;
     odd: number;
     potentialReturn: number;
+    cashoutReturn: number;
     dateTime: string;
     selections: Array<{
       event: string;
@@ -208,10 +200,15 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
     setEditBookmaker(matchedBk);
     setEditFreebetType(defaultFreebetTypeFor(matchedBk));
     setEditType((data.type === "SIMPLES" || data.type === "MULTIPLA") ? data.type : "SIMPLES");
-    setEditStatus(matchStatus(data.status));
+    const status = matchStatus(data.status);
+    setEditStatus(status);
     setIsFreebet(data.isFreebet === true);
     setEditStake(data.stake ? data.stake.toString() : "10.00");
-    setEditCashoutReturn("");
+    setEditCashoutReturn(
+      status === "CASHOUT"
+        ? String(data.cashoutReturn ?? data.finalReturn ?? "")
+        : ""
+    );
     setEditDateTime(data.dateTime || new Date().toISOString().replace("T", " ").slice(0, 16));
     setEditSelections((data.selections || []).map((s: any) => ({
       event: s.event || "",
@@ -370,7 +367,9 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
       metadata: {
         screenshotConfidence: 0.90,
         detectedFields: ["bookmaker", "selections", "stake", "odd", "status", "isFreebet"],
-        correctedFields: []
+        correctedFields: [],
+        isCashout: editStatus === "CASHOUT",
+        cashoutReturn: editStatus === "CASHOUT" ? finalReturn : null,
       }
     };
 

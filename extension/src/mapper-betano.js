@@ -3,6 +3,7 @@
 const STATUS_WIN = 2;
 const STATUS_LOSS = 3;
 const MIN_HISTORY_YEAR = 2012;
+const CASHOUT_STATUS_TOKENS = new Set(["CASHOUT", "CASHEDOUT", "FULLCASHOUT", "PARTIALCASHOUT"]);
 
 export function parseBetanoMoney(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
@@ -53,8 +54,18 @@ export function betanoRef(bet) {
   return bet && bet.BetId !== undefined && bet.BetId !== null ? String(bet.BetId) : null;
 }
 
+function isBetanoCashout(bet) {
+  if (!bet) return false;
+  if (bet.IsCashout === true || bet.IsCashedOut === true) return true;
+  return [bet.Status, bet.State, bet.Result, bet.BetStatus, bet.SettlementStatus]
+    .some((value) => typeof value === "string" && CASHOUT_STATUS_TOKENS.has(
+      value.toUpperCase().replace(/[^A-Z]/g, "")
+    ));
+}
+
 export function mapBetanoStatus(bet) {
   if (!bet || bet.Settled !== true) return "POR_LIQUIDAR";
+  if (isBetanoCashout(bet)) return "CASHOUT";
   if (Number(bet.Status) === STATUS_WIN) return "GANHA";
   if (Number(bet.Status) === STATUS_LOSS) return "PERDIDA";
 
@@ -96,6 +107,7 @@ export function mapBetanoBet(bet) {
   const stake = round2(parseBetanoMoney(bet.Stake));
   const odd = round2(Number(bet.DecimalOdds) || parseBetanoMoney(bet.Odds));
   const promotion = promotionInfo(bet);
+  const isCashout = status === "CASHOUT";
   const settledReturn = round2(parseBetanoMoney(bet.Return));
   const possibleReturn = round2(parseBetanoMoney(bet.PossibleWinnings) || stake * odd);
   const finalReturn = status === "POR_LIQUIDAR" ? 0 : settledReturn;
@@ -122,6 +134,8 @@ export function mapBetanoBet(bet) {
       importKey: `betano:${ref}`,
       originalStatus: bet.Status ?? null,
       originalReturn: bet.Return ?? null,
+      isCashout,
+      cashoutReturn: isCashout ? settledReturn : null,
       promotionType: promotion.type,
       promotionAmount: promotion.amount,
       bonusTokens: promotion.tokens,

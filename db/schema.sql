@@ -51,7 +51,20 @@ CREATE TABLE IF NOT EXISTS bets (
   tags TEXT,
   metadata JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
-  updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW())
+  updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()),
+  CONSTRAINT bets_cashout_metadata_status_check CHECK (
+    status = 'CASHOUT'
+    OR metadata IS NULL
+    OR NOT (
+      LOWER(COALESCE(metadata->>'isCashout', 'false')) = 'true'
+      OR REGEXP_REPLACE(LOWER(COALESCE(metadata->>'originalStatus', '')), '[^a-z]', '', 'g')
+        IN ('cashout', 'cashedout', 'fullcashout', 'partialcashout')
+      OR REGEXP_REPLACE(LOWER(COALESCE(metadata->>'betclicResult', '')), '[^a-z]', '', 'g')
+        IN ('cashout', 'cashedout', 'fullcashout', 'partialcashout')
+      OR REGEXP_REPLACE(LOWER(COALESCE(metadata->>'settlementStatus', '')), '[^a-z]', '', 'g')
+        IN ('cashout', 'cashedout', 'fullcashout', 'partialcashout')
+    )
+  )
 );
 
 -- ------------------------------------------------------------

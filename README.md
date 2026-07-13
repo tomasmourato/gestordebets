@@ -53,9 +53,8 @@ db/               pool de conexões, schema e migrações
 3. Preparar a base de dados:
 
    - Instalações novas: executar [db/schema.sql](db/schema.sql).
-   - Bases de dados existentes: executar a migração idempotente
-     [db/migrations/001_sync_bets_schema.sql](db/migrations/001_sync_bets_schema.sql)
-     (segura para correr várias vezes).
+   - Bases de dados existentes: executar, por ordem, as migrações idempotentes
+     em [db/migrations](db/migrations) (`001` até à mais recente).
 
 4. Arrancar em modo de desenvolvimento:
 

@@ -156,12 +156,19 @@ ESTADO DA APOSTA ("status") — usa exatamente um destes valores:
 - "ANULADA": aposta anulada/reembolsada. Indícios: "Anulada", "Void", "Reembolsada", "Cancelada", "Push".
 - "MEIO_GANHA": handicap asiático parcialmente ganho ("Meio Ganha", "Half Won").
 - "MEIO_PERDIDA": handicap asiático parcialmente perdido ("Meio Perdida", "Half Lost").
+- "CASHOUT": aposta encerrada antecipadamente e já liquidada por cashout. Indícios: "Cashout efetuado",
+  "Cash Out concluído", "Cashed Out", "Full Cashout", "Partial Cashout" ou um valor efetivamente recebido
+  pelo encerramento. Um botão que apenas oferece "Cash Out" numa aposta ainda aberta NÃO é um cashout concluído.
 - "POR_LIQUIDAR": aposta ainda em curso / não resolvida. Indícios: "Em curso", "A decorrer", "Pendente",
   "Por liquidar", "Open", relógio/ampulheta, jogos com data futura, botão de "Cash Out" ativo,
   ou ausência de qualquer marca de resultado.
 Se as seleções tiverem resultados mistos (umas ganhas e outras perdidas) numa múltipla, o estado é "PERDIDA".
 Se todas as seleções estiverem ganhas numa múltipla, o estado é "GANHA".
 Na dúvida, devolve "POR_LIQUIDAR" — é o valor seguro, pois o utilizador pode corrigi-lo antes de gravar.
+
+RETORNO DO CASHOUT ("cashoutReturn"):
+Se o estado for "CASHOUT", devolve o montante efetivamente recebido pelo encerramento antecipado.
+Para todos os outros estados, devolve 0. Nunca uses o retorno potencial como retorno de cashout.
 
 MÚLTIPLOS BOLETINS:
 A imagem pode conter vários boletins distintos (por exemplo, uma lista do histórico de apostas).
@@ -224,9 +231,10 @@ Se não conseguires identificar alguma informação com certeza, faz a melhor es
                     "ANULADA",
                     "MEIO_GANHA",
                     "MEIO_PERDIDA",
+                    "CASHOUT",
                   ],
                   description:
-                    "Estado de liquidação da aposta detetado no boletim. POR_LIQUIDAR se ainda estiver em curso ou na dúvida.",
+                    "Estado de liquidação da aposta detetado no boletim. CASHOUT se foi encerrada antecipadamente; POR_LIQUIDAR se apenas existir uma oferta de cashout ou estiver na dúvida.",
                 },
                 isFreebet: {
                   type: Type.BOOLEAN,
@@ -244,6 +252,10 @@ Se não conseguires identificar alguma informação com certeza, faz a melhor es
                 potentialReturn: {
                   type: Type.NUMBER,
                   description: "Retorno potencial total em Euros, ex: 18.50",
+                },
+                cashoutReturn: {
+                  type: Type.NUMBER,
+                  description: "Montante efetivamente recebido no cashout; 0 se o estado não for CASHOUT.",
                 },
                 dateTime: {
                   type: Type.STRING,
@@ -284,6 +296,7 @@ Se não conseguires identificar alguma informação com certeza, faz a melhor es
                 "stake",
                 "odd",
                 "potentialReturn",
+                "cashoutReturn",
                 "selections",
               ],
                     },

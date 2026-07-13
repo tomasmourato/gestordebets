@@ -500,6 +500,7 @@ export default function BetsManager({
             <option value="ANULADA">Anulada</option>
             <option value="MEIO_GANHA">Meio Ganha</option>
             <option value="MEIO_PERDIDA">Meio Perdida</option>
+            <option value="CASHOUT">Cashout</option>
           </select>
 
           {/* Type Filter */}

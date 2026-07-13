@@ -143,6 +143,21 @@ describe("Betano mapper", () => {
     }]).bets[0];
     expect(fullBetWin).toMatchObject({ isFreebet: true, finalReturn: 59, netProfit: 59 });
   });
+
+  test("keeps an explicitly labelled Betano cashout in the dedicated status", () => {
+    const mapped = mapBetanoBets([{
+      BetId: "cashout", Type: "Single", Settled: true, Status: "FullCashout",
+      Stake: "10,00 €", Return: "7,25 €", PossibleWinnings: "20,00 €",
+      DecimalOdds: 2, BonusTokens: [],
+    }]).bets[0];
+
+    expect(mapped).toMatchObject({
+      status: "CASHOUT",
+      finalReturn: 7.25,
+      netProfit: -2.75,
+      metadata: { isCashout: true, cashoutReturn: 7.25 },
+    });
+  });
 });
 
 describe("Betano pagination", () => {
