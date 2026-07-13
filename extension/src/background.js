@@ -2,6 +2,7 @@
 // source-specific payloads, updates changed imports, and sends new records to
 // BetTrackr in bounded batches.
 import { mapBetclicBets, betclicRef } from "./mapper.js";
+import { fetchBetclicHistory } from "./betclic-history.js";
 import { mapBetanoBets, betanoHistoryStart, betanoRef } from "./mapper-betano.js";
 import { fetchBetanoHistory } from "./betano-history.js";
 
@@ -29,12 +30,9 @@ async function getConfig() {
 }
 
 async function fetchBetclicBets(kind, cfg) {
-  const out = [];
-  let offset = 0;
-  let total = Infinity;
-  while (offset < total) {
+  return fetchBetclicHistory(async ({ offset, limit }) => {
     const url = `${cfg.betclicApiBase}/api/v2/me/bets/${kind}` +
-      `?cache-burst=${Date.now()}&limit=${PAGE_SIZE}&offset=${offset}&embed=Metagame`;
+      `?cache-burst=${Date.now()}&limit=${limit}&offset=${offset}&embed=Metagame`;
     const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${cfg.betclicToken}`,
@@ -47,17 +45,19 @@ async function fetchBetclicBets(kind, cfg) {
       throw new Error("Sessão Betclic expirada. Abre betclic.pt e recarrega as tuas apostas.");
     }
     if (!res.ok) throw new Error(`Betclic respondeu ${res.status} ao obter apostas (${kind}).`);
-    const totalHeader = Number(res.headers.get("X-Total-Count"));
-    if (Number.isFinite(totalHeader)) total = totalHeader;
+    const totalHeader = res.headers.get("X-Total-Count");
     const data = await res.json().catch(() => ({}));
     const bets = Array.isArray(data.bets) ? data.bets : [];
-    out.push(...bets);
-    progress(`A ler apostas do Betclic (${kind}): ${out.length}${Number.isFinite(total) ? "/" + total : ""}…`);
-    if (bets.length === 0) break;
-    offset += PAGE_SIZE;
-    if (offset > 5000) break;
-  }
-  return out;
+    return {
+      bets,
+      total: totalHeader === null ? undefined : Number(totalHeader),
+    };
+  }, {
+    pageSize: PAGE_SIZE,
+    onPage: ({ count, total }) => {
+      progress(`A ler apostas do Betclic (${kind}): ${count}${Number.isFinite(total) ? "/" + total : ""}…`);
+    },
+  });
 }
 
 async function findBetanoTab() {
@@ -244,7 +244,11 @@ function selectionsSignature(selections) {
 }
 
 function needsUpdate(existing, incoming) {
-  return existing.status !== incoming.status ||
+  // Cashouts são sempre reenviados. Versões antigas do mapper guardavam
+  // FullCashout como POR_LIQUIDAR; forçar o PUT garante a correção mesmo que
+  // a comparação local esteja a olhar para dados normalizados/stale.
+  return incoming?.metadata?.isCashout === true ||
+    existing.status !== incoming.status ||
     Number(existing.stake) !== Number(incoming.stake) ||
     Number(existing.odd) !== Number(incoming.odd) ||
     Number(existing.final_return) !== Number(incoming.finalReturn) ||
@@ -320,7 +324,8 @@ async function persistMapped(mapped, unsupported, source, cfg) {
     updated++;
     progress(`A atualizar ${source}: ${updated}/${updates.length}…`);
   }
-  return { fetched: mapped.length, imported, updated, skipped, unsupported };
+  const cashouts = mapped.filter((bet) => bet?.metadata?.isCashout === true).length;
+  return { fetched: mapped.length, imported, updated, skipped, unsupported, cashouts };
 }
 
 async function runBetclicImport(cfg) {
@@ -370,9 +375,9 @@ async function runImport(source) {
   }
   const totals = Object.values(results).reduce((sum, result) => {
     if (!result.ok) return sum;
-    for (const key of ["fetched", "imported", "updated", "skipped", "unsupported"]) sum[key] += result[key] || 0;
+    for (const key of ["fetched", "imported", "updated", "skipped", "unsupported", "cashouts"]) sum[key] += result[key] || 0;
     return sum;
-  }, { fetched: 0, imported: 0, updated: 0, skipped: 0, unsupported: 0 });
+  }, { fetched: 0, imported: 0, updated: 0, skipped: 0, unsupported: 0, cashouts: 0 });
   return { ok: true, sourceResults: results, ...totals };
 }
 

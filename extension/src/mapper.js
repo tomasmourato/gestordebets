@@ -57,8 +57,10 @@ const STATUS_MAP = {
   Canceled: "ANULADA",
   Cancelled: "ANULADA",
   Push: "ANULADA",
-  Cashout: "ANULADA",
-  CashedOut: "ANULADA",
+  Cashout: "MEIO_PERDIDA",
+  CashedOut: "MEIO_PERDIDA",
+  FullCashout: "MEIO_PERDIDA",
+  PartialCashout: "MEIO_PERDIDA",
   HalfWin: "MEIO_GANHA",
   HalfWon: "MEIO_GANHA",
   HalfLose: "MEIO_PERDIDA",
@@ -66,7 +68,36 @@ const STATUS_MAP = {
 };
 
 function mapStatus(result) {
+  if (isCashoutResult(result)) return "MEIO_PERDIDA";
   return STATUS_MAP[result] ?? "POR_LIQUIDAR";
+}
+
+function isCashoutResult(result) {
+  return typeof result === "string" && result.replace(/[\s_-]/g, "").toLowerCase().includes("cashout");
+}
+
+function amountOrNull(value) {
+  if (value === undefined || value === null || value === "") return null;
+  const parsed = typeof value === "string"
+    ? Number(value.trim().replace(",", "."))
+    : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+// O valor recebido num cashout não segue a fórmula stake × odd. A Betclic
+// envia-o em `winnings`; `winning_details` é o fallback para respostas onde
+// esse campo não vem preenchido.
+function cashoutReturn(bet) {
+  const winnings = amountOrNull(bet && bet.winnings);
+  if (winnings !== null) return round2(winnings);
+
+  const details = Array.isArray(bet && bet.winning_details) ? bet.winning_details : [];
+  for (const type of ["TOTAL", "NET_STAKE_WIN", "NET_WIN"]) {
+    const detail = details.find((item) => item && String(item.type).toUpperCase() === type);
+    const amount = amountOrNull(detail && detail.amount);
+    if (amount !== null) return round2(amount);
+  }
+  return 0;
 }
 
 // ISO UTC -> "YYYY-MM-DD HH:mm" na hora local do browser (o utilizador está
@@ -89,13 +120,22 @@ export function betclicRef(bet) {
 
 /** Uma aposta do Betclic -> objeto Bet pronto para POST /api/bets/bulk. */
 export function mapBet(bet) {
-  const status = mapStatus(bet.result);
+  const isCashout = isCashoutResult(bet.result);
   const isFreebet = bet.is_freebet === true;
   const stake = Number(bet.stake) || 0;
   const odd = Number(bet.odds) || 0;
   const ref = betclicRef(bet);
+  const settledCashoutReturn = isCashout ? cashoutReturn(bet) : null;
+  const status = isCashout
+    ? settledCashoutReturn > stake ? "MEIO_GANHA" : "MEIO_PERDIDA"
+    : mapStatus(bet.result);
 
-  const { potentialReturn, finalReturn, netProfit } = calc(stake, odd, status, isFreebet);
+  const calculated = calc(stake, odd, status, isFreebet);
+  const potentialReturn = calculated.potentialReturn;
+  const finalReturn = settledCashoutReturn ?? calculated.finalReturn;
+  const netProfit = settledCashoutReturn === null
+    ? calculated.netProfit
+    : round2(isFreebet ? settledCashoutReturn : settledCashoutReturn - stake);
 
   const selections = (bet.bet_selections || []).map((s, i) => ({
     id: `betclic-${ref || "x"}-${i}`,
@@ -130,9 +170,12 @@ export function mapBet(bet) {
       ref,
       importKey: ref ? `betclic:${ref}` : null,
       originalStatus: bet.result ?? null,
-      originalReturn: typeof bet.winnings === "number" ? bet.winnings : null,
+      originalReturn: amountOrNull(bet.winnings),
       betclicResult: bet.result ?? null,
-      betclicWinnings: typeof bet.winnings === "number" ? bet.winnings : null,
+      betclicWinnings: amountOrNull(bet.winnings),
+      isCashout,
+      cashoutReturn: settledCashoutReturn,
+      winningDetails: Array.isArray(bet.winning_details) ? bet.winning_details : [],
     },
   };
 }

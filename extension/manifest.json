@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BetTrackr — Importar apostas",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Importa as tuas apostas do Betclic.pt e Betano.pt diretamente para o BetTrackr.",
   "permissions": ["storage", "tabs"],
   "host_permissions": [

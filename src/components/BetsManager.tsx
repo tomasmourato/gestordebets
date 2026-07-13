@@ -71,6 +71,7 @@ export default function BetsManager({
   const [formIsFreebet, setFormIsFreebet] = useState(false);
   const [formDateTime, setFormDateTime] = useState("");
   const [formNotes, setFormNotes] = useState("");
+  const [formSettledReturn, setFormSettledReturn] = useState("");
   const [formSelections, setFormSelections] = useState<Array<{
     event: string;
     market: string;
@@ -96,8 +97,21 @@ export default function BetsManager({
   const potentialWinningsInfo = useMemo(() => {
     const stakeNum = parseFloat(formStake) || 0;
     const calcs = calculateBetReturnAndProfit(stakeNum, calculatedOdd, formStatus, formIsFreebet);
+
+    if (formStatus === "MEIO_GANHA" || formStatus === "MEIO_PERDIDA") {
+      const customReturn = Number(formSettledReturn.replace(",", "."));
+      if (formSettledReturn.trim() !== "" && Number.isFinite(customReturn) && customReturn >= 0) {
+        const finalReturn = Number(customReturn.toFixed(2));
+        return {
+          ...calcs,
+          finalReturn,
+          netProfit: Number((formIsFreebet ? finalReturn : finalReturn - stakeNum).toFixed(2)),
+        };
+      }
+    }
+
     return calcs;
-  }, [formStake, calculatedOdd, formStatus, formIsFreebet]);
+  }, [formStake, calculatedOdd, formStatus, formIsFreebet, formSettledReturn]);
 
   // Filtered and sorted bets
   const filteredBets = useMemo(() => {
@@ -265,6 +279,7 @@ export default function BetsManager({
     setFormIsFreebet(false);
     setFormDateTime(new Date().toISOString().replace("T", " ").slice(0, 16));
     setFormNotes("");
+    setFormSettledReturn("");
     setFormSelections([{ event: "", market: "", choice: "", odd: "1.80" }]);
     setFormError(null);
   };
@@ -294,6 +309,11 @@ export default function BetsManager({
     setFormIsFreebet(bet.isFreebet);
     setFormDateTime(bet.dateTime);
     setFormNotes(bet.notes || "");
+    setFormSettledReturn(
+      bet.status === "MEIO_GANHA" || bet.status === "MEIO_PERDIDA"
+        ? safeNum(bet.finalReturn).toFixed(2)
+        : ""
+    );
     setFormSelections(bet.selections.map(s => ({
       event: s.event,
       market: s.market,
@@ -376,12 +396,7 @@ export default function BetsManager({
 
     setFormError(null);
 
-    const { potentialReturn, finalReturn, netProfit } = calculateBetReturnAndProfit(
-      stakeNum,
-      calculatedOdd,
-      formStatus,
-      formIsFreebet
-    );
+    const { potentialReturn, finalReturn, netProfit } = potentialWinningsInfo;
 
     const betData: Bet = {
       id: editingBet ? editingBet.id : "bet-" + Date.now(),
@@ -817,7 +832,11 @@ export default function BetsManager({
                   <select
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
                     value={formStatus}
-                    onChange={(e) => setFormStatus(e.target.value as BetStatus)}
+                    onChange={(e) => {
+                      const nextStatus = e.target.value as BetStatus;
+                      setFormStatus(nextStatus);
+                      setFormSettledReturn("");
+                    }}
                   >
                     <option value="POR_LIQUIDAR">Por Liquidar (Pendente)</option>
                     <option value="GANHA">Ganha</option>
@@ -1008,11 +1027,27 @@ export default function BetsManager({
                   <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
                     {formStatus === "POR_LIQUIDAR" ? "Retorno Potencial" : "Retorno Liquidado"}
                   </p>
-                  <p className="text-lg font-black text-emerald-400">
-                    {formStatus === "POR_LIQUIDAR" 
-                      ? `${potentialWinningsInfo.potentialReturn.toFixed(2)}${currency}`
-                      : `${potentialWinningsInfo.finalReturn.toFixed(2)}${currency}`}
-                  </p>
+                  {formStatus === "MEIO_GANHA" || formStatus === "MEIO_PERDIDA" ? (
+                    <div className="mt-1 flex items-center justify-end gap-1">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        required
+                        value={formSettledReturn !== "" ? formSettledReturn : potentialWinningsInfo.finalReturn.toFixed(2)}
+                        onChange={(e) => setFormSettledReturn(e.target.value)}
+                        className="w-24 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-right font-mono text-base font-black text-emerald-400 focus:border-indigo-400 focus:outline-none"
+                        aria-label="Retorno liquidado"
+                      />
+                      <span className="text-lg font-black text-emerald-400">{currency}</span>
+                    </div>
+                  ) : (
+                    <p className="text-lg font-black text-emerald-400">
+                      {formStatus === "POR_LIQUIDAR"
+                        ? `${potentialWinningsInfo.potentialReturn.toFixed(2)}${currency}`
+                        : `${potentialWinningsInfo.finalReturn.toFixed(2)}${currency}`}
+                    </p>
+                  )}
                 </div>
               </div>
 

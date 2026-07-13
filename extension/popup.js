@@ -37,6 +37,7 @@ function formatSource(name, result) {
   if (!result || !result.ok) return `${name}: ${result?.error || "indisponível"}`;
   return `${name}: ${result.imported || 0} importadas, ${result.updated || 0} atualizadas` +
     (result.skipped ? `, ${result.skipped} já existentes` : "") +
+    (result.cashouts ? `, ${result.cashouts} cashout detetado${result.cashouts === 1 ? "" : "s"}` : "") +
     (result.unsupported ? `, ${result.unsupported} ignoradas` : "");
 }
 
