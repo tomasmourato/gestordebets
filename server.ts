@@ -141,6 +141,11 @@ Se as seleções tiverem resultados mistos (umas ganhas e outras perdidas) numa 
 Se todas as seleções estiverem ganhas numa múltipla, o estado é "GANHA".
 Na dúvida, devolve "POR_LIQUIDAR" — é o valor seguro, pois o utilizador pode corrigi-lo antes de gravar.
 
+MÚLTIPLOS BOLETINS:
+A imagem pode conter vários boletins distintos (por exemplo, uma lista do histórico de apostas).
+Devolve CADA boletim como um elemento separado do array "bets". Não juntes apostas diferentes num só
+boletim: cada cartão/linha com a sua própria stake e odd é uma aposta distinta.
+
 Se não conseguires identificar alguma informação com certeza, faz a melhor estimativa ou deixa em branco.
 `;
 
@@ -163,7 +168,7 @@ Se não conseguires identificar alguma informação com certeza, faz a melhor es
               },
             },
             {
-              text: "Extrai as informações do boletim de apostas desportivas desta imagem em formato JSON.",
+              text: "Extrai TODOS os boletins de apostas desportivas visíveis nesta imagem, cada um como um elemento do array 'bets', em formato JSON. Se houver apenas um, devolve um array com um elemento.",
             },
           ],
           config: {
@@ -173,6 +178,12 @@ Se não conseguires identificar alguma informação com certeza, faz a melhor es
             responseSchema: {
               type: Type.OBJECT,
               properties: {
+                bets: {
+                  type: Type.ARRAY,
+                  description: "Todos os boletins de aposta DISTINTOS visíveis na imagem (1 ou vários).",
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
                 bookmaker: {
                   type: Type.STRING,
                   description: "Nome da casa de apostas, ex: Betano, Betclic, Placard, Solverde, Bwin",
@@ -253,6 +264,10 @@ Se não conseguires identificar alguma informação com certeza, faz a melhor es
                 "potentialReturn",
                 "selections",
               ],
+                    },
+                  },
+              },
+              required: ["bets"],
             },
           },
         });

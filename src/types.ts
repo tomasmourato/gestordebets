@@ -1,5 +1,10 @@
-export type BetStatus = 'POR_LIQUIDAR' | 'GANHA' | 'PERDIDA' | 'ANULADA' | 'MEIO_GANHA' | 'MEIO_PERDIDA';
+export type BetStatus = 'POR_LIQUIDAR' | 'GANHA' | 'PERDIDA' | 'ANULADA' | 'MEIO_GANHA' | 'MEIO_PERDIDA' | 'CASHOUT';
 export type BetType = 'SIMPLES' | 'MULTIPLA';
+
+// Regra de pagamento de uma freebet:
+//  SNR = Stake Not Returned (ganho = (odd-1) * stake) — padrão da indústria
+//  SR  = Stake Returned     (ganho = odd * stake)     — variante do Betclic
+export type FreebetType = 'SNR' | 'SR';
 
 export interface Selection {
   id: string;
@@ -19,6 +24,7 @@ export interface Bet {
   stake: number; // For normal bets, this is real cash. For freebets, it's the freebet value.
   odd: number; // Multiplied odds of all selections
   isFreebet: boolean;
+  freebetType?: FreebetType; // só relevante quando isFreebet; default resolvido pela casa
   potentialReturn: number;
   finalReturn: number;
   netProfit: number;
@@ -36,12 +42,14 @@ export interface Bet {
 }
 
 export type ThemeMode = 'light' | 'dark' | 'system';
+export type Language = 'pt' | 'en';
 
 export interface Preferences {
   currency: string;
   defaultBookmaker: string;
   defaultStake: number;
   theme: ThemeMode;
+  language: Language;
 }
 
 export interface AuditLog {

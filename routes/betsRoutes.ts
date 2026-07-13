@@ -15,7 +15,7 @@ router.use(authenticateToken);
 const BET_COLUMNS = `
   id, type, status,
   stake::float8 AS stake, odd::float8 AS odd,
-  is_freebet,
+  is_freebet, freebet_type,
   potential_return::float8 AS potential_return,
   final_return::float8 AS final_return,
   net_profit::float8 AS net_profit,
@@ -32,7 +32,10 @@ const VALID_STATUSES = [
   "ANULADA",
   "MEIO_GANHA",
   "MEIO_PERDIDA",
+  "CASHOUT",
 ];
+
+const VALID_FREEBET_TYPES = ["SNR", "SR"];
 
 // ============================================================
 // parseBetPayload
@@ -90,6 +93,11 @@ function parseBetPayload(body: any): ParsedPayload {
 
   const isFreebet = b.isFreebet === true || b.isFreebet === "true";
 
+  // freebetType: SNR | SR, ou null (não-freebet ou desconhecido)
+  let freebetType: string | null =
+    typeof b.freebetType === "string" ? b.freebetType.trim().toUpperCase() : null;
+  if (freebetType !== null && !VALID_FREEBET_TYPES.includes(freebetType)) freebetType = null;
+
   // dateTime: string vazia -> null
   const dateTime = trimOrNull(b.dateTime);
 
@@ -129,6 +137,7 @@ function parseBetPayload(body: any): ParsedPayload {
       comment,
       tags,
       metadata,
+      freebetType,
     ],
   };
 }
@@ -187,8 +196,8 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
       `INSERT INTO bets
          (user_id, type, status, stake, odd, is_freebet, potential_return,
           final_return, net_profit, bookmaker, date_time, notes, origin,
-          selections, comment, tags, metadata)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+          selections, comment, tags, metadata, freebet_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
        RETURNING ${BET_COLUMNS}`,
       [req.user!.id, ...parsed.values!]
     );
@@ -236,8 +245,8 @@ router.post("/bulk", async (req: AuthenticatedRequest, res) => {
         `INSERT INTO bets
            (user_id, type, status, stake, odd, is_freebet, potential_return,
             final_return, net_profit, bookmaker, date_time, notes, origin,
-            selections, comment, tags, metadata)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            selections, comment, tags, metadata, freebet_type)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
          RETURNING ${BET_COLUMNS}`,
         [req.user!.id, ...parsed.values!]
       );
@@ -285,8 +294,9 @@ router.put("/:id", async (req: AuthenticatedRequest, res) => {
            potential_return = $6, final_return = $7, net_profit = $8,
            bookmaker = $9, date_time = $10, notes = $11, origin = $12,
            selections = $13, comment = $14, tags = $15, metadata = $16,
+           freebet_type = $17,
            updated_at = timezone('utc', now())
-       WHERE id = $17 AND user_id = $18
+       WHERE id = $18 AND user_id = $19
        RETURNING ${BET_COLUMNS}`,
       [...parsed.values!, id, req.user!.id]
     );

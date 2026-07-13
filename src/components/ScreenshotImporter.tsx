@@ -11,8 +11,9 @@ import {
   X,
   ClipboardPaste
 } from "lucide-react";
-import { Bet, Selection, BetStatus, BetType } from "../types";
+import { Bet, Selection, BetStatus, BetType, FreebetType } from "../types";
 import { AVAILABLE_BOOKMAKERS, calculateBetReturnAndProfit } from "../utils";
+import { defaultFreebetTypeFor } from "../lib/bookmakers";
 import { authFetch, parseJsonResponse } from "../lib/authApi";
 
 interface ScreenshotImporterProps {
@@ -26,7 +27,8 @@ const VALID_STATUSES: BetStatus[] = [
   "PERDIDA",
   "ANULADA",
   "MEIO_GANHA",
-  "MEIO_PERDIDA"
+  "MEIO_PERDIDA",
+  "CASHOUT"
 ];
 
 /**
@@ -104,6 +106,7 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
   const [editType, setEditType] = useState<BetType>("SIMPLES");
   const [editStatus, setEditStatus] = useState<BetStatus>("POR_LIQUIDAR");
   const [editStake, setEditStake] = useState<string>("10.00");
+  const [editCashoutReturn, setEditCashoutReturn] = useState<string>("");
   const [editDateTime, setEditDateTime] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editSelections, setEditSelections] = useState<Array<{
@@ -113,6 +116,13 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
     odd: string;
   }>>([]);
   const [isFreebet, setIsFreebet] = useState(false);
+  const [editFreebetType, setEditFreebetType] = useState<FreebetType>("SNR");
+
+  // Fila de boletins detetados no mesmo screenshot (G1). Revemos um de cada vez
+  // reutilizando o formulário de edição; `detectedIndex` é o que está a ser revisto.
+  const [detectedBets, setDetectedBets] = useState<any[]>([]);
+  const [detectedIndex, setDetectedIndex] = useState(0);
+  const [importedCount, setImportedCount] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -191,6 +201,27 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
     return () => document.removeEventListener("paste", handlePaste);
   }, [parsedBet, isLoading]);
 
+  // Carrega um boletim detetado para os campos de edição do formulário.
+  const loadDetectedBet = (data: any) => {
+    setParsedBet(data);
+    const matchedBk = matchBookmaker(data.bookmaker);
+    setEditBookmaker(matchedBk);
+    setEditFreebetType(defaultFreebetTypeFor(matchedBk));
+    setEditType((data.type === "SIMPLES" || data.type === "MULTIPLA") ? data.type : "SIMPLES");
+    setEditStatus(matchStatus(data.status));
+    setIsFreebet(data.isFreebet === true);
+    setEditStake(data.stake ? data.stake.toString() : "10.00");
+    setEditCashoutReturn("");
+    setEditDateTime(data.dateTime || new Date().toISOString().replace("T", " ").slice(0, 16));
+    setEditSelections((data.selections || []).map((s: any) => ({
+      event: s.event || "",
+      market: s.market || "",
+      choice: s.choice || "",
+      odd: s.odd ? s.odd.toString() : "1.50",
+    })));
+    setEditNotes("Importado automaticamente via Inteligência Artificial.");
+  };
+
   // Call the server API
   const analyzeWithGemini = async (imageBase64: string) => {
     setIsLoading(true);
@@ -220,25 +251,22 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
         throw new Error(resData.error || "Não foi possível extrair os dados da imagem.");
       }
 
-      const data = resData.data;
+      // A IA devolve agora TODOS os boletins da imagem em data.bets (G1).
+      // Aceitamos o formato antigo (bet único) por compatibilidade.
+      const betsArr: any[] = Array.isArray(resData.data?.bets)
+        ? resData.data.bets
+        : resData.data
+          ? [resData.data]
+          : [];
 
-      // Set verification form states. A casa de apostas, o estado de
-      // liquidação e a freebet são agora detetados pela IA — o utilizador
-      // continua a poder corrigir tudo antes de gravar.
-      setParsedBet(data);
-      setEditBookmaker(matchBookmaker(data.bookmaker));
-      setEditType((data.type === "SIMPLES" || data.type === "MULTIPLA") ? data.type : "SIMPLES");
-      setEditStatus(matchStatus(data.status));
-      setIsFreebet(data.isFreebet === true);
-      setEditStake(data.stake ? data.stake.toString() : "10.00");
-      setEditDateTime(data.dateTime || new Date().toISOString().replace("T", " ").slice(0, 16));
-      setEditSelections(data.selections.map((s: any) => ({
-        event: s.event || "",
-        market: s.market || "",
-        choice: s.choice || "",
-        odd: s.odd ? s.odd.toString() : "1.50"
-      })));
-      setEditNotes("Importado automaticamente via Inteligência Artificial.");
+      if (betsArr.length === 0) {
+        throw new Error("Nenhum boletim de apostas foi detetado na imagem.");
+      }
+
+      setDetectedBets(betsArr);
+      setDetectedIndex(0);
+      setImportedCount(0);
+      loadDetectedBet(betsArr[0]);
 
     } catch (error: any) {
       console.error("Error analyzing image:", error);
@@ -271,9 +299,11 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
         parseFloat(editStake) || 0,
         calculatedTotalOdd,
         editStatus,
-        isFreebet
+        isFreebet,
+        parseFloat(editCashoutReturn) || 0,
+        editFreebetType
       ),
-    [editStake, calculatedTotalOdd, editStatus, isFreebet]
+    [editStake, calculatedTotalOdd, editStatus, isFreebet, editCashoutReturn, editFreebetType]
   );
 
   // Submit verified bet
@@ -316,7 +346,9 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
       stakeNum,
       calculatedTotalOdd,
       editStatus,
-      isFreebet
+      isFreebet,
+      parseFloat(editCashoutReturn) || 0,
+      editFreebetType
     );
 
     const confirmedBet: Bet = {
@@ -327,6 +359,7 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
       stake: stakeNum,
       odd: calculatedTotalOdd,
       isFreebet,
+      freebetType: isFreebet ? editFreebetType : undefined,
       potentialReturn: Number(potentialReturn.toFixed(2)),
       finalReturn: Number(finalReturn.toFixed(2)),
       netProfit: Number(netProfit.toFixed(2)),
@@ -342,13 +375,43 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
     };
 
     onAddBet(confirmedBet);
-    
-    // Clear state
+    const savedSoFar = importedCount + 1;
+    setImportedCount(savedSoFar);
+
+    // Se ainda há boletins detetados por rever, avança para o próximo em vez
+    // de fechar (G1 — vários boletins no mesmo screenshot).
+    const nextIndex = detectedIndex + 1;
+    if (nextIndex < detectedBets.length) {
+      setDetectedIndex(nextIndex);
+      loadDetectedBet(detectedBets[nextIndex]);
+      setSuccessMessage(`Aposta ${savedSoFar} gravada. A rever a próxima (${nextIndex + 1}/${detectedBets.length})…`);
+      setTimeout(() => setSuccessMessage(null), 4000);
+      return;
+    }
+
+    // Terminou a fila — limpa tudo.
     setParsedBet(null);
     setSelectedImage(null);
     setImageFileName("");
-    setSuccessMessage("Aposta importada e gravada com sucesso!");
+    setDetectedBets([]);
+    setDetectedIndex(0);
+    setSuccessMessage(
+      savedSoFar > 1
+        ? `${savedSoFar} apostas importadas e gravadas com sucesso!`
+        : "Aposta importada e gravada com sucesso!"
+    );
     setTimeout(() => setSuccessMessage(null), 5000);
+  };
+
+  // Salta o boletim atual sem o gravar e passa ao próximo (ou termina).
+  const skipDetectedBet = () => {
+    const nextIndex = detectedIndex + 1;
+    if (nextIndex < detectedBets.length) {
+      setDetectedIndex(nextIndex);
+      loadDetectedBet(detectedBets[nextIndex]);
+    } else {
+      handleResetImport();
+    }
   };
 
   // Selection inputs edit
@@ -375,6 +438,9 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
     setErrorMessage(null);
     setIsFreebet(false);
     setEditStatus("POR_LIQUIDAR");
+    setDetectedBets([]);
+    setDetectedIndex(0);
+    setImportedCount(0);
   };
 
   return (
@@ -519,7 +585,22 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
                 <h5 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-1.5">
                   <Sparkles size={16} className="text-indigo-600 dark:text-indigo-400" /> Validar Dados Extraídos
                 </h5>
-                <span className="text-[9px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider border border-emerald-200 dark:border-emerald-900">Sucesso</span>
+                {detectedBets.length > 1 ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider border border-indigo-200 dark:border-indigo-900">
+                      Boletim {detectedIndex + 1} de {detectedBets.length}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={skipDetectedBet}
+                      className="text-[9px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 uppercase tracking-wider cursor-pointer"
+                    >
+                      Saltar
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-[9px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider border border-emerald-200 dark:border-emerald-900">Sucesso</span>
+                )}
               </div>
 
               {errorMessage && (
@@ -595,12 +676,31 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
                     <option value="ANULADA">Anulada (Reembolsar)</option>
                     <option value="MEIO_GANHA">Meio Ganha</option>
                     <option value="MEIO_PERDIDA">Meio Perdida</option>
+                    <option value="CASHOUT">Cashout</option>
                   </select>
                 </div>
               </div>
 
-              {/* Freebet Checkbox */}
-              <div className="p-3.5 bg-indigo-50/30 dark:bg-indigo-950/30 rounded-sm border border-indigo-100 dark:border-indigo-900">
+              {/* Cashout: valor recebido ao encerrar antecipadamente */}
+              {editStatus === "CASHOUT" && (
+                <div>
+                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">
+                    Valor do Cashout ({currency})
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="w-full px-3 py-2 rounded-sm border border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-800 focus:outline-none focus:border-violet-500 text-slate-800 dark:text-slate-100 font-mono font-bold"
+                    placeholder="0.00"
+                    value={editCashoutReturn}
+                    onChange={(e) => setEditCashoutReturn(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {/* Freebet Checkbox + tipo */}
+              <div className="p-3.5 bg-indigo-50/30 dark:bg-indigo-950/30 rounded-sm border border-indigo-100 dark:border-indigo-900 space-y-2.5">
                 <label className="flex items-center gap-2 font-semibold text-indigo-900 dark:text-indigo-200 cursor-pointer">
                   <input
                     type="checkbox"
@@ -611,6 +711,17 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
                   <span>Esta aposta usa saldo de Freebet?</span>
                   <AiChip />
                 </label>
+
+                {isFreebet && (
+                  <select
+                    className="w-full px-3 py-2 rounded-sm border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-100 text-[11px]"
+                    value={editFreebetType}
+                    onChange={(e) => setEditFreebetType(e.target.value as FreebetType)}
+                  >
+                    <option value="SNR">Stake não devolvida — SNR</option>
+                    <option value="SR">Stake devolvida — SR (Betclic)</option>
+                  </select>
+                )}
               </div>
 
               {/* Selections Extraction Form */}
@@ -762,7 +873,7 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
                   type="submit"
                   className="px-5 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                 >
-                  <Check size={14} /> Confirmar e Gravar Aposta
+                  <Check size={14} /> {detectedIndex + 1 < detectedBets.length ? "Gravar e Seguinte" : "Confirmar e Gravar Aposta"}
                 </button>
               </div>
 

@@ -24,6 +24,7 @@ import { usePreferences } from "./hooks/usePreferences";
 import { useTheme } from "./hooks/useTheme";
 import { useAuditLog } from "./hooks/useAuditLog";
 import { useBets } from "./hooks/useBets";
+import { I18nProvider, translate } from "./lib/i18n";
 
 export default function App() {
 
@@ -37,6 +38,9 @@ export default function App() {
   // Preferências (armazenamento local) e auditoria (em memória)
   const { preferences, updatePreferences } = usePreferences();
   const { auditLogs, addLog } = useAuditLog();
+
+  // Tradução do shell (i18n). O resto da app usa <I18nProvider> + useI18n().
+  const t = (key: string) => translate(preferences.language, key);
 
   // Aplica o tema ao <html> e devolve o tema efetivo (resolve "system")
   const isDark = useTheme(preferences.theme);
@@ -209,7 +213,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-sm font-bold text-slate-900 dark:text-slate-50 tracking-tight leading-tight font-display">BetTrackr</h1>
-              <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Gestão de Apostas</p>
+              <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">{t("app.brandTagline")}</p>
             </div>
           </div>
 
@@ -219,25 +223,25 @@ export default function App() {
               onClick={() => setActiveTab("DASHBOARD")}
               className={`px-3.5 py-2 rounded transition-colors ${activeTab === "DASHBOARD" ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
             >
-              Visão Geral
+              {t("nav.overview")}
             </button>
             <button
               onClick={() => setActiveTab("BETS")}
               className={`px-3.5 py-2 rounded transition-colors ${activeTab === "BETS" ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
             >
-              Meus Boletins
+              {t("nav.bets")}
             </button>
             <button
               onClick={() => setActiveTab("IMPORT")}
               className={`px-3.5 py-2 rounded transition-colors flex items-center gap-1 ${activeTab === "IMPORT" ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
             >
-              <Sparkles size={13} className="text-amber-500 animate-pulse" /> Importar com IA
+              <Sparkles size={13} className="text-amber-500 animate-pulse" /> {t("nav.import")}
             </button>
             <button
               onClick={() => setActiveTab("SETTINGS")}
               className={`px-3.5 py-2 rounded transition-colors ${activeTab === "SETTINGS" ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
             >
-              Configurações
+              {t("nav.settings")}
             </button>
           </nav>
 
@@ -274,7 +278,7 @@ export default function App() {
               className="flex items-center gap-1 px-2.5 py-1.5 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
             >
               <LogOut size={12} />
-              <span className="hidden sm:inline">Sair</span>
+              <span className="hidden sm:inline">{t("nav.logout")}</span>
             </button>
 
           </div>
@@ -302,7 +306,7 @@ export default function App() {
         {isLoading ? (
           <div className="flex items-center justify-center py-16 text-slate-400 dark:text-slate-500 text-xs gap-2">
             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-            A carregar apostas…
+            {t("app.loadingBets")}
           </div>
         ) : (
           <AnimatePresence mode="wait">
@@ -337,16 +341,18 @@ export default function App() {
                 />
               )}
               {activeTab === "SETTINGS" && (
-                <Settings
-                  preferences={preferences}
-                  auditLogs={auditLogs}
-                  bets={bets}
-                  currency={preferences.currency}
-                  onUpdatePreferences={handleUpdatePreferences}
-                  onClearData={handleClearData}
-                  onResetDemoData={handleResetDemoData}
-                  onImportCSV={handleImportCSV}
-                />
+                <I18nProvider lang={preferences.language}>
+                  <Settings
+                    preferences={preferences}
+                    auditLogs={auditLogs}
+                    bets={bets}
+                    currency={preferences.currency}
+                    onUpdatePreferences={handleUpdatePreferences}
+                    onClearData={handleClearData}
+                    onResetDemoData={handleResetDemoData}
+                    onImportCSV={handleImportCSV}
+                  />
+                </I18nProvider>
               )}
             </motion.div>
           </AnimatePresence>
@@ -361,28 +367,28 @@ export default function App() {
             className={`flex flex-col items-center justify-center gap-1 ${activeTab === "DASHBOARD" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
           >
             <TrendingUp size={18} />
-            <span>Painel</span>
+            <span>{t("footer.panel")}</span>
           </button>
           <button
             onClick={() => setActiveTab("BETS")}
             className={`flex flex-col items-center justify-center gap-1 ${activeTab === "BETS" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
           >
             <Layers size={18} />
-            <span>Boletins</span>
+            <span>{t("footer.bets")}</span>
           </button>
           <button
             onClick={() => setActiveTab("IMPORT")}
             className={`flex flex-col items-center justify-center gap-1 ${activeTab === "IMPORT" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
           >
             <Sparkles size={18} className="text-amber-500 animate-pulse" />
-            <span>IA</span>
+            <span>{t("footer.ai")}</span>
           </button>
           <button
             onClick={() => setActiveTab("SETTINGS")}
             className={`flex flex-col items-center justify-center gap-1 ${activeTab === "SETTINGS" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
           >
             <SettingsIcon size={18} />
-            <span>Ajustes</span>
+            <span>{t("footer.settings")}</span>
           </button>
         </div>
       </footer>

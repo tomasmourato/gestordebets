@@ -1,4 +1,4 @@
-import { Bet, BetStatus, DashboardStats, Selection } from "./types";
+import { Bet, BetStatus, DashboardStats, FreebetType, Selection } from "./types";
 
 // Safe number converter to prevent crashes from undefined/null/non-numeric properties
 export function safeNum(value: any, defaultValue = 0): number {
@@ -7,14 +7,18 @@ export function safeNum(value: any, defaultValue = 0): number {
   return isNaN(num) ? defaultValue : num;
 }
 
-// Calculation formulas for individual bets
+// Calculation formulas for individual bets.
+// cashoutReturn: só usado quando status === "CASHOUT" — é o valor pelo qual a
+// aposta foi encerrada antecipadamente (arbitrário, não deriva de stake*odd).
 export function calculateBetReturnAndProfit(
   stake: number,
   odd: number,
   status: BetStatus,
-  isFreebet: boolean
+  isFreebet: boolean,
+  cashoutReturn?: number,
+  freebetType?: FreebetType
 ): { potentialReturn: number; finalReturn: number; netProfit: number } {
-  
+
   // 1. Calculate Potential Return (For freebets, profit is stake * odd, so potential is stake * odd)
   let potentialReturn = stake * odd;
 
@@ -27,6 +31,17 @@ export function calculateBetReturnAndProfit(
       potentialReturn: Number(potentialReturn.toFixed(2)),
       finalReturn: 0,
       netProfit: 0,
+    };
+  }
+
+  // Cashout: retorno definido pelo utilizador/casa, não calculado a partir da
+  // odd. Numa freebet a stake não era dinheiro real, por isso não se subtrai.
+  if (status === "CASHOUT") {
+    const co = Number(cashoutReturn) || 0;
+    return {
+      potentialReturn: Number(potentialReturn.toFixed(2)),
+      finalReturn: Number(co.toFixed(2)),
+      netProfit: Number((co - (isFreebet ? 0 : stake)).toFixed(2)),
     };
   }
 
@@ -56,11 +71,15 @@ export function calculateBetReturnAndProfit(
         break;
     }
   } else {
-    // Freebet rules: no cash risked as stake, profit on GANHA is stake * odd
+    // Freebet: nenhum dinheiro real é arriscado como stake.
+    //  SR  (Stake Returned)     -> ganho = odd * stake     (variante Betclic)
+    //  SNR (Stake Not Returned) -> ganho = (odd - 1) * stake  (padrão da indústria)
+    // Por omissão SR, para preservar o comportamento histórico da app.
+    const isSR = (freebetType ?? "SR") === "SR";
     switch (status) {
       case "GANHA":
-        finalReturn = stake * odd;
-        netProfit = finalReturn; // Profit of the bet is stake * odd
+        finalReturn = isSR ? stake * odd : (odd - 1) * stake;
+        netProfit = finalReturn; // sem cash arriscado, o lucro é o retorno
         break;
       case "PERDIDA":
         finalReturn = 0;
@@ -372,14 +391,7 @@ export const INITIAL_BETS: Bet[] = [
   }
 ];
 
-export const AVAILABLE_BOOKMAKERS = [
-  "Betano",
-  "Betclic",
-  "Placard",
-  "Bwin",
-  "Solverde",
-  "Nossa Aposta",
-  "Casino Portugal",
-  "Placard.pt",
-  "Outra"
-];
+// A lista de casas vive agora no registo (src/lib/bookmakers.ts), que também
+// guarda o tipo de freebet por omissão de cada uma. Reexportamos aqui para
+// não partir os imports existentes.
+export { AVAILABLE_BOOKMAKERS } from "./lib/bookmakers";

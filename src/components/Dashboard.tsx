@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -40,7 +40,55 @@ interface DashboardProps {
   isDark: boolean;
 }
 
-export default function Dashboard({ bets, currency, isDark }: DashboardProps) {
+export default function Dashboard({ bets: allBets, currency, isDark }: DashboardProps) {
+  // Filtros do dashboard (D2): recalculam TODAS as estatísticas/gráficos para o
+  // subconjunto escolhido. As opções vêm da lista completa; o cálculo usa a
+  // lista filtrada `bets` (sombreada abaixo).
+  const [filterBookmaker, setFilterBookmaker] = useState("ALL");
+  const [filterSport, setFilterSport] = useState("ALL");
+  const [filterType, setFilterType] = useState("ALL");
+  const [filterFreebet, setFilterFreebet] = useState("ALL");
+
+  const bookmakerOptions = useMemo(
+    () => Array.from(new Set(allBets.map(b => b.bookmaker).filter((b): b is string => !!b))).sort(),
+    [allBets]
+  );
+  const sportOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          allBets
+            .flatMap(b => (b.selections || []).map(s => s.sport))
+            .filter((s): s is string => !!s)
+        )
+      ).sort(),
+    [allBets]
+  );
+
+  // `bets` sombreia a prop: é o subconjunto filtrado que todo o código abaixo usa.
+  const bets = useMemo(
+    () =>
+      allBets.filter(b => {
+        if (filterBookmaker !== "ALL" && b.bookmaker !== filterBookmaker) return false;
+        if (filterType !== "ALL" && b.type !== filterType) return false;
+        if (filterFreebet === "FREEBET" && !b.isFreebet) return false;
+        if (filterFreebet === "NORMAL" && b.isFreebet) return false;
+        if (filterSport !== "ALL" && !(b.selections || []).some(s => s.sport === filterSport)) return false;
+        return true;
+      }),
+    [allBets, filterBookmaker, filterSport, filterType, filterFreebet]
+  );
+
+  const hasFilters =
+    filterBookmaker !== "ALL" || filterSport !== "ALL" || filterType !== "ALL" || filterFreebet !== "ALL";
+
+  const clearFilters = () => {
+    setFilterBookmaker("ALL");
+    setFilterSport("ALL");
+    setFilterType("ALL");
+    setFilterFreebet("ALL");
+  };
+
   const stats = useMemo(() => calculateDashboardStats(bets), [bets]);
 
   // O Recharts é desenhado em SVG com cores explícitas, por isso não reage
@@ -166,15 +214,19 @@ export default function Dashboard({ bets, currency, isDark }: DashboardProps) {
     })).sort((a, b) => b.lucro - a.lucro);
   }, [bets]);
 
-  // 3. Prepare data for Bet Status distribution
+  // 3. Prepare data for Bet Status distribution.
+  // "Distribuição de Resultados" mostra apenas apostas RESOLVIDAS — as
+  // pendentes (POR_LIQUIDAR) não são um resultado. Antes eram incluídas como
+  // fatia "Pendente", o que fazia a soma das fatias não bater certo com o
+  // número central "Resolvidas". (correção do bug D1)
   const statusData = useMemo(() => {
-    const statusCounts = {
+    const statusCounts: Record<string, number> = {
       GANHA: 0,
       PERDIDA: 0,
       ANULADA: 0,
       MEIO_GANHA: 0,
       MEIO_PERDIDA: 0,
-      POR_LIQUIDAR: 0,
+      CASHOUT: 0,
     };
 
     bets.forEach(b => {
@@ -186,10 +238,10 @@ export default function Dashboard({ bets, currency, isDark }: DashboardProps) {
     return [
       { name: "Ganha", value: statusCounts.GANHA, color: "#10B981" },
       { name: "Meio Ganha", value: statusCounts.MEIO_GANHA, color: "#34D399" },
+      { name: "Cashout", value: statusCounts.CASHOUT, color: "#8B5CF6" },
       { name: "Anulada", value: statusCounts.ANULADA, color: "#9CA3AF" },
       { name: "Meio Perdida", value: statusCounts.MEIO_PERDIDA, color: "#F87171" },
       { name: "Perdida", value: statusCounts.PERDIDA, color: "#EF4444" },
-      { name: "Pendente", value: statusCounts.POR_LIQUIDAR, color: "#3B82F6" },
     ].filter(item => item.value > 0);
   }, [bets]);
 
@@ -233,9 +285,53 @@ export default function Dashboard({ bets, currency, isDark }: DashboardProps) {
     };
   }, [bets, bookmakerData]);
 
+  const filterSelectClass =
+    "px-3 py-2 text-xs rounded-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:border-indigo-600 focus:outline-none transition-colors";
+
   return (
     <div className="space-y-6" id="dashboard-tab">
-      
+
+      {/* Filtros (D2) */}
+      <div className="bg-white dark:bg-slate-900 rounded-sm p-3 border border-slate-200 dark:border-slate-800 flex flex-wrap gap-2 items-center" id="dashboard-filters">
+        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mr-1">Filtros</span>
+
+        <select className={filterSelectClass} value={filterBookmaker} onChange={(e) => setFilterBookmaker(e.target.value)}>
+          <option value="ALL">Todas as Casas</option>
+          {bookmakerOptions.map((b) => <option key={b} value={b}>{b}</option>)}
+        </select>
+
+        <select className={filterSelectClass} value={filterSport} onChange={(e) => setFilterSport(e.target.value)}>
+          <option value="ALL">Todos os Desportos</option>
+          {sportOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+
+        <select className={filterSelectClass} value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+          <option value="ALL">Qualquer Tipo</option>
+          <option value="SIMPLES">Simples</option>
+          <option value="MULTIPLA">Múltipla</option>
+        </select>
+
+        <select className={filterSelectClass} value={filterFreebet} onChange={(e) => setFilterFreebet(e.target.value)}>
+          <option value="ALL">Dinheiro e Freebet</option>
+          <option value="NORMAL">Dinheiro Real</option>
+          <option value="FREEBET">Freebet</option>
+        </select>
+
+        {hasFilters && (
+          <>
+            <button
+              onClick={clearFilters}
+              className="px-3 py-2 text-xs rounded-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 font-semibold transition-colors cursor-pointer"
+            >
+              Limpar
+            </button>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 ml-auto">
+              A mostrar {bets.length} de {allBets.length} apostas
+            </span>
+          </>
+        )}
+      </div>
+
       {/* 4 Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         

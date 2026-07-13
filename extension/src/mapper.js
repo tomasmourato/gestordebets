@@ -6,13 +6,23 @@
 // src/utils.ts — mantém a matemática de retorno/lucro idêntica à das apostas
 // introduzidas à mão. Se a do app mudar, atualiza aqui também.
 
-function calc(stake, odd, status, isFreebet) {
+function calc(stake, odd, status, isFreebet, cashoutReturn, freebetType) {
   const potentialReturn = stake * odd;
   let finalReturn = 0;
   let netProfit = 0;
 
   if (status === "POR_LIQUIDAR") {
     return { potentialReturn: round2(potentialReturn), finalReturn: 0, netProfit: 0 };
+  }
+
+  // Cashout: retorno real recebido, não derivado da odd.
+  if (status === "CASHOUT") {
+    const co = Number(cashoutReturn) || 0;
+    return {
+      potentialReturn: round2(potentialReturn),
+      finalReturn: round2(co),
+      netProfit: round2(co - (isFreebet ? 0 : stake)),
+    };
   }
 
   if (!isFreebet) {
@@ -24,8 +34,10 @@ function calc(stake, odd, status, isFreebet) {
       case "MEIO_PERDIDA": finalReturn = stake / 2; netProfit = finalReturn - stake; break;
     }
   } else {
+    // Freebet: SR (Betclic) devolve odd*stake; SNR devolve (odd-1)*stake.
+    const isSR = (freebetType ?? "SR") === "SR";
     switch (status) {
-      case "GANHA": finalReturn = stake * odd; netProfit = finalReturn; break;
+      case "GANHA": finalReturn = isSR ? stake * odd : (odd - 1) * stake; netProfit = finalReturn; break;
       case "PERDIDA": finalReturn = 0; netProfit = 0; break;
       case "ANULADA": finalReturn = stake; netProfit = 0; break;
       case "MEIO_GANHA": finalReturn = (stake / 2) * odd + (stake / 2); netProfit = finalReturn; break;
@@ -57,8 +69,10 @@ const STATUS_MAP = {
   Canceled: "ANULADA",
   Cancelled: "ANULADA",
   Push: "ANULADA",
-  Cashout: "ANULADA",
-  CashedOut: "ANULADA",
+  Cashout: "CASHOUT",
+  CashedOut: "CASHOUT",
+  FullCashout: "CASHOUT",
+  PartialCashout: "CASHOUT",
   HalfWin: "MEIO_GANHA",
   HalfWon: "MEIO_GANHA",
   HalfLose: "MEIO_PERDIDA",
@@ -94,8 +108,26 @@ export function mapBet(bet) {
   const stake = Number(bet.stake) || 0;
   const odd = Number(bet.odds) || 0;
   const ref = betclicRef(bet);
+  // As freebets do Betclic são do tipo SR (stake devolvida).
+  const freebetType = isFreebet ? "SR" : undefined;
 
-  const { potentialReturn, finalReturn, netProfit } = calc(stake, odd, status, isFreebet);
+  // Num cashout, o valor real recebido vem dos winning_details (TOTAL/CASH)
+  // ou do campo winnings — não deriva da odd.
+  let cashoutReturn = 0;
+  if (status === "CASHOUT") {
+    const details = Array.isArray(bet.winning_details) ? bet.winning_details : [];
+    const total = details.find((d) => d && d.type === "TOTAL" && d.unit === "CASH");
+    cashoutReturn = total ? Number(total.amount) || 0 : Number(bet.winnings) || 0;
+  }
+
+  const { potentialReturn, finalReturn, netProfit } = calc(
+    stake,
+    odd,
+    status,
+    isFreebet,
+    cashoutReturn,
+    freebetType
+  );
 
   const selections = (bet.bet_selections || []).map((s, i) => ({
     id: `betclic-${ref || "x"}-${i}`,
@@ -113,6 +145,7 @@ export function mapBet(bet) {
     stake,
     odd,
     isFreebet,
+    freebetType,
     potentialReturn,
     finalReturn,
     netProfit,

@@ -16,8 +16,9 @@ import {
   Clock,
   AlertTriangle
 } from "lucide-react";
-import { Bet, Selection, BetStatus, BetType } from "../types";
+import { Bet, Selection, BetStatus, BetType, FreebetType } from "../types";
 import { calculateBetReturnAndProfit, AVAILABLE_BOOKMAKERS, safeNum } from "../utils";
+import { defaultFreebetTypeFor } from "../lib/bookmakers";
 
 interface BetsManagerProps {
   bets: Bet[];
@@ -55,6 +56,8 @@ export default function BetsManager({
   const [formCustomBookmaker, setFormCustomBookmaker] = useState("");
   const [formStake, setFormStake] = useState<string>("10.00");
   const [formIsFreebet, setFormIsFreebet] = useState(false);
+  const [formFreebetType, setFormFreebetType] = useState<FreebetType>("SNR");
+  const [formCashoutReturn, setFormCashoutReturn] = useState<string>("");
   const [formDateTime, setFormDateTime] = useState("");
   const [formNotes, setFormNotes] = useState("");
   const [formSelections, setFormSelections] = useState<Array<{
@@ -81,9 +84,16 @@ export default function BetsManager({
   // Real-time calculations for potential return in the form
   const potentialWinningsInfo = useMemo(() => {
     const stakeNum = parseFloat(formStake) || 0;
-    const calcs = calculateBetReturnAndProfit(stakeNum, calculatedOdd, formStatus, formIsFreebet);
+    const calcs = calculateBetReturnAndProfit(
+      stakeNum,
+      calculatedOdd,
+      formStatus,
+      formIsFreebet,
+      parseFloat(formCashoutReturn) || 0,
+      formFreebetType
+    );
     return calcs;
-  }, [formStake, calculatedOdd, formStatus, formIsFreebet]);
+  }, [formStake, calculatedOdd, formStatus, formIsFreebet, formCashoutReturn, formFreebetType]);
 
   // Filtered bets
   const filteredBets = useMemo(() => {
@@ -118,6 +128,8 @@ export default function BetsManager({
     setFormCustomBookmaker("");
     setFormStake("10.00");
     setFormIsFreebet(false);
+    setFormFreebetType(defaultFreebetTypeFor("Betano"));
+    setFormCashoutReturn("");
     setFormDateTime(new Date().toISOString().replace("T", " ").slice(0, 16));
     setFormNotes("");
     setFormSelections([{ event: "", market: "", choice: "", odd: "1.80" }]);
@@ -147,6 +159,8 @@ export default function BetsManager({
     
     setFormStake(bet.stake.toString());
     setFormIsFreebet(bet.isFreebet);
+    setFormFreebetType(bet.freebetType ?? defaultFreebetTypeFor(bet.bookmaker));
+    setFormCashoutReturn(bet.status === "CASHOUT" ? String(bet.finalReturn ?? "") : "");
     setFormDateTime(bet.dateTime);
     setFormNotes(bet.notes || "");
     setFormSelections(bet.selections.map(s => ({
@@ -235,7 +249,9 @@ export default function BetsManager({
       stakeNum,
       calculatedOdd,
       formStatus,
-      formIsFreebet
+      formIsFreebet,
+      parseFloat(formCashoutReturn) || 0,
+      formFreebetType
     );
 
     const betData: Bet = {
@@ -246,6 +262,7 @@ export default function BetsManager({
       stake: stakeNum,
       odd: calculatedOdd,
       isFreebet: formIsFreebet,
+      freebetType: formIsFreebet ? formFreebetType : undefined,
       potentialReturn,
       finalReturn,
       netProfit,
@@ -281,6 +298,8 @@ export default function BetsManager({
         return <span className={`${base} bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900`}><Check size={10} /> Meio Ganha</span>;
       case "MEIO_PERDIDA":
         return <span className={`${base} bg-rose-50/50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 border-rose-200 dark:border-rose-900`}><X size={10} /> Meio Perdida</span>;
+      case "CASHOUT":
+        return <span className={`${base} bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-300 border-violet-200 dark:border-violet-900`}><MinusCircle size={10} /> Cashout</span>;
     }
   };
 
@@ -585,9 +604,31 @@ export default function BetsManager({
                     <option value="ANULADA">Anulada</option>
                     <option value="MEIO_GANHA">Meio Ganha</option>
                     <option value="MEIO_PERDIDA">Meio Perdida</option>
+                    <option value="CASHOUT">Cashout</option>
                   </select>
                 </div>
               </div>
+
+              {/* Cashout: valor recebido ao encerrar antecipadamente (editável) */}
+              {formStatus === "CASHOUT" && (
+                <div className="p-4 bg-violet-50/60 dark:bg-violet-950/30 rounded-2xl border border-violet-100 dark:border-violet-900">
+                  <label className="block text-violet-900 dark:text-violet-200 font-semibold mb-1">
+                    Valor do Cashout ({currency})
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="w-full px-3 py-2 rounded-xl border border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-800 focus:outline-none focus:border-violet-500 text-slate-700 dark:text-slate-200 font-mono font-bold"
+                    placeholder="0.00"
+                    value={formCashoutReturn}
+                    onChange={(e) => setFormCashoutReturn(e.target.value)}
+                  />
+                  <p className="text-[11px] text-violet-700/70 dark:text-violet-300/70 mt-1">
+                    Montante efetivamente recebido ao fazer cashout (independente do resultado).
+                  </p>
+                </div>
+              )}
 
               {/* Bookmaker Choice */}
               <div className="grid grid-cols-2 gap-4">
@@ -596,7 +637,12 @@ export default function BetsManager({
                   <select
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
                     value={formBookmaker}
-                    onChange={(e) => setFormBookmaker(e.target.value)}
+                    onChange={(e) => {
+                      const bk = e.target.value;
+                      setFormBookmaker(bk);
+                      // Ajusta o tipo de freebet ao default da casa escolhida.
+                      setFormFreebetType(defaultFreebetTypeFor(bk));
+                    }}
                   >
                     {AVAILABLE_BOOKMAKERS.map((b, idx) => (
                       <option key={idx} value={b}>{b}</option>
@@ -628,8 +674,8 @@ export default function BetsManager({
                 </div>
               </div>
 
-              {/* Freebet Checkbox */}
-              <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-2xl border border-indigo-100/50 dark:border-indigo-900">
+              {/* Freebet Checkbox + tipo */}
+              <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-2xl border border-indigo-100/50 dark:border-indigo-900 space-y-3">
                 <label className="flex items-center gap-2 font-semibold text-indigo-900 dark:text-indigo-200 cursor-pointer">
                   <input
                     type="checkbox"
@@ -639,6 +685,25 @@ export default function BetsManager({
                   />
                   <span>Esta aposta foi colocada com uma Freebet (Aposta Grátis)?</span>
                 </label>
+
+                {formIsFreebet && (
+                  <div>
+                    <label className="block text-indigo-900/80 dark:text-indigo-200/80 font-semibold mb-1">
+                      Tipo de Freebet
+                    </label>
+                    <select
+                      className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
+                      value={formFreebetType}
+                      onChange={(e) => setFormFreebetType(e.target.value as FreebetType)}
+                    >
+                      <option value="SNR">Stake não devolvida — SNR (ganho = (odd−1)×stake)</option>
+                      <option value="SR">Stake devolvida — SR (ganho = odd×stake)</option>
+                    </select>
+                    <p className="text-[11px] text-indigo-700/70 dark:text-indigo-300/70 mt-1">
+                      Predefinido pela casa ({formBookmaker}). SNR é o padrão; o Betclic usa SR.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Stake & Notes */}

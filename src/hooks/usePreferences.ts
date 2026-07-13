@@ -12,6 +12,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   defaultBookmaker: "Betano",
   defaultStake: 10,
   theme: "system",
+  language: "pt",
 };
 
 function loadPreferences(): Preferences {

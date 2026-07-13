@@ -4,7 +4,7 @@
 // e traduzem entre o formato snake_case da BD e o modelo Bet do frontend.
 
 import { authFetch, parseJsonResponse } from "./authApi";
-import { Bet, BetStatus, BetType, Selection } from "../types";
+import { Bet, BetStatus, BetType, FreebetType, Selection } from "../types";
 import { safeNum } from "../utils";
 
 // Linha crua devolvida pela API (colunas em snake_case).
@@ -17,9 +17,11 @@ const VALID_STATUSES: BetStatus[] = [
   "ANULADA",
   "MEIO_GANHA",
   "MEIO_PERDIDA",
+  "CASHOUT",
 ];
 
 const VALID_ORIGINS = ["MANUAL", "SCREENSHOT", "CSV"];
+const VALID_FREEBET_TYPES: FreebetType[] = ["SNR", "SR"];
 
 // ------------------------------------------------------------
 // Normaliza as seleções vindas da BD (array, string JSON ou null)
@@ -74,6 +76,9 @@ export function mapBetFromApi(row: ApiBetRow): Bet {
     stake: safeNum(row.stake),
     odd: safeNum(row.odd),
     isFreebet: row.is_freebet === true,
+    freebetType: VALID_FREEBET_TYPES.includes(row.freebet_type)
+      ? (row.freebet_type as FreebetType)
+      : undefined,
     potentialReturn: safeNum(row.potential_return),
     finalReturn: safeNum(row.final_return),
     netProfit: safeNum(row.net_profit),
@@ -98,6 +103,7 @@ export function mapBetToApi(bet: Bet) {
     stake: bet.stake,
     odd: bet.odd,
     isFreebet: bet.isFreebet,
+    freebetType: bet.freebetType,
     potentialReturn: bet.potentialReturn,
     finalReturn: bet.finalReturn,
     netProfit: bet.netProfit,

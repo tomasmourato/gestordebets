@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "git": {
+    "deploymentEnabled": {
+      "test": false
+    }
+  },
   "builds": [
     {
       "src": "package.json",

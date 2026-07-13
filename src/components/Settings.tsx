@@ -12,9 +12,10 @@ import {
   CheckCircle2,
   DollarSign
 } from "lucide-react";
-import { Preferences, AuditLog, Bet, BetStatus, Selection, BetType, ThemeMode } from "../types";
+import { Preferences, AuditLog, Bet, BetStatus, Selection, BetType, ThemeMode, Language } from "../types";
 import { calculateBetReturnAndProfit, safeNum } from "../utils";
 import BetclicImport from "./BetclicImport";
+import { useI18n } from "../lib/i18n";
 
 interface SettingsProps {
   preferences: Preferences;
@@ -37,7 +38,9 @@ export default function Settings({
   onResetDemoData,
   onImportCSV
 }: SettingsProps) {
-  
+
+  const { t } = useI18n();
+
   // Local preferences fields
   const [localCurrency, setLocalCurrency] = useState(preferences.currency);
   const [localBookmaker, setLocalBookmaker] = useState(preferences.defaultBookmaker);
@@ -74,6 +77,10 @@ export default function Settings({
   // formulário reverta uma mudança feita pelo botão de tema no cabeçalho.
   const handleThemeChange = (theme: ThemeMode) => {
     onUpdatePreferences({ ...preferences, theme });
+  };
+
+  const handleLanguageChange = (language: Language) => {
+    onUpdatePreferences({ ...preferences, language });
   };
 
   // Export Bets and Freebets to CSV
@@ -500,6 +507,19 @@ export default function Settings({
                     <option value="system">Automático (Sistema)</option>
                     <option value="light">Claro</option>
                     <option value="dark">Escuro</option>
+                  </select>
+                </div>
+
+                {/* Idioma — aplica-se de imediato (i18n) */}
+                <div>
+                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">{t("settings.language.title")}</label>
+                  <select
+                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100"
+                    value={preferences.language}
+                    onChange={(e) => handleLanguageChange(e.target.value as Language)}
+                  >
+                    <option value="pt">{t("lang.pt")}</option>
+                    <option value="en">{t("lang.en")}</option>
                   </select>
                 </div>
 
