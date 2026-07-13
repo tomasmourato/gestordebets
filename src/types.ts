@@ -79,6 +79,7 @@ export interface DashboardStats {
   refundedBets: number; // Anuladas
   halfWonBets: number;
   halfLostBets: number;
+  cashoutBets: number;
   totalStake: number;
   totalReturn: number;
   netProfit: number;

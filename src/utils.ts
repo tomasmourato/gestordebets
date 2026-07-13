@@ -116,6 +116,7 @@ export function calculateDashboardStats(bets: Bet[]): DashboardStats {
   let refundedBets = 0;
   let halfWonBets = 0;
   let halfLostBets = 0;
+  let cashoutBets = 0;
 
   let totalStake = 0;
   let totalReturn = 0;
@@ -151,19 +152,19 @@ export function calculateDashboardStats(bets: Bet[]): DashboardStats {
       case "MEIO_PERDIDA":
         halfLostBets++;
         break;
+      case "CASHOUT":
+        cashoutBets++;
+        break;
     }
   }
 
-  const settledBetsCount = wonBets + lostBets + refundedBets + halfWonBets + halfLostBets;
+  const settledBetsCount = wonBets + lostBets + refundedBets + halfWonBets + halfLostBets + cashoutBets;
   
-  // Win Rate = (Ganha + Meio Ganha * 0.5) / (Settled bets excluding refunded bets) * 100
-  // Or simple version: (Won + Half Won * 0.5) / Settled bets
-  const rateDivisor = settledBetsCount - refundedBets;
+  // Cashouts and refunds are settled, but neither is a win/loss result.
+  const rateDivisor = settledBetsCount - refundedBets - cashoutBets;
   const winRate = rateDivisor > 0 
     ? ((wonBets + halfWonBets * 0.5) / rateDivisor) * 100 
-    : settledBetsCount > 0 
-      ? (wonBets / settledBetsCount) * 100 
-      : 0;
+    : 0;
 
   // ROI = (netProfit / totalStake) * 100
   const roi = totalStake > 0 ? (netProfit / totalStake) * 100 : 0;
@@ -179,6 +180,7 @@ export function calculateDashboardStats(bets: Bet[]): DashboardStats {
     refundedBets,
     halfWonBets,
     halfLostBets,
+    cashoutBets,
     totalStake: Number(totalStake.toFixed(2)),
     totalReturn: Number(totalReturn.toFixed(2)),
     netProfit: Number(netProfit.toFixed(2)),
