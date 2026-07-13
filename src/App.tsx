@@ -114,6 +114,16 @@ export default function App() {
     }
   };
 
+  const handleDuplicateBets = async (duplicatedBets: Bet[]) => {
+    const created = await importBets(duplicatedBets);
+    if (created) {
+      addLog(
+        "DUPLICAR_APOSTAS",
+        `${created.length} ${created.length === 1 ? "aposta duplicada" : "apostas duplicadas"} com sucesso.`
+      );
+    }
+  };
+
   // ----------------------------------------------------
   // PREFERENCES & GENERAL OPERATIONS
   // ----------------------------------------------------
@@ -326,6 +336,7 @@ export default function App() {
                   bets={bets}
                   currency={preferences.currency}
                   onAddBet={handleAddBet}
+                  onAddBets={handleDuplicateBets}
                   onUpdateBet={handleUpdateBet}
                   onDeleteBet={handleDeleteBet}
                 />
