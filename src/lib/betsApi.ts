@@ -6,19 +6,10 @@
 import { authFetch, parseJsonResponse } from "./authApi";
 import { Bet, BetStatus, BetType, FreebetType, Selection } from "../types";
 import { safeNum } from "../utils";
+import { normalizeBetStatus, parseBetMetadata } from "./betStatus";
 
 // Linha crua devolvida pela API (colunas em snake_case).
 type ApiBetRow = Record<string, any>;
-
-const VALID_STATUSES: BetStatus[] = [
-  "POR_LIQUIDAR",
-  "GANHA",
-  "PERDIDA",
-  "ANULADA",
-  "MEIO_GANHA",
-  "MEIO_PERDIDA",
-  "CASHOUT",
-];
 
 const VALID_ORIGINS = ["MANUAL", "SCREENSHOT", "CSV"];
 const VALID_FREEBET_TYPES: FreebetType[] = ["SNR", "SR"];
@@ -55,10 +46,10 @@ function normalizeSelections(raw: any, rowId: string): Selection[] {
 // mapBetFromApi: linha snake_case da BD -> modelo Bet (camelCase).
 // ------------------------------------------------------------
 export function mapBetFromApi(row: ApiBetRow): Bet {
-  // Estado: mapeia legado 'PENDENTE' -> 'POR_LIQUIDAR' e valida.
-  let status = row.status as BetStatus;
-  if ((status as string) === "PENDENTE") status = "POR_LIQUIDAR";
-  if (!VALID_STATUSES.includes(status)) status = "POR_LIQUIDAR";
+  const metadata = parseBetMetadata(row.metadata);
+  // A metadata de imports antigos permite recuperar cashouts que chegaram a
+  // ser guardados como meio-ganha/meio-perdida antes do estado dedicado.
+  const status = normalizeBetStatus(row.status, metadata);
 
   // Tipo: valida contra SIMPLES/MULTIPLA.
   let type = row.type as BetType;
@@ -89,7 +80,7 @@ export function mapBetFromApi(row: ApiBetRow): Bet {
     origin,
     comment: row.comment ?? undefined,
     tags: row.tags ?? undefined,
-    metadata: row.metadata ?? undefined,
+    metadata,
   };
 }
 

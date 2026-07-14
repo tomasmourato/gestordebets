@@ -34,7 +34,7 @@ describe("Betclic mapper", () => {
     });
 
     expect(mapped).toMatchObject({
-      status: "MEIO_PERDIDA",
+      status: "CASHOUT",
       stake: 5.93,
       odd: 1.41,
       potentialReturn: 8.36,
@@ -61,13 +61,13 @@ describe("Betclic mapper", () => {
     });
 
     expect(mapped).toMatchObject({
-      status: "MEIO_PERDIDA",
+      status: "CASHOUT",
       finalReturn: 8.5,
       netProfit: -1.5,
     });
   });
 
-  test("maps a profitable cashout as Meio Ganha", () => {
+  test("keeps a profitable cashout in the dedicated status", () => {
     const mapped = mapBetclicBet({
       bet_reference: "profitable-cashout",
       bet_type: "simple",
@@ -79,7 +79,7 @@ describe("Betclic mapper", () => {
     });
 
     expect(mapped).toMatchObject({
-      status: "MEIO_GANHA",
+      status: "CASHOUT",
       finalReturn: 12.5,
       netProfit: 2.5,
     });
@@ -142,6 +142,21 @@ describe("Betano mapper", () => {
       DecimalOdds: 5.9, BonusTokens: [{ Type: "FullBet", Amount: "10,00 €" }],
     }]).bets[0];
     expect(fullBetWin).toMatchObject({ isFreebet: true, finalReturn: 59, netProfit: 59 });
+  });
+
+  test("keeps an explicitly labelled Betano cashout in the dedicated status", () => {
+    const mapped = mapBetanoBets([{
+      BetId: "cashout", Type: "Single", Settled: true, Status: "FullCashout",
+      Stake: "10,00 €", Return: "7,25 €", PossibleWinnings: "20,00 €",
+      DecimalOdds: 2, BonusTokens: [],
+    }]).bets[0];
+
+    expect(mapped).toMatchObject({
+      status: "CASHOUT",
+      finalReturn: 7.25,
+      netProfit: -2.75,
+      metadata: { isCashout: true, cashoutReturn: 7.25 },
+    });
   });
 });
 

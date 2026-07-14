@@ -1,6 +1,7 @@
 import { Router } from "express";
 import pool from "../db/pool.js";
 import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddleware.js";
+import { normalizeBetStatus } from "../src/lib/betStatus.js";
 
 const router = Router();
 
@@ -23,17 +24,6 @@ const BET_COLUMNS = `
   to_char(date_time, 'YYYY-MM-DD HH24:MI') AS date_time,
   notes, origin, selections, comment, tags, metadata, created_at
 `;
-
-// Estados válidos de uma aposta (têm de coincidir com BetStatus no frontend)
-const VALID_STATUSES = [
-  "POR_LIQUIDAR",
-  "GANHA",
-  "PERDIDA",
-  "ANULADA",
-  "MEIO_GANHA",
-  "MEIO_PERDIDA",
-  "CASHOUT",
-];
 
 const VALID_FREEBET_TYPES = ["SNR", "SR"];
 
@@ -72,9 +62,10 @@ function parseBetPayload(body: any): ParsedPayload {
   let type = typeof b.type === "string" ? b.type.trim().toUpperCase() : "SIMPLES";
   if (type !== "SIMPLES" && type !== "MULTIPLA") type = "SIMPLES";
 
-  // status: um dos seis valores válidos (default POR_LIQUIDAR)
-  let status = typeof b.status === "string" ? b.status.trim().toUpperCase() : "POR_LIQUIDAR";
-  if (!VALID_STATUSES.includes(status)) status = "POR_LIQUIDAR";
+  // CASHOUT é um estado próprio. Além do valor explícito, aceitamos os nomes
+  // usados pelas casas e corrigimos payloads legados cuja metadata ainda
+  // acompanha MEIO_GANHA/MEIO_PERDIDA mas identifica um cashout real.
+  const status = normalizeBetStatus(b.status, b.metadata);
 
   // Campos numéricos opcionais: NaN -> erro se enviados, senão null
   const numericOrNull = (raw: any, label: string): number | null | { error: string } => {

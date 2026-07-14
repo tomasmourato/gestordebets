@@ -17,11 +17,13 @@ import {
   AlertTriangle,
   ArrowUp,
   ArrowDown,
-  CheckSquare
+  CheckSquare,
+  CalendarRange
 } from "lucide-react";
 import { Bet, Selection, BetStatus, BetType, FreebetType } from "../types";
 import { calculateBetReturnAndProfit, AVAILABLE_BOOKMAKERS, safeNum } from "../utils";
 import { defaultFreebetTypeFor } from "../lib/bookmakers";
+import FilterDropdown from "./FilterDropdown";
 
 interface BetsManagerProps {
   bets: Bet[];
@@ -43,13 +45,18 @@ export default function BetsManager({
   onUpdateBet, 
   onDeleteBet
 }: BetsManagerProps) {
+  const initialFilters = useMemo(() => new URLSearchParams(window.location.search), []);
+  const initialFilter = (name: string) => initialFilters.get(name) || "ALL";
   
   // Search & Filter state
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [typeFilter, setTypeFilter] = useState<string>("ALL");
-  const [freebetFilter, setFreebetFilter] = useState<string>("ALL");
-  const [bookmakerFilter, setBookmakerFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>(() => initialFilter("status"));
+  const [typeFilter, setTypeFilter] = useState<string>(() => initialFilter("type"));
+  const [freebetFilter, setFreebetFilter] = useState<string>(() => initialFilter("money"));
+  const [bookmakerFilter, setBookmakerFilter] = useState<string>(() => initialFilter("bookmaker"));
+  const [sportFilter, setSportFilter] = useState<string>(() => initialFilter("sport"));
+  const [dateFromFilter, setDateFromFilter] = useState(() => initialFilters.get("dateFrom") || "");
+  const [dateToFilter, setDateToFilter] = useState(() => initialFilters.get("dateTo") || "");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [isSelecting, setIsSelecting] = useState(false);
@@ -127,6 +134,18 @@ export default function BetsManager({
     return calcs;
   }, [formStake, calculatedOdd, formStatus, formIsFreebet, formIsRiskFree, formSettledReturn, formCashoutReturn, formFreebetType]);
 
+  const sportOptions = useMemo(
+    () => Array.from(new Set(
+      bets.flatMap(bet => bet.selections.map(selection => selection.sport?.trim()).filter((sport): sport is string => Boolean(sport)))
+    )).sort((a, b) => a.localeCompare(b, "pt")),
+    [bets]
+  );
+  const bookmakerOptions = useMemo(
+    () => Array.from(new Set([...AVAILABLE_BOOKMAKERS, ...bets.map(bet => bet.bookmaker).filter(Boolean)]))
+      .sort((a, b) => a.localeCompare(b, "pt")),
+    [bets]
+  );
+
   // Filtered and sorted bets
   const filteredBets = useMemo(() => {
     const visibleBets = bets.filter(bet => {
@@ -147,8 +166,12 @@ export default function BetsManager({
       if (freebetFilter === "NORMAL") matchesFreebet = !bet.isFreebet && !bet.isRiskFree;
 
       const matchesBookmaker = bookmakerFilter === "ALL" || bet.bookmaker === bookmakerFilter;
+      const matchesSport = sportFilter === "ALL" || bet.selections.some(selection => selection.sport?.trim() === sportFilter);
+      const betDate = bet.dateTime?.slice(0, 10) || "";
+      const matchesDateFrom = !dateFromFilter || Boolean(betDate && betDate >= dateFromFilter);
+      const matchesDateTo = !dateToFilter || Boolean(betDate && betDate <= dateToFilter);
 
-      return matchesSearch && matchesStatus && matchesType && matchesFreebet && matchesBookmaker;
+      return matchesSearch && matchesStatus && matchesType && matchesFreebet && matchesBookmaker && matchesSport && matchesDateFrom && matchesDateTo;
     });
 
     return visibleBets.sort((a, b) => {
@@ -171,7 +194,7 @@ export default function BetsManager({
 
       return sortDirection === "asc" ? comparison : -comparison;
     });
-  }, [bets, search, statusFilter, typeFilter, freebetFilter, bookmakerFilter, sortField, sortDirection]);
+  }, [bets, search, statusFilter, typeFilter, freebetFilter, bookmakerFilter, sportFilter, dateFromFilter, dateToFilter, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -472,85 +495,156 @@ export default function BetsManager({
     }
   };
 
+  const activeFilterCount = [statusFilter, typeFilter, freebetFilter, bookmakerFilter, sportFilter]
+    .filter(value => value !== "ALL").length + (dateFromFilter || dateToFilter ? 1 : 0);
+  const formatFilterDate = (date: string) => date ? date.split("-").reverse().join("/") : "…";
+  const clearFilters = () => {
+    setStatusFilter("ALL");
+    setTypeFilter("ALL");
+    setFreebetFilter("ALL");
+    setBookmakerFilter("ALL");
+    setSportFilter("ALL");
+    setDateFromFilter("");
+    setDateToFilter("");
+  };
+
   return (
     <div className="space-y-4" id="bets-tab">
       
       {/* Search and Filters Toolbar */}
-      <div className="bg-white dark:bg-slate-900 rounded-sm p-4 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-3 items-center justify-between" id="bets-toolbar">
+      <div className="overflow-visible rounded-lg border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900" id="bets-toolbar">
+        <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+          {/* Search */}
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              placeholder="Pesquisar equipa, mercado ou notas..."
+              className="h-10 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-4 text-xs text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-indigo-500 dark:focus:bg-slate-800"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-        {/* Search */}
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Pesquisar equipa, mercado, notas..."
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-colors"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          {(dateFromFilter || dateToFilter) && (
+            <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-2.5 text-[10px] font-semibold text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-200">
+              <CalendarRange size={13} />
+              {formatFilterDate(dateFromFilter)} — {formatFilterDate(dateToFilter)}
+              <button
+                type="button"
+                onClick={() => {
+                  setDateFromFilter("");
+                  setDateToFilter("");
+                }}
+                className="ml-0.5 rounded p-0.5 transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900 cursor-pointer"
+                aria-label="Remover filtro de período"
+              >
+                <X size={11} />
+              </button>
+            </span>
+          )}
+
+          <span className="hidden text-[11px] font-medium text-slate-400 lg:block dark:text-slate-500">
+            {filteredBets.length} de {bets.length} apostas
+          </span>
+
+          {/* New Bet Button */}
+          <button
+            onClick={openAddModal}
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-md bg-indigo-600 px-4 text-xs font-semibold text-white shadow-sm shadow-indigo-950/15 transition-all hover:bg-indigo-500 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:ring-offset-2 dark:focus:ring-offset-slate-900 cursor-pointer"
+            id="btn-new-bet"
+          >
+            <Plus size={15} strokeWidth={2.5} /> Registar Aposta
+          </button>
         </div>
 
         {/* Dynamic Filters */}
-        <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
+        <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/20 xl:flex-row xl:items-center">
+          <div className="flex min-w-fit items-center justify-between gap-3 xl:justify-start">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              <Filter size={13} /> Filtros
+              {activeFilterCount > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-100 px-1.5 text-[10px] text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                  {activeFilterCount}
+                </span>
+              )}
+            </span>
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-[10px] font-semibold text-slate-400 transition-colors hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-300 cursor-pointer"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+
+          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
           
-          {/* Status Filter */}
-          <select
-            className="px-3 py-2 text-xs rounded-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:border-indigo-600 focus:outline-none transition-colors"
+          <FilterDropdown
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="ALL">Todos os Estados</option>
-            <option value="POR_LIQUIDAR">Por Liquidar</option>
-            <option value="GANHA">Ganha</option>
-            <option value="PERDIDA">Perdida</option>
-            <option value="ANULADA">Anulada</option>
-            <option value="MEIO_GANHA">Meio Ganha</option>
-            <option value="MEIO_PERDIDA">Meio Perdida</option>
-          </select>
+            options={[
+              { value: "ALL", label: "Todos os Estados" },
+              { value: "POR_LIQUIDAR", label: "Por Liquidar" },
+              { value: "GANHA", label: "Ganha" },
+              { value: "PERDIDA", label: "Perdida" },
+              { value: "ANULADA", label: "Anulada" },
+              { value: "MEIO_GANHA", label: "Meio Ganha" },
+              { value: "MEIO_PERDIDA", label: "Meio Perdida" },
+              { value: "CASHOUT", label: "Cashout" }
+            ]}
+            onChange={setStatusFilter}
+            ariaLabel="Filtrar por estado"
+          />
 
-          {/* Type Filter */}
-          <select
-            className="px-3 py-2 text-xs rounded-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:border-indigo-600 focus:outline-none transition-colors"
+          <FilterDropdown
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-          >
-            <option value="ALL">Qualquer Tipo</option>
-            <option value="SIMPLES">Simples</option>
-            <option value="MULTIPLA">Múltipla</option>
-          </select>
+            options={[
+              { value: "ALL", label: "Qualquer Tipo" },
+              { value: "SIMPLES", label: "Simples" },
+              { value: "MULTIPLA", label: "Múltipla" }
+            ]}
+            onChange={setTypeFilter}
+            ariaLabel="Filtrar por tipo de aposta"
+          />
 
-          {/* Freebet Filter */}
-          <select
-            className="px-3 py-2 text-xs rounded-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:border-indigo-600 focus:outline-none transition-colors"
+          <FilterDropdown
             value={freebetFilter}
-            onChange={(e) => setFreebetFilter(e.target.value)}
-          >
-            <option value="ALL">Tipo de Dinheiro</option>
-            <option value="NORMAL">Dinheiro Real</option>
-            <option value="FREEBET">Freebet</option>
-            <option value="RISK_FREE">Sem risco</option>
-          </select>
+            options={[
+              { value: "ALL", label: "Tipo de Dinheiro" },
+              { value: "NORMAL", label: "Dinheiro Real" },
+              { value: "FREEBET", label: "Freebet" },
+              { value: "RISK_FREE", label: "Sem risco" }
+            ]}
+            onChange={setFreebetFilter}
+            ariaLabel="Filtrar por tipo de dinheiro"
+          />
 
-          {/* Bookmaker Filter */}
-          <select
-            className="px-3 py-2 text-xs rounded-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:border-indigo-600 focus:outline-none transition-colors"
+          <FilterDropdown
             value={bookmakerFilter}
-            onChange={(e) => setBookmakerFilter(e.target.value)}
-          >
-            <option value="ALL">Todas as Casas</option>
-            {AVAILABLE_BOOKMAKERS.map((b, idx) => (
-              <option key={idx} value={b}>{b}</option>
-            ))}
-          </select>
+            options={[{ value: "ALL", label: "Todas as Casas" }, ...bookmakerOptions.map(bookmaker => ({ value: bookmaker, label: bookmaker }))]}
+            onChange={setBookmakerFilter}
+            ariaLabel="Filtrar por casa de apostas"
+          />
+
+          <FilterDropdown
+            value={sportFilter}
+            options={[{ value: "ALL", label: "Todos os Desportos" }, ...sportOptions.map(sport => ({ value: sport, label: sport }))]}
+            onChange={setSportFilter}
+            ariaLabel="Filtrar por desporto"
+          />
+
+          </div>
 
           {/* Multiple selection */}
           <button
             type="button"
             onClick={toggleSelectionMode}
-            className={`px-3 py-2 rounded-sm border font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border px-3 text-xs font-semibold transition-colors cursor-pointer ${
               isSelecting
                 ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-900 text-indigo-700 dark:text-indigo-300"
-                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600"
+                : "bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-300 hover:text-indigo-600 dark:hover:border-indigo-700 dark:hover:text-indigo-300"
             }`}
           >
             <CheckSquare size={14} />
@@ -562,22 +656,13 @@ export default function BetsManager({
               type="button"
               onClick={toggleAllFilteredBets}
               disabled={filteredBets.length === 0}
-              className="px-3 py-2 rounded-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed font-semibold text-xs transition-colors cursor-pointer"
+              className="h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition-colors hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:border-indigo-700 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
             >
               {allFilteredBetsSelected ? "Desmarcar filtradas" : `Selecionar filtradas (${filteredBets.length})`}
             </button>
           )}
 
-          {/* New Bet Button */}
-          <button
-            onClick={openAddModal}
-            className="ml-auto md:ml-0 px-4 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-            id="btn-new-bet"
-          >
-            <Plus size={14} /> Registar Aposta
-          </button>
         </div>
-
       </div>
 
       {isSelecting && selectedBetIds.size > 0 && (

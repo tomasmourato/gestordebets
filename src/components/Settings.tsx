@@ -16,6 +16,8 @@ import { Preferences, AuditLog, Bet, BetStatus, Selection, BetType, ThemeMode, L
 import { calculateBetReturnAndProfit, safeNum } from "../utils";
 import BetclicImport from "./BetclicImport";
 import { useI18n } from "../lib/i18n";
+import { normalizeBetStatus } from "../lib/betStatus";
+import FilterDropdown from "./FilterDropdown";
 
 interface SettingsProps {
   preferences: Preferences;
@@ -85,7 +87,7 @@ export default function Settings({
 
   // Export Bets and Freebets to CSV
   const handleExportCSV = () => {
-    let csvContent = "DATE;TIME;GAME;BET;STAKE;ODDS;STATUS;SPORT;BOOKIE;BETTYPE;COMMENT;TAGS\n";
+    let csvContent = "DATE;TIME;GAME;BET;STAKE;ODDS;STATUS;RETURN;SPORT;BOOKIE;BETTYPE;COMMENT;TAGS\n";
 
     bets.forEach((b) => {
       // Split dateTime into DATE and TIME
@@ -116,7 +118,10 @@ export default function Settings({
       else if (b.status === "ANULADA") statusVal = "VOID";
       else if (b.status === "MEIO_GANHA") statusVal = "WON";
       else if (b.status === "MEIO_PERDIDA") statusVal = "LOST";
+      else if (b.status === "CASHOUT") statusVal = "CASHOUT";
       else if (b.status === "POR_LIQUIDAR") statusVal = "POR_LIQUIDAR";
+
+      const returnVal = safeNum(b.finalReturn).toFixed(2);
 
       // SPORT
       let sportVal = b.selections.map(s => s.sport || "FUTEBOL").join(" + ");
@@ -166,7 +171,7 @@ export default function Settings({
       const commentField = escapeField(commentVal);
       const tagsField = escapeField(tagsVal);
 
-      csvContent += `${dateField};${timeField};${gameField};${betField};${stakeField};${oddsField};${statusField};${sportField};${bookieField};${betTypeField};${commentField};${tagsField}\n`;
+      csvContent += `${dateField};${timeField};${gameField};${betField};${stakeField};${oddsField};${statusField};${returnVal};${sportField};${bookieField};${betTypeField};${commentField};${tagsField}\n`;
     });
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -244,6 +249,7 @@ export default function Settings({
             const stakeIdx = headerRow.findIndex(h => h.toUpperCase() === "STAKE");
             const oddsIdx = headerRow.findIndex(h => h.toUpperCase() === "ODDS");
             const statusIdx = headerRow.findIndex(h => h.toUpperCase() === "STATUS");
+            const returnIdx = headerRow.findIndex(h => ["RETURN", "FINAL_RETURN", "CASHOUT_RETURN"].includes(h.toUpperCase()));
             const sportIdx = headerRow.findIndex(h => h.toUpperCase() === "SPORT");
             const bookieIdx = headerRow.findIndex(h => h.toUpperCase() === "BOOKIE");
             const betTypeIdx = headerRow.findIndex(h => h.toUpperCase() === "BETTYPE");
@@ -273,25 +279,17 @@ export default function Settings({
               const oddsVal = parseFloat(rawOdds.replace(",", "."));
 
               const statusRaw = statusIdx !== -1 && row[statusIdx] ? row[statusIdx].toUpperCase() : "PENDING";
+              const rawReturn = returnIdx !== -1 && row[returnIdx] ? row[returnIdx] : "";
+              const returnVal = parseFloat(rawReturn.replace(",", "."));
               const sportVal = sportIdx !== -1 && row[sportIdx] ? row[sportIdx] : "FUTEBOL";
               const bookieVal = bookieIdx !== -1 && row[bookieIdx] ? row[bookieIdx] : "Outro";
               const betTypeVal = betTypeIdx !== -1 && row[betTypeIdx] ? row[betTypeIdx] : "Simples";
               const commentVal = commentIdx !== -1 && row[commentIdx] ? row[commentIdx] : "";
               const tagsVal = tagsIdx !== -1 && row[tagsIdx] ? row[tagsIdx] : "";
 
-              // Map status
-              let status: BetStatus = "POR_LIQUIDAR";
-              if (statusRaw === "WON" || statusRaw === "GANHA") {
-                status = "GANHA";
-              } else if (statusRaw === "LOST" || statusRaw === "PERDIDA") {
-                status = "PERDIDA";
-              } else if (statusRaw === "VOID" || statusRaw === "ANULADA") {
-                status = "ANULADA";
-              } else if (statusRaw === "HALF_WON" || statusRaw === "MEIO_GANHA") {
-                status = "MEIO_GANHA";
-              } else if (statusRaw === "HALF_LOST" || statusRaw === "MEIO_PERDIDA") {
-                status = "MEIO_PERDIDA";
-              }
+              // CASHOUT e os aliases das casas são normalizados para o estado
+              // dedicado; nunca são convertidos em meio-ganha/meio-perdida.
+              const status: BetStatus = normalizeBetStatus(statusRaw);
 
               // Detect freebet
               const combinedNotes = [commentVal, tagsVal].filter(Boolean).join(" | ");
@@ -363,7 +361,8 @@ export default function Settings({
                 stakeNumVal,
                 totalOdd,
                 status,
-                isFreebet
+                isFreebet,
+                status === "CASHOUT" && !isNaN(returnVal) ? returnVal : undefined
               );
 
               parsedBets.push({
@@ -460,16 +459,17 @@ export default function Settings({
                 {/* Currency */}
                 <div>
                   <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Moeda / Símbolo</label>
-                  <select
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100"
+                  <FilterDropdown
                     value={localCurrency}
-                    onChange={(e) => setLocalCurrency(e.target.value)}
-                  >
-                    <option value="€">Euro (€)</option>
-                    <option value="$">Dólar ($)</option>
-                    <option value="£">Libra (£)</option>
-                    <option value="R$">Real (R$)</option>
-                  </select>
+                    options={[
+                      { value: "€", label: "Euro (€)" },
+                      { value: "$", label: "Dólar ($)" },
+                      { value: "£", label: "Libra (£)" },
+                      { value: "R$", label: "Real (R$)" }
+                    ]}
+                    onChange={setLocalCurrency}
+                    ariaLabel="Selecionar moeda"
+                  />
                 </div>
 
                 {/* Default bookmaker */}
@@ -499,28 +499,30 @@ export default function Settings({
                 {/* Theme — aplica-se de imediato */}
                 <div>
                   <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Aspeto / Tema</label>
-                  <select
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100"
+                  <FilterDropdown
                     value={preferences.theme}
-                    onChange={(e) => handleThemeChange(e.target.value as ThemeMode)}
-                  >
-                    <option value="system">Automático (Sistema)</option>
-                    <option value="light">Claro</option>
-                    <option value="dark">Escuro</option>
-                  </select>
+                    options={[
+                      { value: "system", label: "Automático (Sistema)" },
+                      { value: "light", label: "Claro" },
+                      { value: "dark", label: "Escuro" }
+                    ]}
+                    onChange={handleThemeChange}
+                    ariaLabel="Selecionar tema"
+                  />
                 </div>
 
                 {/* Idioma — aplica-se de imediato (i18n) */}
                 <div>
                   <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">{t("settings.language.title")}</label>
-                  <select
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100"
+                  <FilterDropdown
                     value={preferences.language}
-                    onChange={(e) => handleLanguageChange(e.target.value as Language)}
-                  >
-                    <option value="pt">{t("lang.pt")}</option>
-                    <option value="en">{t("lang.en")}</option>
-                  </select>
+                    options={[
+                      { value: "pt", label: t("lang.pt") },
+                      { value: "en", label: t("lang.en") }
+                    ]}
+                    onChange={handleLanguageChange}
+                    ariaLabel={t("settings.language.title")}
+                  />
                 </div>
 
               </div>
