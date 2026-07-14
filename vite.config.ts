@@ -10,6 +10,22 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['pwa-192x192.png', 'pwa-512x512.png'],
+      workbox: {
+        // O index.html (app shell) NÃO é pré-cacheado. Cada navegação vai
+        // sempre à rede e recebe o shell atual, que referencia os assets com o
+        // hash correto. Isto elimina o bug do "shell obsoleto": antes o SW
+        // servia um index.html em cache de um build antigo, cujos assets já
+        // tinham sido removidos no deploy seguinte -> ecrã em branco no desktop.
+        // Só os assets imutáveis (com hash no nome) são pré-cacheados, para
+        // carregamento rápido; a app continua instalável (o SW tem fetch handler).
+        // Esta app precisa sempre de rede (login/BD/API), por isso não perdemos
+        // funcionalidade offline útil.
+        globPatterns: ['**/*.{js,css,ico,png,svg,woff,woff2}'],
+        navigateFallback: null,
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+      },
       manifest: {
         name: 'BetTrackr',
         short_name: 'BetTrackr',
