@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -12,10 +13,15 @@ import {
   Award,
   Percent,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  Filter,
+  CalendarRange,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
-import { Bet, DashboardStats } from "../types";
+import { Bet, BetStatus, DashboardStats } from "../types";
 import { calculateDashboardStats, safeNum } from "../utils";
+import FilterDropdown from "./FilterDropdown";
 import { 
   ResponsiveContainer, 
   AreaChart, 
@@ -38,9 +44,64 @@ interface DashboardProps {
   bets: Bet[];
   currency: string;
   isDark: boolean;
+  onOpenBets: (filters: DashboardBetsFilters) => void;
 }
 
-export default function Dashboard({ bets: allBets, currency, isDark }: DashboardProps) {
+export interface DashboardBetsFilters {
+  status: BetStatus;
+  bookmaker?: string;
+  sport?: string;
+  type?: string;
+  money?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+type Timeframe = "ALL" | "7_DAYS" | "30_DAYS" | "90_DAYS" | "THIS_MONTH" | "THIS_YEAR" | "CUSTOM";
+type RangeEndpoint = "start" | "end";
+
+const TIMEFRAME_OPTIONS: Array<{ value: Timeframe; label: string }> = [
+  { value: "ALL", label: "Todo o Período" },
+  { value: "7_DAYS", label: "Últimos 7 dias" },
+  { value: "30_DAYS", label: "Últimos 30 dias" },
+  { value: "90_DAYS", label: "Últimos 90 dias" },
+  { value: "THIS_MONTH", label: "Este mês" },
+  { value: "THIS_YEAR", label: "Este ano" },
+  { value: "CUSTOM", label: "Período personalizado" }
+];
+
+const toLocalDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const fromLocalDateKey = (dateKey: string) => {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+};
+
+const formatDateKey = (dateKey: string) => {
+  const date = fromLocalDateKey(dateKey);
+  return date ? new Intl.DateTimeFormat("pt-PT").format(date) : "dd/mm/aaaa";
+};
+
+const calendarDaysFor = (month: Date) => {
+  const firstOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
+  const mondayOffset = (firstOfMonth.getDay() + 6) % 7;
+  const firstVisibleDay = new Date(firstOfMonth);
+  firstVisibleDay.setDate(firstOfMonth.getDate() - mondayOffset);
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(firstVisibleDay);
+    date.setDate(firstVisibleDay.getDate() + index);
+    return date;
+  });
+};
+
+export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets }: DashboardProps) {
   // Filtros do dashboard (D2): recalculam TODAS as estatísticas/gráficos para o
   // subconjunto escolhido. As opções vêm da lista completa; o cálculo usa a
   // lista filtrada `bets` (sombreada abaixo).
@@ -48,6 +109,41 @@ export default function Dashboard({ bets: allBets, currency, isDark }: Dashboard
   const [filterSport, setFilterSport] = useState("ALL");
   const [filterType, setFilterType] = useState("ALL");
   const [filterFreebet, setFilterFreebet] = useState("ALL");
+  const [filterTimeframe, setFilterTimeframe] = useState<Timeframe>("ALL");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+  const [isCustomRangeOpen, setIsCustomRangeOpen] = useState(false);
+  const [isTimeframeMenuOpen, setIsTimeframeMenuOpen] = useState(false);
+  const [activeRangeEndpoint, setActiveRangeEndpoint] = useState<RangeEndpoint>("start");
+  const customRangeContainerRef = useRef<HTMLDivElement>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
+
+  useEffect(() => {
+    if (!isCustomRangeOpen && !isTimeframeMenuOpen) return;
+
+    const handleOutsidePointer = (event: PointerEvent) => {
+      if (!customRangeContainerRef.current?.contains(event.target as Node)) {
+        setIsCustomRangeOpen(false);
+        setIsTimeframeMenuOpen(false);
+      }
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsCustomRangeOpen(false);
+        setIsTimeframeMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsidePointer);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isCustomRangeOpen, isTimeframeMenuOpen]);
 
   const bookmakerOptions = useMemo(
     () => Array.from(new Set(allBets.map(b => b.bookmaker).filter((b): b is string => !!b))).sort(),
@@ -65,6 +161,50 @@ export default function Dashboard({ bets: allBets, currency, isDark }: Dashboard
     [allBets]
   );
 
+  const timeframeRange = useMemo(() => {
+    if (filterTimeframe === "ALL") return { start: "", end: "" };
+    if (filterTimeframe === "CUSTOM") return { start: customStartDate, end: customEndDate };
+
+    const today = new Date();
+    const start = new Date(today);
+
+    if (filterTimeframe === "7_DAYS") start.setDate(today.getDate() - 6);
+    if (filterTimeframe === "30_DAYS") start.setDate(today.getDate() - 29);
+    if (filterTimeframe === "90_DAYS") start.setDate(today.getDate() - 89);
+    if (filterTimeframe === "THIS_MONTH") start.setDate(1);
+    if (filterTimeframe === "THIS_YEAR") start.setMonth(0, 1);
+
+    return { start: toLocalDateKey(start), end: toLocalDateKey(today) };
+  }, [filterTimeframe, customStartDate, customEndDate]);
+
+  const calendarDays = useMemo(() => calendarDaysFor(calendarMonth), [calendarMonth]);
+
+  const openCustomRangePicker = () => {
+    const endpoint: RangeEndpoint = customStartDate && !customEndDate ? "end" : "start";
+    const preferredDate = fromLocalDateKey(endpoint === "end" ? customEndDate : customStartDate) || new Date();
+    setActiveRangeEndpoint(endpoint);
+    setCalendarMonth(new Date(preferredDate.getFullYear(), preferredDate.getMonth(), 1));
+    setIsCustomRangeOpen(true);
+  };
+
+  const selectCalendarDate = (date: Date) => {
+    const dateKey = toLocalDateKey(date);
+
+    if (activeRangeEndpoint === "start") {
+      setCustomStartDate(dateKey);
+      if (customEndDate && dateKey > customEndDate) setCustomEndDate("");
+      setActiveRangeEndpoint("end");
+      return;
+    }
+
+    if (customStartDate && dateKey < customStartDate) {
+      setCustomStartDate(dateKey);
+      setCustomEndDate(customStartDate);
+    } else {
+      setCustomEndDate(dateKey);
+    }
+  };
+
   // `bets` sombreia a prop: é o subconjunto filtrado que todo o código abaixo usa.
   const bets = useMemo(
     () =>
@@ -74,19 +214,46 @@ export default function Dashboard({ bets: allBets, currency, isDark }: Dashboard
         if (filterFreebet === "FREEBET" && !b.isFreebet) return false;
         if (filterFreebet === "NORMAL" && b.isFreebet) return false;
         if (filterSport !== "ALL" && !(b.selections || []).some(s => s.sport === filterSport)) return false;
+        if (timeframeRange.start || timeframeRange.end) {
+          const betDate = b.dateTime?.slice(0, 10) || "";
+          if (!betDate) return false;
+          if (timeframeRange.start && betDate < timeframeRange.start) return false;
+          if (timeframeRange.end && betDate > timeframeRange.end) return false;
+        }
         return true;
       }),
-    [allBets, filterBookmaker, filterSport, filterType, filterFreebet]
+    [allBets, filterBookmaker, filterSport, filterType, filterFreebet, timeframeRange]
   );
 
   const hasFilters =
-    filterBookmaker !== "ALL" || filterSport !== "ALL" || filterType !== "ALL" || filterFreebet !== "ALL";
+    filterBookmaker !== "ALL" || filterSport !== "ALL" || filterType !== "ALL" || filterFreebet !== "ALL" || filterTimeframe !== "ALL";
+
+  const activeFilterCount = [filterBookmaker, filterSport, filterType, filterFreebet, filterTimeframe]
+    .filter(value => value !== "ALL").length;
 
   const clearFilters = () => {
     setFilterBookmaker("ALL");
     setFilterSport("ALL");
     setFilterType("ALL");
     setFilterFreebet("ALL");
+    setFilterTimeframe("ALL");
+    setCustomStartDate("");
+    setCustomEndDate("");
+    setIsCustomRangeOpen(false);
+    setIsTimeframeMenuOpen(false);
+    setActiveRangeEndpoint("start");
+  };
+
+  const openBetsForStatus = (status: BetStatus) => {
+    onOpenBets({
+      status,
+      bookmaker: filterBookmaker !== "ALL" ? filterBookmaker : undefined,
+      sport: filterSport !== "ALL" ? filterSport : undefined,
+      type: filterType !== "ALL" ? filterType : undefined,
+      money: filterFreebet !== "ALL" ? filterFreebet : undefined,
+      dateFrom: timeframeRange.start || undefined,
+      dateTo: timeframeRange.end || undefined
+    });
   };
 
   const stats = useMemo(() => calculateDashboardStats(bets), [bets]);
@@ -236,12 +403,12 @@ export default function Dashboard({ bets: allBets, currency, isDark }: Dashboard
     });
 
     return [
-      { name: "Ganha", value: statusCounts.GANHA, color: "#10B981" },
-      { name: "Meio Ganha", value: statusCounts.MEIO_GANHA, color: "#34D399" },
-      { name: "Cashout", value: statusCounts.CASHOUT, color: "#8B5CF6" },
-      { name: "Anulada", value: statusCounts.ANULADA, color: "#9CA3AF" },
-      { name: "Meio Perdida", value: statusCounts.MEIO_PERDIDA, color: "#F87171" },
-      { name: "Perdida", value: statusCounts.PERDIDA, color: "#EF4444" },
+      { name: "Ganha", status: "GANHA" as BetStatus, value: statusCounts.GANHA, color: "#10B981" },
+      { name: "Meio Ganha", status: "MEIO_GANHA" as BetStatus, value: statusCounts.MEIO_GANHA, color: "#34D399" },
+      { name: "Cashout", status: "CASHOUT" as BetStatus, value: statusCounts.CASHOUT, color: "#8B5CF6" },
+      { name: "Anulada", status: "ANULADA" as BetStatus, value: statusCounts.ANULADA, color: "#9CA3AF" },
+      { name: "Meio Perdida", status: "MEIO_PERDIDA" as BetStatus, value: statusCounts.MEIO_PERDIDA, color: "#F87171" },
+      { name: "Perdida", status: "PERDIDA" as BetStatus, value: statusCounts.PERDIDA, color: "#EF4444" },
     ].filter(item => item.value > 0);
   }, [bets]);
 
@@ -285,51 +452,247 @@ export default function Dashboard({ bets: allBets, currency, isDark }: Dashboard
     };
   }, [bets, bookmakerData]);
 
-  const filterSelectClass =
-    "px-3 py-2 text-xs rounded-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 focus:border-indigo-600 focus:outline-none transition-colors";
-
   return (
     <div className="space-y-6" id="dashboard-tab">
 
       {/* Filtros (D2) */}
-      <div className="bg-white dark:bg-slate-900 rounded-sm p-3 border border-slate-200 dark:border-slate-800 flex flex-wrap gap-2 items-center" id="dashboard-filters">
-        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mr-1">Filtros</span>
-
-        <select className={filterSelectClass} value={filterBookmaker} onChange={(e) => setFilterBookmaker(e.target.value)}>
-          <option value="ALL">Todas as Casas</option>
-          {bookmakerOptions.map((b) => <option key={b} value={b}>{b}</option>)}
-        </select>
-
-        <select className={filterSelectClass} value={filterSport} onChange={(e) => setFilterSport(e.target.value)}>
-          <option value="ALL">Todos os Desportos</option>
-          {sportOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
-
-        <select className={filterSelectClass} value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-          <option value="ALL">Qualquer Tipo</option>
-          <option value="SIMPLES">Simples</option>
-          <option value="MULTIPLA">Múltipla</option>
-        </select>
-
-        <select className={filterSelectClass} value={filterFreebet} onChange={(e) => setFilterFreebet(e.target.value)}>
-          <option value="ALL">Dinheiro e Freebet</option>
-          <option value="NORMAL">Dinheiro Real</option>
-          <option value="FREEBET">Freebet</option>
-        </select>
-
-        {hasFilters && (
-          <>
-            <button
-              onClick={clearFilters}
-              className="px-3 py-2 text-xs rounded-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 font-semibold transition-colors cursor-pointer"
-            >
-              Limpar
-            </button>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 ml-auto">
-              A mostrar {bets.length} de {allBets.length} apostas
+      <div className="overflow-visible rounded-lg border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900" id="dashboard-filters">
+        <div className="flex flex-col gap-3 bg-slate-50/60 p-4 dark:bg-slate-950/20 xl:flex-row xl:items-center">
+          <div className="flex min-w-fit items-center justify-between gap-3 xl:justify-start">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              <Filter size={13} /> Filtros
+              {activeFilterCount > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-100 px-1.5 text-[10px] text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                  {activeFilterCount}
+                </span>
+              )}
             </span>
-          </>
-        )}
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-[10px] font-semibold text-slate-400 transition-colors hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-300 cursor-pointer"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+
+          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <FilterDropdown
+              value={filterBookmaker}
+              options={[{ value: "ALL", label: "Todas as Casas" }, ...bookmakerOptions.map(bookmaker => ({ value: bookmaker, label: bookmaker }))]}
+              onChange={setFilterBookmaker}
+              ariaLabel="Filtrar por casa de apostas"
+            />
+
+            <FilterDropdown
+              value={filterSport}
+              options={[{ value: "ALL", label: "Todos os Desportos" }, ...sportOptions.map(sport => ({ value: sport, label: sport }))]}
+              onChange={setFilterSport}
+              ariaLabel="Filtrar por desporto"
+            />
+
+            <FilterDropdown
+              value={filterType}
+              options={[
+                { value: "ALL", label: "Qualquer Tipo" },
+                { value: "SIMPLES", label: "Simples" },
+                { value: "MULTIPLA", label: "Múltipla" }
+              ]}
+              onChange={setFilterType}
+              ariaLabel="Filtrar por tipo de aposta"
+            />
+
+            <FilterDropdown
+              value={filterFreebet}
+              options={[
+                { value: "ALL", label: "Dinheiro e Freebet" },
+                { value: "NORMAL", label: "Dinheiro Real" },
+                { value: "FREEBET", label: "Freebet" }
+              ]}
+              onChange={setFilterFreebet}
+              ariaLabel="Filtrar por tipo de dinheiro"
+            />
+
+            <div ref={customRangeContainerRef} className="relative min-w-0">
+              <FilterDropdown
+                value={filterTimeframe}
+                options={TIMEFRAME_OPTIONS}
+                open={isTimeframeMenuOpen}
+                onOpenChange={setIsTimeframeMenuOpen}
+                onTriggerClick={() => {
+                  if (filterTimeframe === "CUSTOM") {
+                    if (isCustomRangeOpen) {
+                      setIsCustomRangeOpen(false);
+                      setIsTimeframeMenuOpen(true);
+                    } else if (isTimeframeMenuOpen) {
+                      setIsTimeframeMenuOpen(false);
+                    } else {
+                      openCustomRangePicker();
+                    }
+                    return;
+                  }
+
+                  setIsCustomRangeOpen(false);
+                  setIsTimeframeMenuOpen(current => !current);
+                }}
+                onChange={(nextTimeframe) => {
+                  setFilterTimeframe(nextTimeframe);
+                  if (nextTimeframe === "CUSTOM") openCustomRangePicker();
+                  else setIsCustomRangeOpen(false);
+                }}
+                ariaLabel="Filtrar por período"
+              />
+
+              <AnimatePresence>
+                {filterTimeframe === "CUSTOM" && isCustomRangeOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                    transition={{ duration: 0.16, ease: "easeOut" }}
+                    className="absolute right-0 top-[calc(100%+0.5rem)] z-50 max-h-[calc(100vh-8rem)] w-[min(22rem,calc(100vw-3rem))] select-none overflow-y-auto rounded-lg border border-slate-200 bg-white p-3 shadow-xl shadow-slate-950/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/30"
+                    role="dialog"
+                    aria-label="Escolher período personalizado"
+                  >
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-300">
+                          <CalendarRange size={15} />
+                        </span>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">Período personalizado</p>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500">As datas inicial e final são incluídas.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Data inicial</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveRangeEndpoint("start");
+                            const date = fromLocalDateKey(customStartDate);
+                            if (date) setCalendarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+                          }}
+                          className={`flex h-10 w-full items-center justify-between rounded-md border px-2.5 text-left text-xs font-semibold outline-none transition-all cursor-pointer ${
+                            activeRangeEndpoint === "start"
+                              ? "border-indigo-500 bg-indigo-50/70 text-indigo-700 ring-2 ring-indigo-500/10 dark:bg-indigo-950/40 dark:text-indigo-200"
+                              : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-slate-600"
+                          }`}
+                        >
+                          <span>{formatDateKey(customStartDate)}</span>
+                          <CalendarRange size={13} className="text-slate-400" />
+                        </button>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Data final</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveRangeEndpoint("end");
+                            const date = fromLocalDateKey(customEndDate || customStartDate);
+                            if (date) setCalendarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+                          }}
+                          className={`flex h-10 w-full items-center justify-between rounded-md border px-2.5 text-left text-xs font-semibold outline-none transition-all cursor-pointer ${
+                            activeRangeEndpoint === "end"
+                              ? "border-indigo-500 bg-indigo-50/70 text-indigo-700 ring-2 ring-indigo-500/10 dark:bg-indigo-950/40 dark:text-indigo-200"
+                              : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-slate-600"
+                          }`}
+                        >
+                          <span>{formatDateKey(customEndDate)}</span>
+                          <CalendarRange size={13} className="text-slate-400" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50/70 p-2 dark:border-slate-800 dark:bg-slate-950/40">
+                      <div className="mb-2 flex items-center justify-between px-1">
+                        <button
+                          type="button"
+                          onClick={() => setCalendarMonth(current => new Date(current.getFullYear(), current.getMonth() - 1, 1))}
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-white hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-300 cursor-pointer"
+                          aria-label="Mês anterior"
+                        >
+                          <ChevronLeft size={15} />
+                        </button>
+                        <span className="text-xs font-semibold capitalize text-slate-700 dark:text-slate-200">
+                          {calendarMonth.toLocaleDateString("pt-PT", { month: "long", year: "numeric" })}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setCalendarMonth(current => new Date(current.getFullYear(), current.getMonth() + 1, 1))}
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-white hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-300 cursor-pointer"
+                          aria-label="Mês seguinte"
+                        >
+                          <ChevronRight size={15} />
+                        </button>
+                      </div>
+
+                      <div className="mb-1 grid grid-cols-7">
+                        {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map(day => (
+                          <span key={day} className="flex h-6 items-center justify-center text-[9px] font-bold uppercase text-slate-400 dark:text-slate-600">
+                            {day}
+                          </span>
+                        ))}
+                      </div>
+
+                      <motion.div
+                        key={`${calendarMonth.getFullYear()}-${calendarMonth.getMonth()}`}
+                        initial={{ opacity: 0.45, x: 3 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.12, ease: "easeOut" }}
+                        className="grid grid-cols-7 gap-0.5"
+                      >
+                        {calendarDays.map(date => {
+                          const dateKey = toLocalDateKey(date);
+                          const isCurrentMonth = date.getMonth() === calendarMonth.getMonth();
+                          const isStart = dateKey === customStartDate;
+                          const isEnd = dateKey === customEndDate;
+                          const isRangeEdge = isStart || isEnd;
+                          const isInRange = Boolean(customStartDate && customEndDate && dateKey > customStartDate && dateKey < customEndDate);
+                          const isToday = dateKey === toLocalDateKey(new Date());
+
+                          return (
+                            <button
+                              type="button"
+                              key={dateKey}
+                              onClick={() => selectCalendarDate(date)}
+                              className={`relative flex aspect-square items-center justify-center rounded-md text-[10px] font-semibold outline-none transition-colors cursor-pointer ${
+                                isRangeEdge
+                                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-950/20 hover:bg-indigo-500"
+                                  : isInRange
+                                    ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-950/70 dark:text-indigo-200 dark:hover:bg-indigo-900"
+                                    : isCurrentMonth
+                                      ? "text-slate-700 hover:bg-white hover:text-indigo-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-indigo-300"
+                                      : "text-slate-300 hover:bg-white hover:text-slate-500 dark:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-500"
+                              }`}
+                              aria-label={date.toLocaleDateString("pt-PT", { day: "numeric", month: "long", year: "numeric" })}
+                              aria-pressed={isRangeEdge}
+                            >
+                              {date.getDate()}
+                              {isToday && !isRangeEdge && (
+                                <span className="absolute bottom-1 h-0.5 w-0.5 rounded-full bg-indigo-500" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </motion.div>
+                    </div>
+
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+            {bets.length} de {allBets.length} apostas
+          </span>
+        </div>
       </div>
 
       {/* 4 Cards Grid */}
@@ -501,7 +864,12 @@ export default function Dashboard({ bets: allBets, currency, isDark }: Dashboard
                         dataKey="value"
                       >
                         {statusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.color}
+                            onClick={() => openBetsForStatus(entry.status)}
+                            className="cursor-pointer outline-none transition-opacity hover:opacity-80"
+                          />
                         ))}
                       </Pie>
                       <Tooltip
@@ -523,10 +891,16 @@ export default function Dashboard({ bets: allBets, currency, isDark }: Dashboard
                 {/* Custom Legend */}
                 <div className="grid grid-cols-2 gap-2 text-xs pt-4 border-t border-slate-100 dark:border-slate-800">
                   {statusData.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                    <button
+                      type="button"
+                      key={idx}
+                      onClick={() => openBetsForStatus(item.status)}
+                      className="group flex items-center gap-1.5 rounded-md px-1 py-0.5 text-left text-slate-600 transition-colors hover:bg-slate-50 hover:text-indigo-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white cursor-pointer"
+                      title={`Ver apostas: ${item.name}`}
+                    >
                       <span className="w-2.5 h-2.5 rounded-xs shrink-0" style={{ backgroundColor: item.color }} />
-                      <span className="truncate">{item.name} ({item.value})</span>
-                    </div>
+                      <span className="truncate group-hover:underline">{item.name} ({item.value})</span>
+                    </button>
                   ))}
                 </div>
               </>

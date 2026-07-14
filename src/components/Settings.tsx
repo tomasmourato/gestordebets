@@ -17,6 +17,7 @@ import { calculateBetReturnAndProfit, safeNum } from "../utils";
 import BetclicImport from "./BetclicImport";
 import { useI18n } from "../lib/i18n";
 import { normalizeBetStatus } from "../lib/betStatus";
+import FilterDropdown from "./FilterDropdown";
 
 interface SettingsProps {
   preferences: Preferences;
@@ -458,16 +459,17 @@ export default function Settings({
                 {/* Currency */}
                 <div>
                   <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Moeda / Símbolo</label>
-                  <select
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100"
+                  <FilterDropdown
                     value={localCurrency}
-                    onChange={(e) => setLocalCurrency(e.target.value)}
-                  >
-                    <option value="€">Euro (€)</option>
-                    <option value="$">Dólar ($)</option>
-                    <option value="£">Libra (£)</option>
-                    <option value="R$">Real (R$)</option>
-                  </select>
+                    options={[
+                      { value: "€", label: "Euro (€)" },
+                      { value: "$", label: "Dólar ($)" },
+                      { value: "£", label: "Libra (£)" },
+                      { value: "R$", label: "Real (R$)" }
+                    ]}
+                    onChange={setLocalCurrency}
+                    ariaLabel="Selecionar moeda"
+                  />
                 </div>
 
                 {/* Default bookmaker */}
@@ -497,28 +499,30 @@ export default function Settings({
                 {/* Theme — aplica-se de imediato */}
                 <div>
                   <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Aspeto / Tema</label>
-                  <select
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100"
+                  <FilterDropdown
                     value={preferences.theme}
-                    onChange={(e) => handleThemeChange(e.target.value as ThemeMode)}
-                  >
-                    <option value="system">Automático (Sistema)</option>
-                    <option value="light">Claro</option>
-                    <option value="dark">Escuro</option>
-                  </select>
+                    options={[
+                      { value: "system", label: "Automático (Sistema)" },
+                      { value: "light", label: "Claro" },
+                      { value: "dark", label: "Escuro" }
+                    ]}
+                    onChange={handleThemeChange}
+                    ariaLabel="Selecionar tema"
+                  />
                 </div>
 
                 {/* Idioma — aplica-se de imediato (i18n) */}
                 <div>
                   <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">{t("settings.language.title")}</label>
-                  <select
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100"
+                  <FilterDropdown
                     value={preferences.language}
-                    onChange={(e) => handleLanguageChange(e.target.value as Language)}
-                  >
-                    <option value="pt">{t("lang.pt")}</option>
-                    <option value="en">{t("lang.en")}</option>
-                  </select>
+                    options={[
+                      { value: "pt", label: t("lang.pt") },
+                      { value: "en", label: t("lang.en") }
+                    ]}
+                    onChange={handleLanguageChange}
+                    ariaLabel={t("settings.language.title")}
+                  />
                 </div>
 
               </div>
