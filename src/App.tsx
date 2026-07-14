@@ -5,6 +5,7 @@ import {
   Layers,
   Sparkles,
   Settings as SettingsIcon,
+  Users,
   Moon,
   Sun,
   X,
@@ -18,6 +19,7 @@ import Dashboard from "./components/Dashboard";
 import BetsManager from "./components/BetsManager";
 import ScreenshotImporter from "./components/ScreenshotImporter";
 import Settings from "./components/Settings";
+import Social from "./components/Social";
 import AuthPage from "./components/AuthPage";
 import { isAuthenticated, logout, getStoredUser } from "./lib/authApi";
 import { usePreferences } from "./hooks/usePreferences";
@@ -248,6 +250,12 @@ export default function App() {
               <Sparkles size={13} className="text-amber-500 animate-pulse" /> {t("nav.import")}
             </button>
             <button
+              onClick={() => setActiveTab("SOCIAL")}
+              className={`px-3.5 py-2 rounded transition-colors flex items-center gap-1 ${activeTab === "SOCIAL" ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+            >
+              <Users size={13} /> {t("nav.social")}
+            </button>
+            <button
               onClick={() => setActiveTab("SETTINGS")}
               className={`px-3.5 py-2 rounded transition-colors ${activeTab === "SETTINGS" ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
             >
@@ -351,6 +359,9 @@ export default function App() {
                   onAddBet={handleAddBet}
                 />
               )}
+              {activeTab === "SOCIAL" && (
+                <Social currency={preferences.currency} isDark={isDark} />
+              )}
               {activeTab === "SETTINGS" && (
                 <I18nProvider lang={preferences.language}>
                   <Settings
@@ -372,7 +383,7 @@ export default function App() {
 
       {/* Mobile Footer Tab Bar */}
       <footer className="md:hidden bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 sticky bottom-0 z-40 shrink-0 shadow-lg">
-        <div className="grid grid-cols-4 h-16 text-[9px] font-bold text-slate-400 dark:text-slate-500">
+        <div className="grid grid-cols-5 h-16 text-[9px] font-bold text-slate-400 dark:text-slate-500">
           <button
             onClick={() => setActiveTab("DASHBOARD")}
             className={`flex flex-col items-center justify-center gap-1 ${activeTab === "DASHBOARD" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
@@ -393,6 +404,13 @@ export default function App() {
           >
             <Sparkles size={18} className="text-amber-500 animate-pulse" />
             <span>{t("footer.ai")}</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("SOCIAL")}
+            className={`flex flex-col items-center justify-center gap-1 ${activeTab === "SOCIAL" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
+          >
+            <Users size={18} />
+            <span>{t("footer.social")}</span>
           </button>
           <button
             onClick={() => setActiveTab("SETTINGS")}

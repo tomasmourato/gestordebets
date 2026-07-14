@@ -60,6 +60,35 @@ export interface Bet {
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type Language = 'pt' | 'en';
 
+// ------------------------------------------------------------
+// Social (amizades)
+// ------------------------------------------------------------
+// Relação entre o utilizador autenticado e outro, do ponto de vista de "mim":
+//  none     -> sem relação
+//  friends  -> amizade aceite
+//  incoming -> o outro enviou-me um pedido (posso aceitar)
+//  outgoing -> eu enviei-lhe um pedido (aguarda resposta)
+export type Relationship = 'none' | 'friends' | 'incoming' | 'outgoing';
+
+export interface Friend {
+  id: string;
+  username: string;
+  since?: string;
+}
+
+export interface UserSearchResult {
+  id: string;
+  username: string;
+  relationship: Relationship;
+}
+
+export interface FriendRequest {
+  id: string;        // id da linha de amizade (para aceitar/recusar/cancelar)
+  user_id: string;   // id do outro utilizador
+  username: string;
+  created_at: string;
+}
+
 export interface Preferences {
   currency: string;
   defaultBookmaker: string;
