@@ -7,6 +7,11 @@
 //    ID da extensão nem de a publicar).
 
 (function () {
+  // Guarda contra dupla injeção (declaração no manifest + reinjeção do
+  // background após update): dois listeners duplicariam a importação.
+  if (window.__bettrackrBridgeLoaded) return;
+  window.__bettrackrBridgeLoaded = true;
+
   const KEY = "gestordebets_token";
   const APP = "bettrackr-app"; // mensagens vindas da página
   const EXT = "bettrackr-ext"; // mensagens enviadas pela extensão

@@ -8,6 +8,28 @@ import { fetchBetanoHistory } from "./betano-history.js";
 
 const PAGE_SIZE = 20;
 const DEFAULT_BETTRACKR_BASE = "https://gestordebets.vercel.app";
+const BETTRACKR_APP_URLS = [
+  "https://gestordebets.vercel.app/*",
+  "http://localhost/*",
+  "http://127.0.0.1/*",
+];
+
+// Recarregar/atualizar a extensão mata os content scripts das tabs já abertas
+// e o Chrome NÃO os reinjeta — a app deixava de detetar a extensão (PING sem
+// resposta) até o utilizador recarregar a página à mão. Numa reinstalação o
+// chrome.storage também vem vazio (token BetTrackr perdido). Reinjetar a ponte
+// nas tabs abertas da app repõe a deteção e ressincroniza o token de imediato.
+chrome.runtime.onInstalled.addListener(async () => {
+  try {
+    const tabs = await chrome.tabs.query({ url: BETTRACKR_APP_URLS });
+    for (const tab of tabs) {
+      if (tab.id === undefined) continue;
+      chrome.scripting
+        .executeScript({ target: { tabId: tab.id }, files: ["src/content-bettrackr.js"] })
+        .catch(() => {}); // tab protegida/descarregada — o reload manual continua a funcionar
+    }
+  } catch (_) {}
+});
 const pendingBetanoRequests = new Map();
 const betanoTokenWaiters = new Set();
 let betanoSessionTokens = null;
