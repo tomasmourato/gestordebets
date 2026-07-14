@@ -70,6 +70,7 @@ export default function BetsManager({
   const [formCustomBookmaker, setFormCustomBookmaker] = useState("");
   const [formStake, setFormStake] = useState<string>("10.00");
   const [formIsFreebet, setFormIsFreebet] = useState(false);
+  const [formIsRiskFree, setFormIsRiskFree] = useState(false);
   const [formFreebetType, setFormFreebetType] = useState<FreebetType>("SNR");
   const [formCashoutReturn, setFormCashoutReturn] = useState<string>("");
   const [formDateTime, setFormDateTime] = useState("");
@@ -105,7 +106,8 @@ export default function BetsManager({
       formStatus,
       formIsFreebet,
       parseFloat(formCashoutReturn) || 0,
-      formFreebetType
+      formFreebetType,
+      formIsRiskFree
     );
 
     // Meio-ganha/meio-perdida: o utilizador pode indicar o retorno liquidado
@@ -123,7 +125,7 @@ export default function BetsManager({
     }
 
     return calcs;
-  }, [formStake, calculatedOdd, formStatus, formIsFreebet, formSettledReturn, formCashoutReturn, formFreebetType]);
+  }, [formStake, calculatedOdd, formStatus, formIsFreebet, formIsRiskFree, formSettledReturn, formCashoutReturn, formFreebetType]);
 
   // Filtered and sorted bets
   const filteredBets = useMemo(() => {
@@ -141,7 +143,8 @@ export default function BetsManager({
       
       let matchesFreebet = true;
       if (freebetFilter === "FREEBET") matchesFreebet = bet.isFreebet;
-      if (freebetFilter === "NORMAL") matchesFreebet = !bet.isFreebet;
+      if (freebetFilter === "RISK_FREE") matchesFreebet = !!bet.isRiskFree;
+      if (freebetFilter === "NORMAL") matchesFreebet = !bet.isFreebet && !bet.isRiskFree;
 
       const matchesBookmaker = bookmakerFilter === "ALL" || bet.bookmaker === bookmakerFilter;
 
@@ -289,6 +292,7 @@ export default function BetsManager({
     setFormCustomBookmaker("");
     setFormStake("10.00");
     setFormIsFreebet(false);
+    setFormIsRiskFree(false);
     setFormFreebetType(defaultFreebetTypeFor("Betano"));
     setFormCashoutReturn("");
     setFormDateTime(new Date().toISOString().replace("T", " ").slice(0, 16));
@@ -321,6 +325,7 @@ export default function BetsManager({
     
     setFormStake(bet.stake.toString());
     setFormIsFreebet(bet.isFreebet);
+    setFormIsRiskFree(bet.isRiskFree ?? false);
     setFormFreebetType(bet.freebetType ?? defaultFreebetTypeFor(bet.bookmaker));
     setFormCashoutReturn(bet.status === "CASHOUT" ? String(bet.finalReturn ?? "") : "");
     setFormDateTime(bet.dateTime);
@@ -426,6 +431,7 @@ export default function BetsManager({
       odd: calculatedOdd,
       isFreebet: formIsFreebet,
       freebetType: formIsFreebet ? formFreebetType : undefined,
+      isRiskFree: formIsRiskFree,
       potentialReturn,
       finalReturn,
       netProfit,
@@ -522,6 +528,7 @@ export default function BetsManager({
             <option value="ALL">Tipo de Dinheiro</option>
             <option value="NORMAL">Dinheiro Real</option>
             <option value="FREEBET">Freebet</option>
+            <option value="RISK_FREE">Sem risco</option>
           </select>
 
           {/* Bookmaker Filter */}
@@ -670,6 +677,11 @@ export default function BetsManager({
                   {bet.isFreebet && (
                     <span className="text-[9px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-sm uppercase border border-amber-200 dark:border-amber-900">
                       Freebet
+                    </span>
+                  )}
+                  {bet.isRiskFree && (
+                    <span className="text-[9px] font-bold bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 px-2 py-0.5 rounded-sm uppercase border border-teal-200 dark:border-teal-900">
+                      Sem risco
                     </span>
                   )}
                   {getStatusBadge(bet.status)}
@@ -936,17 +948,44 @@ export default function BetsManager({
                 </div>
               </div>
 
-              {/* Freebet Checkbox + tipo */}
+              {/* Tipo de aposta: Normal / Freebet / Sem risco */}
               <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-2xl border border-indigo-100/50 dark:border-indigo-900 space-y-3">
-                <label className="flex items-center gap-2 font-semibold text-indigo-900 dark:text-indigo-200 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4"
-                    checked={formIsFreebet}
-                    onChange={(e) => setFormIsFreebet(e.target.checked)}
-                  />
-                  <span>Esta aposta foi colocada com uma Freebet (Aposta Grátis)?</span>
+                <label className="block font-semibold text-indigo-900 dark:text-indigo-200">
+                  Tipo de aposta
                 </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { key: "NORMAL", label: "Normal", hint: "Stake real" },
+                    { key: "FREEBET", label: "Freebet", hint: "Aposta grátis" },
+                    { key: "RISK_FREE", label: "Sem risco", hint: "Stake real, derrota devolvida" },
+                  ] as const).map((mode) => {
+                    const active =
+                      (mode.key === "NORMAL" && !formIsFreebet && !formIsRiskFree) ||
+                      (mode.key === "FREEBET" && formIsFreebet) ||
+                      (mode.key === "RISK_FREE" && formIsRiskFree);
+                    return (
+                      <button
+                        key={mode.key}
+                        type="button"
+                        onClick={() => {
+                          // Modos mutuamente exclusivos.
+                          setFormIsFreebet(mode.key === "FREEBET");
+                          setFormIsRiskFree(mode.key === "RISK_FREE");
+                        }}
+                        className={`px-3 py-2 rounded-xl border text-xs font-semibold transition-colors text-center ${
+                          active
+                            ? "bg-indigo-600 border-indigo-600 text-white"
+                            : "bg-white dark:bg-slate-800 border-indigo-200 dark:border-indigo-800 text-slate-600 dark:text-slate-300 hover:border-indigo-400"
+                        }`}
+                      >
+                        <span className="block">{mode.label}</span>
+                        <span className={`block text-[9px] font-normal mt-0.5 ${active ? "text-indigo-100" : "text-slate-400 dark:text-slate-500"}`}>
+                          {mode.hint}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
 
                 {formIsFreebet && (
                   <div>
@@ -965,6 +1004,14 @@ export default function BetsManager({
                       Predefinido pela casa ({formBookmaker}). SNR é o padrão; o Betclic usa SR.
                     </p>
                   </div>
+                )}
+
+                {formIsRiskFree && (
+                  <p className="text-[11px] text-indigo-700/70 dark:text-indigo-300/70">
+                    Aposta sem risco: a stake é dinheiro real. Se <strong>ganhar</strong>, o lucro é
+                    normal; se <strong>perder</strong>, a stake é devolvida (resultado neutro).
+                    Regista a freebet devolvida como uma aposta à parte quando a usares.
+                  </p>
                 )}
               </div>
 

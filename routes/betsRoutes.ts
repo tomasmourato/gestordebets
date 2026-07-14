@@ -15,7 +15,7 @@ router.use(authenticateToken);
 const BET_COLUMNS = `
   id, type, status,
   stake::float8 AS stake, odd::float8 AS odd,
-  is_freebet, freebet_type,
+  is_freebet, freebet_type, is_risk_free,
   potential_return::float8 AS potential_return,
   final_return::float8 AS final_return,
   net_profit::float8 AS net_profit,
@@ -91,7 +91,9 @@ function parseBetPayload(body: any): ParsedPayload {
   const netProfit = numericOrNull(b.netProfit, "netProfit");
   if (netProfit && typeof netProfit === "object") return { error: netProfit.error };
 
-  const isFreebet = b.isFreebet === true || b.isFreebet === "true";
+  const isRiskFree = b.isRiskFree === true || b.isRiskFree === "true";
+  // Freebet e "sem risco" são mutuamente exclusivos; sem risco tem prioridade.
+  const isFreebet = !isRiskFree && (b.isFreebet === true || b.isFreebet === "true");
 
   // freebetType: SNR | SR, ou null (não-freebet ou desconhecido)
   let freebetType: string | null =
@@ -138,6 +140,7 @@ function parseBetPayload(body: any): ParsedPayload {
       tags,
       metadata,
       freebetType,
+      isRiskFree,
     ],
   };
 }
@@ -196,8 +199,8 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
       `INSERT INTO bets
          (user_id, type, status, stake, odd, is_freebet, potential_return,
           final_return, net_profit, bookmaker, date_time, notes, origin,
-          selections, comment, tags, metadata, freebet_type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+          selections, comment, tags, metadata, freebet_type, is_risk_free)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
        RETURNING ${BET_COLUMNS}`,
       [req.user!.id, ...parsed.values!]
     );
@@ -245,8 +248,8 @@ router.post("/bulk", async (req: AuthenticatedRequest, res) => {
         `INSERT INTO bets
            (user_id, type, status, stake, odd, is_freebet, potential_return,
             final_return, net_profit, bookmaker, date_time, notes, origin,
-            selections, comment, tags, metadata, freebet_type)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+            selections, comment, tags, metadata, freebet_type, is_risk_free)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
          RETURNING ${BET_COLUMNS}`,
         [req.user!.id, ...parsed.values!]
       );
@@ -294,9 +297,9 @@ router.put("/:id", async (req: AuthenticatedRequest, res) => {
            potential_return = $6, final_return = $7, net_profit = $8,
            bookmaker = $9, date_time = $10, notes = $11, origin = $12,
            selections = $13, comment = $14, tags = $15, metadata = $16,
-           freebet_type = $17,
+           freebet_type = $17, is_risk_free = $18,
            updated_at = timezone('utc', now())
-       WHERE id = $18 AND user_id = $19
+       WHERE id = $19 AND user_id = $20
        RETURNING ${BET_COLUMNS}`,
       [...parsed.values!, id, req.user!.id]
     );

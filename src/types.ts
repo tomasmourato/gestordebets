@@ -41,6 +41,10 @@ export interface Bet {
   odd: number; // Multiplied odds of all selections
   isFreebet: boolean;
   freebetType?: FreebetType; // só relevante quando isFreebet; default resolvido pela casa
+  // Aposta sem risco: stake é dinheiro REAL, mas uma derrota total devolve a
+  // stake (tipicamente como freebet, registada à parte) -> break-even nesta
+  // aposta. Mutuamente exclusivo com isFreebet.
+  isRiskFree?: boolean;
   potentialReturn: number;
   finalReturn: number;
   netProfit: number;

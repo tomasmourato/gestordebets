@@ -79,6 +79,7 @@ export function mapBetFromApi(row: ApiBetRow): Bet {
     freebetType: VALID_FREEBET_TYPES.includes(row.freebet_type)
       ? (row.freebet_type as FreebetType)
       : undefined,
+    isRiskFree: row.is_risk_free === true,
     potentialReturn: safeNum(row.potential_return),
     finalReturn: safeNum(row.final_return),
     netProfit: safeNum(row.net_profit),
@@ -104,6 +105,7 @@ export function mapBetToApi(bet: Bet) {
     odd: bet.odd,
     isFreebet: bet.isFreebet,
     freebetType: bet.freebetType,
+    isRiskFree: bet.isRiskFree ?? false,
     potentialReturn: bet.potentialReturn,
     finalReturn: bet.finalReturn,
     netProfit: bet.netProfit,

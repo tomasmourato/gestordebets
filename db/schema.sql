@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS bets (
   is_freebet BOOLEAN DEFAULT FALSE,
   freebet_type TEXT
     CONSTRAINT bets_freebet_type_check CHECK (freebet_type IS NULL OR freebet_type IN ('SNR', 'SR')),
+  -- Aposta sem risco: stake real, mas derrota total devolve a stake (net 0).
+  is_risk_free BOOLEAN NOT NULL DEFAULT FALSE,
   potential_return DECIMAL,
   final_return DECIMAL,
   net_profit DECIMAL,
