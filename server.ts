@@ -1,5 +1,5 @@
 import express from "express";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "path";
@@ -13,9 +13,27 @@ import pool from "./db/pool.js";
 import { authenticateToken, AuthenticatedRequest } from "./middleware/authMiddleware.js";
 import { rateLimit } from "./middleware/rateLimit.js";
 
-// O .env.local sobrepõe-se ao .env.
+// O .env.local sobrepõe-se ao .env; um .env.<branch>.local sobrepõe-se aos
+// dois. Assim a branch "test" pode apontar para a BD de dev criando um
+// .env.test.local (ignorado pelo git), sem tocar no .env.local partilhado.
+// Na Vercel nada disto corre — as variáveis vêm do dashboard.
+function currentGitBranch(): string | null {
+  try {
+    const head = readFileSync(".git/HEAD", "utf8").trim();
+    const match = head.match(/^ref: refs\/heads\/(.+)$/);
+    return match ? match[1] : null; // HEAD solto (detached) -> sem override
+  } catch {
+    return null; // fora de um repositório git
+  }
+}
+
 dotenv.config({ path: ".env" });
 dotenv.config({ path: ".env.local", override: true });
+const gitBranch = currentGitBranch();
+if (gitBranch && existsSync(`.env.${gitBranch}.local`)) {
+  dotenv.config({ path: `.env.${gitBranch}.local`, override: true });
+  console.log(`Ambiente: a usar .env.${gitBranch}.local (branch ${gitBranch}).`);
+}
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;

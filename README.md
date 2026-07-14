@@ -50,6 +50,11 @@ db/               pool de conexões, schema e migrações
    node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
    ```
 
+   **Ambiente por branch (opcional):** um ficheiro `.env.<branch>.local`
+   sobrepõe-se ao `.env.local` quando essa branch está ativa. Ex.: cria um
+   `.env.test.local` com a `DATABASE_URL` da base de dados de dev e a branch
+   `test` passa a usá-la automaticamente, sem tocar no `.env.local`.
+
 3. Preparar a base de dados:
 
    - Instalações novas: executar [db/schema.sql](db/schema.sql).
