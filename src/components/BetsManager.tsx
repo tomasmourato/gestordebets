@@ -23,6 +23,7 @@ import {
 import { Bet, Selection, BetStatus, BetType, FreebetType } from "../types";
 import { calculateBetReturnAndProfit, AVAILABLE_BOOKMAKERS, safeNum } from "../utils";
 import { defaultFreebetTypeFor } from "../lib/bookmakers";
+import { hasCashoutSignal } from "../lib/betStatus";
 import FilterDropdown from "./FilterDropdown";
 
 interface BetsManagerProps {
@@ -264,7 +265,10 @@ export default function BetsManager({
         })),
         dateTime: duplicatedAt,
         notes: bet.notes ? `[Duplicado] ${bet.notes}` : "Aposta duplicada.",
-        origin: "MANUAL"
+        origin: "MANUAL",
+        // Sem metadata: o duplicado não pode herdar o importKey, senão a
+        // extensão confunde-o com a aposta importada original.
+        metadata: undefined
       } as Bet;
     });
 
@@ -374,7 +378,9 @@ export default function BetsManager({
       id: "bet-" + Date.now(),
       dateTime: new Date().toISOString().replace("T", " ").slice(0, 16),
       notes: bet.notes ? `[Duplicado] ${bet.notes}` : "Aposta duplicada.",
-      origin: "MANUAL"
+      origin: "MANUAL",
+      // Sem metadata: o duplicado não pode herdar o importKey da original.
+      metadata: undefined
     };
     onAddBet(duplicated);
   };
@@ -445,6 +451,19 @@ export default function BetsManager({
     // exatamente com o que a pré-visualização mostra.
     const { potentialReturn, finalReturn, netProfit } = potentialWinningsInfo;
 
+    // O PUT substitui a aposta inteira; comment/tags/metadata não são editáveis
+    // neste formulário mas têm de ser preservados — a metadata guarda a chave
+    // de deduplicação (importKey) usada pela extensão.
+    const preservedMetadata = (() => {
+      const metadata = editingBet?.metadata;
+      if (!metadata) return undefined;
+      if (formStatus === "CASHOUT" || !hasCashoutSignal(undefined, metadata)) return metadata;
+      // O utilizador corrigiu o estado de um cashout: sem limpar as marcas, o
+      // servidor (normalizeBetStatus + constraint da BD) forçava CASHOUT de volta.
+      const { isCashout, originalStatus, betclicResult, settlementStatus, ...rest } = metadata;
+      return { ...rest, isCashout: false };
+    })();
+
     const betData: Bet = {
       id: editingBet ? editingBet.id : "bet-" + Date.now(),
       type: formType,
@@ -461,7 +480,10 @@ export default function BetsManager({
       bookmaker: finalBookmaker,
       dateTime: formDateTime || new Date().toISOString().replace("T", " ").slice(0, 16),
       notes: formNotes.trim() || undefined,
-      origin: editingBet ? editingBet.origin : "MANUAL"
+      origin: editingBet ? editingBet.origin : "MANUAL",
+      comment: editingBet?.comment,
+      tags: editingBet?.tags,
+      metadata: preservedMetadata
     };
 
     if (editingBet) {

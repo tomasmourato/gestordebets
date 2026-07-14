@@ -213,8 +213,11 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
       allBets.filter(b => {
         if (filterBookmaker !== "ALL" && b.bookmaker !== filterBookmaker) return false;
         if (filterType !== "ALL" && b.type !== filterType) return false;
+        // Mesma semântica do filtro de dinheiro do BetsManager, para o
+        // drill-down mostrar exatamente as apostas contadas aqui.
         if (filterFreebet === "FREEBET" && !b.isFreebet) return false;
-        if (filterFreebet === "NORMAL" && b.isFreebet) return false;
+        if (filterFreebet === "RISK_FREE" && !b.isRiskFree) return false;
+        if (filterFreebet === "NORMAL" && (b.isFreebet || b.isRiskFree)) return false;
         if (filterSport !== "ALL" && !(b.selections || []).some(s => s.sport === filterSport)) return false;
         if (timeframeRange.start || timeframeRange.end) {
           const betDate = b.dateTime?.slice(0, 10) || "";
@@ -283,9 +286,11 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
   // 1. Prepare data for profit history chart
   const profitChartData = useMemo(() => {
     // Sort settled bets chronologically by dateTime
+    // "YYYY-MM-DD HH:mm" só é aceite pelo Date com o "T" — sem o replace o
+    // Safari/iOS devolve Invalid Date e a ordenação do gráfico desfaz-se.
     const settledBets = bets
       .filter(b => b.status !== "POR_LIQUIDAR")
-      .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+      .sort((a, b) => new Date(a.dateTime.replace(" ", "T")).getTime() - new Date(b.dateTime.replace(" ", "T")).getTime());
 
     let runningProfit = 0;
     const data = settledBets.map((bet, index) => {
@@ -511,7 +516,8 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
               options={[
                 { value: "ALL", label: "Dinheiro e Freebet" },
                 { value: "NORMAL", label: "Dinheiro Real" },
-                { value: "FREEBET", label: "Freebet" }
+                { value: "FREEBET", label: "Freebet" },
+                { value: "RISK_FREE", label: "Sem risco" }
               ]}
               onChange={setFilterFreebet}
               ariaLabel="Filtrar por tipo de dinheiro"

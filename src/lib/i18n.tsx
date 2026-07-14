@@ -31,6 +31,26 @@ const DICT: Record<string, Entry> = {
   "app.loadingBets": { pt: "A carregar apostas…", en: "Loading bets…" },
   "app.brandTagline": { pt: "Gestão de Apostas", en: "Bet Management" },
 
+  // Painel lateral de conta
+  "account.title": { pt: "A minha conta", en: "My account" },
+  "account.open": { pt: "Abrir painel de conta", en: "Open account panel" },
+  "account.close": { pt: "Fechar painel de conta", en: "Close account panel" },
+  "account.username": { pt: "Username", en: "Username" },
+  "account.email": { pt: "Email", en: "Email" },
+  "account.userId": { pt: "ID de utilizador", en: "User ID" },
+  "account.memberSince": { pt: "Membro desde", en: "Member since" },
+  "account.copyId": { pt: "Copiar ID", en: "Copy ID" },
+  "account.copied": { pt: "Copiado!", en: "Copied!" },
+  "account.logout": { pt: "Terminar sessão", en: "Log out" },
+  "account.logoutHint": {
+    pt: "Termina a sessão neste dispositivo. As tuas apostas ficam guardadas na conta.",
+    en: "Signs you out on this device. Your bets stay saved in your account.",
+  },
+  "account.loadError": {
+    pt: "Não foi possível atualizar os dados da conta.",
+    en: "Could not refresh the account details.",
+  },
+
   // Configurações — cartão de idioma
   "settings.language.title": { pt: "Idioma", en: "Language" },
   "settings.language.desc": {

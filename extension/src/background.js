@@ -254,6 +254,7 @@ function needsUpdate(existing, incoming) {
     Number(existing.final_return) !== Number(incoming.finalReturn) ||
     Number(existing.net_profit) !== Number(incoming.netProfit) ||
     Boolean(existing.is_freebet) !== Boolean(incoming.isFreebet) ||
+    String(existing.freebet_type || "") !== String(incoming.freebetType || "") ||
     selectionsSignature(existing.selections) !== selectionsSignature(incoming.selections);
 }
 
@@ -264,6 +265,7 @@ function betPayload(bet) {
     stake: bet.stake,
     odd: bet.odd,
     isFreebet: bet.isFreebet,
+    freebetType: bet.freebetType,
     potentialReturn: bet.potentialReturn,
     finalReturn: bet.finalReturn,
     netProfit: bet.netProfit,

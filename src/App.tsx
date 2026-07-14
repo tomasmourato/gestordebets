@@ -8,8 +8,7 @@ import {
   Users,
   Moon,
   Sun,
-  X,
-  LogOut
+  X
 } from "lucide-react";
 
 import { Bet, Preferences } from "./types";
@@ -21,6 +20,7 @@ import ScreenshotImporter from "./components/ScreenshotImporter";
 import Settings from "./components/Settings";
 import Social from "./components/Social";
 import AuthPage from "./components/AuthPage";
+import AccountPanel from "./components/AccountPanel";
 import { isAuthenticated, logout, getStoredUser } from "./lib/authApi";
 import { usePreferences } from "./hooks/usePreferences";
 import { useTheme } from "./hooks/useTheme";
@@ -54,6 +54,9 @@ export default function App() {
 
   // Cada área tem um URL próprio e continua a navegar como SPA.
   const [activeTab, setActiveTab] = useState<AppTab>(() => tabFromPath(window.location.pathname));
+
+  // Painel lateral de conta (detalhes do utilizador + terminar sessão).
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   const navigateToTab = (tab: AppTab) => {
     const nextPath = TAB_PATHS[tab];
@@ -243,6 +246,7 @@ export default function App() {
 
   // Logout: termina a sessão e volta a mostrar o ecrã de login
   const handleLogout = () => {
+    setIsAccountOpen(false);
     logout();
     setCurrentUser(null);
     setAuthed(false);
@@ -338,14 +342,17 @@ export default function App() {
               {isDark ? <Sun size={13} /> : <Moon size={13} />}
             </button>
 
-            {/* Logout */}
+            {/* Conta — abre o painel lateral com os detalhes e o logout */}
             <button
-              onClick={handleLogout}
-              title={currentUser ? `Sair (${currentUser.username})` : "Sair"}
-              className="flex items-center gap-1 px-2.5 py-1.5 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+              onClick={() => setIsAccountOpen(true)}
+              title={currentUser ? `${t("account.title")} (${currentUser.username})` : t("account.title")}
+              aria-label={t("account.open")}
+              className="flex items-center gap-1.5 pl-1 pr-1 sm:pr-2.5 py-1 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
             >
-              <LogOut size={12} />
-              <span className="hidden sm:inline">{t("nav.logout")}</span>
+              <span className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-[9px] uppercase">
+                {currentUser?.username?.slice(0, 2) || "?"}
+              </span>
+              <span className="hidden sm:inline max-w-[9rem] truncate">{currentUser?.username}</span>
             </button>
 
           </div>
@@ -471,6 +478,17 @@ export default function App() {
           </button>
         </div>
       </footer>
+
+      {/* Painel lateral de conta */}
+      <AccountPanel
+        open={isAccountOpen}
+        user={currentUser}
+        language={preferences.language}
+        t={t}
+        onClose={() => setIsAccountOpen(false)}
+        onLogout={handleLogout}
+        onSessionExpired={handleSessionExpired}
+      />
 
     </div>
   );

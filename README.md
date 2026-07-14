@@ -20,8 +20,8 @@ do browser guarda apenas o token JWT, o utilizador em cache e as preferências
 ```
 src/components/   componentes de UI
 src/hooks/        estado da aplicação (apostas, preferências, tema, auditoria)
-src/lib/          camada de API (authApi, betsApi) e mapeamento BD <-> frontend
-routes/           rotas Express (/api/auth, /api/bets)
+src/lib/          camada de API (authApi, betsApi, socialApi) e mapeamento BD <-> frontend
+routes/           rotas Express (/api/auth, /api/bets, /api/social)
 middleware/       verificação do JWT
 db/               pool de conexões, schema e migrações
 ```
@@ -90,3 +90,12 @@ e devolvem apenas as apostas do utilizador autenticado.
 | `PUT`    | `/api/bets/:id`      | Atualiza uma aposta             |
 | `DELETE` | `/api/bets/:id`      | Apaga uma aposta                |
 | `DELETE` | `/api/bets`          | Apaga todas as apostas          |
+| `POST`   | `/api/parse-screenshot` | Extrai boletins de um screenshot (Gemini) |
+| `GET`    | `/api/social/search?q=` | Procura utilizadores por username |
+| `GET`    | `/api/social/friends`   | Lista de amigos aceites       |
+| `GET`    | `/api/social/requests`  | Pedidos pendentes (recebidos/enviados) |
+| `POST`   | `/api/social/requests`  | Envia um pedido de amizade    |
+| `POST`   | `/api/social/requests/:id/accept` | Aceita um pedido    |
+| `DELETE` | `/api/social/requests/:id` | Recusa/cancela um pedido   |
+| `DELETE` | `/api/social/friends/:userId` | Remove uma amizade      |
+| `GET`    | `/api/social/friends/:userId/bets` | Apostas de um amigo (só entre amigos) |

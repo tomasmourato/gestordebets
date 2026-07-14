@@ -148,10 +148,18 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
     }
   };
 
+  // O servidor aceita payloads JSON até 4MB; em base64 a imagem cresce ~37%,
+  // por isso o ficheiro original não pode passar dos ~3MB.
+  const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
+
   // Convert file and send to backend
   const handleFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
       setErrorMessage("Por favor, seleciona apenas ficheiros de imagem (PNG, JPG, WEBP).");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setErrorMessage("A imagem excede 3MB. Recorta o screenshot ou reduz a resolução e tenta novamente.");
       return;
     }
 
@@ -501,7 +509,7 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
                 <kbd className="font-mono font-bold bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-xs px-1">V</kbd>
               </p>
 
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-4 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-sm">PNG, JPG ou WEBP até 10MB</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-4 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-sm">PNG, JPG ou WEBP até 3MB</p>
             </div>
           </div>
 

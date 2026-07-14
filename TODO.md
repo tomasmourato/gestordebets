@@ -1,22 +1,21 @@
 **Manual Import**
-- Create multiple freebets types (because each bookie has their own rules for freebets)
-  - For each bookie, learn how their freebets work and create the freebet type for them
-- Link each freebet type to its correspondent bookie
-- Add cashout option with return editable
+- [x] Create multiple freebets types (SNR/SR) — `src/lib/bookmakers.ts` + `freebetType` na aposta
+- [x] Link each freebet type to its correspondent bookie (defaults por casa, corrigível por aposta)
+- [x] Add cashout option with return editable (estado `CASHOUT` + campo "Valor do Cashout")
 
 **Gemini Import Feature**
-- Let AI read multiple bets in one screenshot
+- [x] Let AI read multiple bets in one screenshot (fila de revisão boletim a boletim)
 
-**Bet Import Extention**
-- Add multiple betting bookies to the Bettrackr Import Extention
-- Create an option on the Extention Manager to make it more automatized:
-  - Everytime the user with the extention installed in their browser logs into a bookie, the extention automaticly fetches for the bets and automaticly imports to the app.
-  - This would need a login option on the extention so the user doesnt need to have the bettrackr website open.
-- Add cashed out bets to import using the screenshot I sent in this message.
+**Bet Import Extension**
+- [x] Add multiple betting bookies to the extension (Betclic + Betano)
+- [x] Add cashed out bets to import (FullCashout/PartialCashout → `CASHOUT` com retorno real)
+- [ ] Auto-import when the user logs into a bookie (needs extension login so the
+      BetTrackr site doesn't have to be open — see PLAN.md §E3; opt-in, off by default)
 
 **Dashboard**
-- Add filters (Filter by bookie, sport, bet type, etc) to show stats just from bets of the type the user filtered
-- Solve error on "Distribuição de Resultados" section where the count on bets is wrong
+- [x] Add filters (bookie, sport, bet type, money type, timeframe) — stats/charts recalculam
+- [x] Solve error on "Distribuição de Resultados" (pendentes já não entram na contagem)
 
 **Configurations**
-- Add different language options
+- [~] Add different language options — infraestrutura i18n + shell traduzidos
+      (`src/lib/i18n.tsx`); falta extrair as strings dos separadores (PLAN.md §C1)

@@ -103,6 +103,23 @@ export function logout() {
 }
 
 // ------------------------------------------------------------
+// Perfil completo do utilizador autenticado (inclui created_at).
+// Usado pelo painel de conta; atualiza também a cache local.
+// ------------------------------------------------------------
+export interface CurrentUser extends StoredUser {
+  created_at?: string;
+}
+
+export async function fetchCurrentUser(): Promise<CurrentUser> {
+  const res = await authFetch("/api/auth/me");
+  const data = await parseJsonResponse(res);
+  if (!res.ok) throw errorFrom(data, res, "Erro ao obter o utilizador");
+  const user = data.user as CurrentUser;
+  saveUser({ id: user.id, username: user.username, email: user.email });
+  return user;
+}
+
+// ------------------------------------------------------------
 // Wrapper de fetch que injeta automaticamente o header Authorization.
 // Usa isto para TODAS as chamadas a rotas protegidas (/api/bets, etc.)
 // ------------------------------------------------------------
