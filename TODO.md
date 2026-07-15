@@ -1,5 +1,7 @@
 **Bet import .CSV and .JSON**
-- [ ] Bets file import feature doesnt capture isFreebet, freebetType, isRiskFree, account and maybe others. Fix bug.
+- [x] Bets file import feature doesnt capture isFreebet, freebetType, isRiskFree, account and maybe others. Fix bug.
+      — CSV ganhou colunas FREEBET/FREEBET_TYPE/RISK_FREE/ACCOUNT (export+import, ACCOUNT por etiqueta);
+      JSON já levava os campos via mapBetToApi, agora sanitiza accountId obsoleto (evita 400 no lote).
 
 **Bet Import Extension**
 - [ ] Auto-import when the user logs into a bookie (needs extension login so the

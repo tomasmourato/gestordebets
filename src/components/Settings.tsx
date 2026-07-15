@@ -12,8 +12,9 @@ import {
   CheckCircle2,
   DollarSign
 } from "lucide-react";
-import { Preferences, AuditLog, Bet, BetStatus, BookieAccount, Selection, BetType, ThemeMode, Language } from "../types";
+import { Preferences, AuditLog, Bet, BetStatus, BookieAccount, FreebetType, Selection, BetType, ThemeMode, Language } from "../types";
 import { calculateBetReturnAndProfit, safeNum } from "../utils";
+import { defaultFreebetTypeFor } from "../lib/bookmakers";
 import BetclicImport from "./BetclicImport";
 import BookieAccountsCard from "./BookieAccountsCard";
 import { useI18n } from "../lib/i18n";
@@ -99,9 +100,16 @@ export default function Settings({
     onUpdatePreferences({ ...preferences, language });
   };
 
+  // Etiqueta de cada conta por id — usada no export (coluna ACCOUNT) e para
+  // resolver a coluna ACCOUNT na importação de volta para o accountId.
+  const accountLabelById = React.useMemo(
+    () => new Map(accounts.map(a => [a.id, a.label])),
+    [accounts]
+  );
+
   // Export Bets and Freebets to CSV
   const handleExportCSV = () => {
-    let csvContent = "DATE;TIME;GAME;BET;STAKE;ODDS;STATUS;RETURN;SPORT;BOOKIE;BETTYPE;COMMENT;TAGS\n";
+    let csvContent = "DATE;TIME;GAME;BET;STAKE;ODDS;STATUS;RETURN;SPORT;BOOKIE;BETTYPE;FREEBET;FREEBET_TYPE;RISK_FREE;ACCOUNT;COMMENT;TAGS\n";
 
     bets.forEach((b) => {
       // Split dateTime into DATE and TIME
@@ -172,6 +180,12 @@ export default function Settings({
         return `"${str.replace(/"/g, '""')}"`;
       };
 
+      // Campos de dinheiro e conta (antes perdidos no round-trip do CSV).
+      const freebetVal = b.isFreebet ? "SIM" : "NAO";
+      const freebetTypeVal = b.isFreebet ? (b.freebetType || "") : "";
+      const riskFreeVal = b.isRiskFree ? "SIM" : "NAO";
+      const accountVal = b.accountId ? (accountLabelById.get(b.accountId) || "") : "";
+
       const dateField = dateVal;
       const timeField = timeVal;
       const gameField = escapeField(gameVal);
@@ -182,10 +196,11 @@ export default function Settings({
       const sportField = sportVal;
       const bookieField = bookieVal;
       const betTypeField = betTypeVal;
+      const accountField = escapeField(accountVal);
       const commentField = escapeField(commentVal);
       const tagsField = escapeField(tagsVal);
 
-      csvContent += `${dateField};${timeField};${gameField};${betField};${stakeField};${oddsField};${statusField};${returnVal};${sportField};${bookieField};${betTypeField};${commentField};${tagsField}\n`;
+      csvContent += `${dateField};${timeField};${gameField};${betField};${stakeField};${oddsField};${statusField};${returnVal};${sportField};${bookieField};${betTypeField};${freebetVal};${freebetTypeVal};${riskFreeVal};${accountField};${commentField};${tagsField}\n`;
     });
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -238,13 +253,28 @@ export default function Settings({
         // Let's check if it's JSON backup first (recommended for complex objects) or basic parsing
         if (text.trim().startsWith("{") || text.trim().startsWith("[")) {
           const parsed = JSON.parse(text);
-          if (parsed.bets) {
-            onImportCSV(parsed.bets);
+          // Um accountId de um backup pode já não existir (conta apagada, ou
+          // backup de outro conjunto de contas). Sem isto, um único id inválido
+          // faz o servidor rejeitar TODO o lote (validateAccountOwnership -> 400).
+          // Mantemos o id só se a conta ainda existir; senão a aposta entra
+          // "sem conta".
+          const validAccountIds = new Set(accounts.map(a => a.id));
+          const sanitizeAccounts = (list: any[]): any[] =>
+            list.map(b => {
+              if (!b || typeof b !== "object") return b;
+              if (b.accountId && !validAccountIds.has(b.accountId)) {
+                return { ...b, accountId: undefined };
+              }
+              return b;
+            });
+
+          if (Array.isArray(parsed.bets)) {
+            onImportCSV(sanitizeAccounts(parsed.bets));
             setSuccessMsg("Backup importado com sucesso!");
             setTimeout(() => setSuccessMsg(null), 4000);
           } else if (Array.isArray(parsed)) {
             // Assume just bets list
-            onImportCSV(parsed);
+            onImportCSV(sanitizeAccounts(parsed));
             setSuccessMsg("Apostas importadas com sucesso!");
             setTimeout(() => setSuccessMsg(null), 4000);
           } else {
@@ -267,8 +297,15 @@ export default function Settings({
             const sportIdx = headerRow.findIndex(h => h.toUpperCase() === "SPORT");
             const bookieIdx = headerRow.findIndex(h => h.toUpperCase() === "BOOKIE");
             const betTypeIdx = headerRow.findIndex(h => h.toUpperCase() === "BETTYPE");
+            const freebetIdx = headerRow.findIndex(h => h.toUpperCase() === "FREEBET");
+            const freebetTypeIdx = headerRow.findIndex(h => h.toUpperCase() === "FREEBET_TYPE");
+            const riskFreeIdx = headerRow.findIndex(h => h.toUpperCase() === "RISK_FREE");
+            const accountIdx = headerRow.findIndex(h => h.toUpperCase() === "ACCOUNT");
             const commentIdx = headerRow.findIndex(h => h.toUpperCase() === "COMMENT");
             const tagsIdx = headerRow.findIndex(h => h.toUpperCase() === "TAGS");
+
+            // "SIM"/"YES"/"TRUE"/"1" -> true (tolerante a exports antigos/manuais).
+            const parseBool = (v: string) => ["SIM", "YES", "TRUE", "1"].includes(String(v || "").trim().toUpperCase());
 
             // Ensure basic columns exist
             if (dateIdx === -1 || gameIdx === -1 || stakeIdx === -1 || oddsIdx === -1) {
@@ -305,11 +342,40 @@ export default function Settings({
               // dedicado; nunca são convertidos em meio-ganha/meio-perdida.
               const status: BetStatus = normalizeBetStatus(statusRaw);
 
-              // Detect freebet
               const combinedNotes = [commentVal, tagsVal].filter(Boolean).join(" | ");
-              const isFreebet = combinedNotes.toLowerCase().includes("freebet") || 
-                                combinedNotes.toLowerCase().includes("grátis") ||
-                                combinedNotes.toLowerCase().includes("gratis");
+
+              // Aposta sem risco (coluna dedicada; ausente em exports antigos).
+              const isRiskFree = riskFreeIdx !== -1 ? parseBool(row[riskFreeIdx] || "") : false;
+
+              // Freebet: usa a coluna FREEBET quando existe; senão cai para a
+              // deteção antiga pelo texto das notas (compatibilidade). Sem risco
+              // e freebet são mutuamente exclusivos (o servidor dá prioridade a
+              // sem risco), por isso não marcamos freebet se for sem risco.
+              let isFreebet: boolean;
+              if (freebetIdx !== -1) {
+                isFreebet = parseBool(row[freebetIdx] || "");
+              } else {
+                isFreebet = combinedNotes.toLowerCase().includes("freebet") ||
+                            combinedNotes.toLowerCase().includes("grátis") ||
+                            combinedNotes.toLowerCase().includes("gratis");
+              }
+              if (isRiskFree) isFreebet = false;
+
+              // Tipo de freebet: coluna dedicada (SNR/SR) ou o default da casa.
+              let freebetType: FreebetType | undefined;
+              if (isFreebet) {
+                const raw = freebetTypeIdx !== -1 ? String(row[freebetTypeIdx] || "").trim().toUpperCase() : "";
+                freebetType = raw === "SNR" || raw === "SR" ? (raw as FreebetType) : defaultFreebetTypeFor(bookieVal);
+              }
+
+              // Conta: a coluna guarda a etiqueta; resolvemos para o accountId da
+              // conta com a mesma casa + etiqueta. Sem correspondência -> sem conta.
+              let accountId: string | undefined;
+              const accountLabel = accountIdx !== -1 ? String(row[accountIdx] || "").trim() : "";
+              if (accountLabel) {
+                const match = accounts.find(a => a.bookmaker === bookieVal && a.label === accountLabel);
+                accountId = match?.id;
+              }
 
               // Extract selections
               let games: string[] = [];
@@ -376,7 +442,9 @@ export default function Settings({
                 totalOdd,
                 status,
                 isFreebet,
-                status === "CASHOUT" && !isNaN(returnVal) ? returnVal : undefined
+                status === "CASHOUT" && !isNaN(returnVal) ? returnVal : undefined,
+                freebetType,
+                isRiskFree
               );
 
               parsedBets.push({
@@ -387,6 +455,9 @@ export default function Settings({
                 stake: stakeNumVal,
                 odd: totalOdd,
                 isFreebet: isFreebet,
+                freebetType: freebetType,
+                isRiskFree: isRiskFree,
+                accountId: accountId,
                 potentialReturn: potentialReturn,
                 finalReturn: finalReturn,
                 netProfit: netProfit,
