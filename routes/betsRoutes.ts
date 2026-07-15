@@ -20,12 +20,35 @@ const BET_COLUMNS = `
   potential_return::float8 AS potential_return,
   final_return::float8 AS final_return,
   net_profit::float8 AS net_profit,
-  bookmaker,
+  bookmaker, account_id,
   to_char(date_time, 'YYYY-MM-DD HH24:MI') AS date_time,
   notes, origin, selections, comment, tags, metadata, created_at
 `;
 
 const VALID_FREEBET_TYPES = ["SNR", "SR"];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// ============================================================
+// Garante que todos os accountIds enviados pertencem ao utilizador.
+// Devolve null se ok, ou a mensagem de erro (a rota responde 400).
+// Sem isto, um payload podia associar apostas à conta de outro user.
+// ============================================================
+async function validateAccountOwnership(
+  db: { query: (text: string, params?: any[]) => Promise<any> },
+  userId: string,
+  accountIds: (string | null)[]
+): Promise<string | null> {
+  const unique = [...new Set(accountIds.filter((id): id is string => id !== null))];
+  if (unique.length === 0) return null;
+  const result = await db.query(
+    "SELECT id FROM bookie_accounts WHERE user_id = $1 AND id = ANY($2::uuid[])",
+    [userId, unique]
+  );
+  if (result.rows.length !== unique.length) {
+    return "Conta de casa de apostas inválida ou inexistente.";
+  }
+  return null;
+}
 
 // ============================================================
 // parseBetPayload
@@ -37,6 +60,7 @@ const VALID_FREEBET_TYPES = ["SNR", "SR"];
 interface ParsedPayload {
   error?: string;
   values?: any[];
+  accountId?: string | null;
 }
 
 function trimOrNull(value: any): string | null {
@@ -103,6 +127,14 @@ function parseBetPayload(body: any): ParsedPayload {
   const tags = trimOrNull(b.tags);
   const origin = trimOrNull(b.origin);
 
+  // accountId: UUID de uma conta do utilizador ou null ("sem conta").
+  // A propriedade da conta é validada pela rota (validateAccountOwnership).
+  const accountIdRaw = trimOrNull(b.accountId);
+  if (accountIdRaw !== null && !UUID_RE.test(accountIdRaw)) {
+    return { error: "accountId inválido." };
+  }
+  const accountId = accountIdRaw;
+
   // selections e metadata: JSON.stringify ou null
   const selections =
     b.selections === undefined || b.selections === null ? null : JSON.stringify(b.selections);
@@ -132,7 +164,9 @@ function parseBetPayload(body: any): ParsedPayload {
       metadata,
       freebetType,
       isRiskFree,
+      accountId,
     ],
+    accountId,
   };
 }
 
@@ -186,12 +220,18 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
       return;
     }
 
+    const accountError = await validateAccountOwnership(pool, req.user!.id, [parsed.accountId ?? null]);
+    if (accountError) {
+      res.status(400).json({ error: accountError });
+      return;
+    }
+
     const result = await pool.query(
       `INSERT INTO bets
          (user_id, type, status, stake, odd, is_freebet, potential_return,
           final_return, net_profit, bookmaker, date_time, notes, origin,
-          selections, comment, tags, metadata, freebet_type, is_risk_free)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+          selections, comment, tags, metadata, freebet_type, is_risk_free, account_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
        RETURNING ${BET_COLUMNS}`,
       [req.user!.id, ...parsed.values!]
     );
@@ -227,22 +267,31 @@ router.post("/bulk", async (req: AuthenticatedRequest, res) => {
   try {
     await client.query("BEGIN");
 
-    const inserted: any[] = [];
+    // Valida todos os payloads (e a propriedade das contas) antes de inserir.
+    const parsedAll: any[][] = [];
+    const accountIds: (string | null)[] = [];
     for (let i = 0; i < bets.length; i++) {
       const parsed = parseBetPayload(bets[i]);
       if (parsed.error) {
         // Lança para forçar o ROLLBACK de todo o lote.
         throw { statusCode: 400, message: `Bet inválida no índice ${i}: ${parsed.error}` };
       }
+      parsedAll.push(parsed.values!);
+      accountIds.push(parsed.accountId ?? null);
+    }
+    const accountError = await validateAccountOwnership(client, req.user!.id, accountIds);
+    if (accountError) throw { statusCode: 400, message: accountError };
 
+    const inserted: any[] = [];
+    for (const values of parsedAll) {
       const result = await client.query(
         `INSERT INTO bets
            (user_id, type, status, stake, odd, is_freebet, potential_return,
             final_return, net_profit, bookmaker, date_time, notes, origin,
-            selections, comment, tags, metadata, freebet_type, is_risk_free)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+            selections, comment, tags, metadata, freebet_type, is_risk_free, account_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
          RETURNING ${BET_COLUMNS}`,
-        [req.user!.id, ...parsed.values!]
+        [req.user!.id, ...values]
       );
       inserted.push(result.rows[0]);
     }
@@ -280,6 +329,12 @@ router.put("/:id", async (req: AuthenticatedRequest, res) => {
       return;
     }
 
+    const accountError = await validateAccountOwnership(pool, req.user!.id, [parsed.accountId ?? null]);
+    if (accountError) {
+      res.status(400).json({ error: accountError });
+      return;
+    }
+
     // A cláusula "AND user_id = $x" garante que um utilizador nunca
     // consegue editar a bet de outro, mesmo que adivinhe o ID.
     const result = await pool.query(
@@ -288,9 +343,9 @@ router.put("/:id", async (req: AuthenticatedRequest, res) => {
            potential_return = $6, final_return = $7, net_profit = $8,
            bookmaker = $9, date_time = $10, notes = $11, origin = $12,
            selections = $13, comment = $14, tags = $15, metadata = $16,
-           freebet_type = $17, is_risk_free = $18,
+           freebet_type = $17, is_risk_free = $18, account_id = $19,
            updated_at = timezone('utc', now())
-       WHERE id = $19 AND user_id = $20
+       WHERE id = $20 AND user_id = $21
        RETURNING ${BET_COLUMNS}`,
       [...parsed.values!, id, req.user!.id]
     );

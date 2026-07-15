@@ -12,9 +12,10 @@ import {
   CheckCircle2,
   DollarSign
 } from "lucide-react";
-import { Preferences, AuditLog, Bet, BetStatus, Selection, BetType, ThemeMode, Language } from "../types";
+import { Preferences, AuditLog, Bet, BetStatus, BookieAccount, Selection, BetType, ThemeMode, Language } from "../types";
 import { calculateBetReturnAndProfit, safeNum } from "../utils";
 import BetclicImport from "./BetclicImport";
+import BookieAccountsCard from "./BookieAccountsCard";
 import { useI18n } from "../lib/i18n";
 import { normalizeBetStatus } from "../lib/betStatus";
 import FilterDropdown from "./FilterDropdown";
@@ -28,6 +29,13 @@ interface SettingsProps {
   onClearData: () => void;
   onResetDemoData: () => void;
   onImportCSV: (bets: Bet[]) => void;
+  // Contas por casa (geridas ao nível do App para partilhar com filtros/extensão)
+  accounts: BookieAccount[];
+  accountsError: string | null;
+  clearAccountsError: () => void;
+  onAddAccount: (bookmaker: string, label: string) => Promise<BookieAccount | null>;
+  onRenameAccount: (id: string, label: string) => Promise<BookieAccount | null>;
+  onDeleteAccount: (id: string) => Promise<boolean>;
 }
 
 export default function Settings({
@@ -38,7 +46,13 @@ export default function Settings({
   onUpdatePreferences,
   onClearData,
   onResetDemoData,
-  onImportCSV
+  onImportCSV,
+  accounts,
+  accountsError,
+  clearAccountsError,
+  onAddAccount,
+  onRenameAccount,
+  onDeleteAccount
 }: SettingsProps) {
 
   const { t } = useI18n();
@@ -539,8 +553,19 @@ export default function Settings({
             </form>
           </div>
 
+          {/* Contas por casa de apostas */}
+          <BookieAccountsCard
+            accounts={accounts}
+            bets={bets}
+            error={accountsError}
+            clearError={clearAccountsError}
+            onAdd={onAddAccount}
+            onRename={onRenameAccount}
+            onDelete={onDeleteAccount}
+          />
+
           {/* Importação do Betclic via extensão de browser */}
-          <BetclicImport />
+          <BetclicImport accounts={accounts} />
 
           {/* Backup, CSV and Data actions */}
           <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 space-y-4">

@@ -9,6 +9,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import betsRoutes from "./routes/betsRoutes.js";
 import socialRoutes from "./routes/socialRoutes.js";
+import accountsRoutes from "./routes/accountsRoutes.js";
 import pool from "./db/pool.js";
 import { authenticateToken, AuthenticatedRequest } from "./middleware/authMiddleware.js";
 import { rateLimit } from "./middleware/rateLimit.js";
@@ -106,6 +107,7 @@ app.use("/api/parse-screenshot", rateLimit({ windowMs: 10 * 60 * 1000, max: 30 }
 app.use("/api/auth", authRoutes);
 app.use("/api/bets", betsRoutes);
 app.use("/api/social", socialRoutes);
+app.use("/api/accounts", accountsRoutes);
 
 let aiClient: GoogleGenAI | null = null;
 function getAiClient(): GoogleGenAI {

@@ -26,6 +26,7 @@ import { usePreferences } from "./hooks/usePreferences";
 import { useTheme } from "./hooks/useTheme";
 import { useAuditLog } from "./hooks/useAuditLog";
 import { useBets } from "./hooks/useBets";
+import { useAccounts } from "./hooks/useAccounts";
 import { I18nProvider, translate } from "./lib/i18n";
 
 type AppTab = "DASHBOARD" | "BETS" | "IMPORT" | "SOCIAL" | "SETTINGS";
@@ -106,6 +107,16 @@ export default function App() {
     clearAllBets,
     replaceAllBets
   } = useBets(authed, handleSessionExpired);
+
+  // Contas por casa de apostas (partilhadas por Configurações, filtros e extensão)
+  const {
+    accounts,
+    error: accountsError,
+    clearError: clearAccountsError,
+    addAccount,
+    editAccount: renameAccount,
+    removeAccount,
+  } = useAccounts(authed, handleSessionExpired);
 
   // Online status
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -398,6 +409,7 @@ export default function App() {
                   currency={preferences.currency}
                   isDark={isDark}
                   onOpenBets={navigateToFilteredBets}
+                  accounts={accounts}
                 />
               )}
               {activeTab === "BETS" && (
@@ -408,6 +420,7 @@ export default function App() {
                   onAddBets={handleDuplicateBets}
                   onUpdateBet={handleUpdateBet}
                   onDeleteBet={handleDeleteBet}
+                  accounts={accounts}
                 />
               )}
               {activeTab === "IMPORT" && (
@@ -430,6 +443,12 @@ export default function App() {
                     onClearData={handleClearData}
                     onResetDemoData={handleResetDemoData}
                     onImportCSV={handleImportCSV}
+                    accounts={accounts}
+                    accountsError={accountsError}
+                    clearAccountsError={clearAccountsError}
+                    onAddAccount={addAccount}
+                    onRenameAccount={renameAccount}
+                    onDeleteAccount={removeAccount}
                   />
                 </I18nProvider>
               )}

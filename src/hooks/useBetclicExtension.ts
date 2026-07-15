@@ -89,11 +89,16 @@ export function useBetclicExtension() {
     }, 1500);
   }, []);
 
-  const runImport = useCallback(() => {
+  // accountIds: casa (minúsculas, ex. "betclic") -> id da conta BetTrackr para
+  // onde importar. Ausente/vazio = importar "sem conta" (comportamento antigo).
+  const runImport = useCallback((accountIds?: Record<string, string>) => {
     setResult(null);
     setProgress(null);
     setImporting(true);
-    window.postMessage({ source: APP, type: "IMPORT", sourceBookmakers: "all" }, window.location.origin);
+    window.postMessage(
+      { source: APP, type: "IMPORT", sourceBookmakers: "all", accountIds: accountIds || null },
+      window.location.origin
+    );
     // Salvaguarda: se a extensão nunca responder, não fica preso "a importar".
     window.setTimeout(() => {
       setImporting((busy) => {

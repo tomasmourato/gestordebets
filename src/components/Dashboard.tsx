@@ -19,7 +19,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
-import { Bet, BetStatus, DashboardStats } from "../types";
+import { Bet, BetStatus, BookieAccount, DashboardStats } from "../types";
 import { calculateDashboardStats, safeNum } from "../utils";
 import FilterDropdown from "./FilterDropdown";
 import { 
@@ -44,6 +44,9 @@ interface DashboardProps {
   bets: Bet[];
   currency: string;
   isDark: boolean;
+  // Contas por casa do utilizador; ausente/vazio na vista de um amigo
+  // (não conhecemos as contas dele) — o filtro de conta fica escondido.
+  accounts?: BookieAccount[];
   // Opcional: drill-down para a lista de apostas filtrada. Ausente na vista
   // read-only de um amigo (não há BetsManager próprio para onde navegar).
   onOpenBets?: (filters: DashboardBetsFilters) => void;
@@ -55,6 +58,7 @@ export interface DashboardBetsFilters {
   sport?: string;
   type?: string;
   money?: string;
+  account?: string;
   dateFrom?: string;
   dateTo?: string;
 }
@@ -103,11 +107,13 @@ const calendarDaysFor = (month: Date) => {
   });
 };
 
-export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets }: DashboardProps) {
+export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets, accounts = [] }: DashboardProps) {
   // Filtros do dashboard (D2): recalculam TODAS as estatísticas/gráficos para o
   // subconjunto escolhido. As opções vêm da lista completa; o cálculo usa a
   // lista filtrada `bets` (sombreada abaixo).
   const [filterBookmaker, setFilterBookmaker] = useState("ALL");
+  // "ALL" | "NONE" (apostas sem conta) | id de uma conta
+  const [filterAccount, setFilterAccount] = useState("ALL");
   const [filterSport, setFilterSport] = useState("ALL");
   const [filterType, setFilterType] = useState("ALL");
   const [filterFreebet, setFilterFreebet] = useState("ALL");
@@ -212,6 +218,8 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
     () =>
       allBets.filter(b => {
         if (filterBookmaker !== "ALL" && b.bookmaker !== filterBookmaker) return false;
+        if (filterAccount === "NONE" && b.accountId) return false;
+        if (filterAccount !== "ALL" && filterAccount !== "NONE" && b.accountId !== filterAccount) return false;
         if (filterType !== "ALL" && b.type !== filterType) return false;
         // Mesma semântica do filtro de dinheiro do BetsManager, para o
         // drill-down mostrar exatamente as apostas contadas aqui.
@@ -227,17 +235,18 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
         }
         return true;
       }),
-    [allBets, filterBookmaker, filterSport, filterType, filterFreebet, timeframeRange]
+    [allBets, filterBookmaker, filterAccount, filterSport, filterType, filterFreebet, timeframeRange]
   );
 
   const hasFilters =
-    filterBookmaker !== "ALL" || filterSport !== "ALL" || filterType !== "ALL" || filterFreebet !== "ALL" || filterTimeframe !== "ALL";
+    filterBookmaker !== "ALL" || filterAccount !== "ALL" || filterSport !== "ALL" || filterType !== "ALL" || filterFreebet !== "ALL" || filterTimeframe !== "ALL";
 
-  const activeFilterCount = [filterBookmaker, filterSport, filterType, filterFreebet, filterTimeframe]
+  const activeFilterCount = [filterBookmaker, filterAccount, filterSport, filterType, filterFreebet, filterTimeframe]
     .filter(value => value !== "ALL").length;
 
   const clearFilters = () => {
     setFilterBookmaker("ALL");
+    setFilterAccount("ALL");
     setFilterSport("ALL");
     setFilterType("ALL");
     setFilterFreebet("ALL");
@@ -253,6 +262,7 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
     onOpenBets?.({
       status,
       bookmaker: filterBookmaker !== "ALL" ? filterBookmaker : undefined,
+      account: filterAccount !== "ALL" ? filterAccount : undefined,
       sport: filterSport !== "ALL" ? filterSport : undefined,
       type: filterType !== "ALL" ? filterType : undefined,
       money: filterFreebet !== "ALL" ? filterFreebet : undefined,
@@ -492,6 +502,19 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
               onChange={setFilterBookmaker}
               ariaLabel="Filtrar por casa de apostas"
             />
+
+            {accounts.length > 0 && (
+              <FilterDropdown
+                value={filterAccount}
+                options={[
+                  { value: "ALL", label: "Todas as Contas" },
+                  ...accounts.map(account => ({ value: account.id, label: `${account.bookmaker} · ${account.label}` })),
+                  { value: "NONE", label: "Sem conta" }
+                ]}
+                onChange={setFilterAccount}
+                ariaLabel="Filtrar por conta"
+              />
+            )}
 
             <FilterDropdown
               value={filterSport}

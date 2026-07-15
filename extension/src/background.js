@@ -265,11 +265,13 @@ function selectionsSignature(selections) {
   })));
 }
 
-function needsUpdate(existing, incoming) {
+function needsUpdate(existing, incoming, accountId) {
   // Cashouts são sempre reenviados. Versões antigas do mapper guardavam
   // FullCashout como POR_LIQUIDAR; forçar o PUT garante a correção mesmo que
   // a comparação local esteja a olhar para dados normalizados/stale.
-  return incoming?.metadata?.isCashout === true ||
+  // Uma conta escolhida também "preenche" apostas antigas ainda sem conta.
+  return (Boolean(accountId) && !existing.account_id) ||
+    incoming?.metadata?.isCashout === true ||
     existing.status !== incoming.status ||
     Number(existing.stake) !== Number(incoming.stake) ||
     Number(existing.odd) !== Number(incoming.odd) ||
@@ -280,7 +282,7 @@ function needsUpdate(existing, incoming) {
     selectionsSignature(existing.selections) !== selectionsSignature(incoming.selections);
 }
 
-function betPayload(bet) {
+function betPayload(bet, accountId) {
   return {
     type: bet.type,
     status: bet.status,
@@ -292,6 +294,7 @@ function betPayload(bet) {
     finalReturn: bet.finalReturn,
     netProfit: bet.netProfit,
     bookmaker: bet.bookmaker,
+    accountId: accountId || null,
     dateTime: bet.dateTime,
     notes: bet.notes,
     origin: bet.origin,
@@ -302,28 +305,30 @@ function betPayload(bet) {
   };
 }
 
-async function postBulk(bets, cfg) {
+async function postBulk(bets, cfg, accountId) {
   const res = await fetch(`${cfg.bettrackrBase}/api/bets/bulk`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.bettrackrToken}` },
-    body: JSON.stringify({ bets: bets.map(betPayload) }),
+    body: JSON.stringify({ bets: bets.map((bet) => betPayload(bet, accountId)) }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `BetTrackr respondeu ${res.status} ao importar.`);
   return Array.isArray(data.bets) ? data.bets.length : bets.length;
 }
 
-async function updateBet(existing, incoming, cfg) {
+async function updateBet(existing, incoming, cfg, accountId) {
+  // Uma aposta já associada a uma conta mantém-na; só as "sem conta" herdam
+  // a conta escolhida para esta importação.
   const res = await fetch(`${cfg.bettrackrBase}/api/bets/${encodeURIComponent(existing.id)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.bettrackrToken}` },
-    body: JSON.stringify(betPayload(incoming)),
+    body: JSON.stringify(betPayload(incoming, existing.account_id || accountId)),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `BetTrackr respondeu ${res.status} ao atualizar.`);
 }
 
-async function persistMapped(mapped, unsupported, source, cfg) {
+async function persistMapped(mapped, unsupported, source, cfg, accountId) {
   const existing = await fetchExistingBets(cfg);
   const fresh = [];
   const updates = [];
@@ -332,19 +337,19 @@ async function persistMapped(mapped, unsupported, source, cfg) {
     const key = importKey(bet);
     const old = key && existing.get(key);
     if (!old) fresh.push(bet);
-    else if (needsUpdate(old, bet)) updates.push({ old, bet });
+    else if (needsUpdate(old, bet, accountId)) updates.push({ old, bet });
     else skipped++;
   }
 
   let imported = 0;
   const chunkSize = 500;
   for (let i = 0; i < fresh.length; i += chunkSize) {
-    imported += await postBulk(fresh.slice(i, i + chunkSize), cfg);
+    imported += await postBulk(fresh.slice(i, i + chunkSize), cfg, accountId);
     progress(`A importar ${source}: ${Math.min(i + chunkSize, fresh.length)}/${fresh.length}…`);
   }
   let updated = 0;
   for (const pair of updates) {
-    await updateBet(pair.old, pair.bet, cfg);
+    await updateBet(pair.old, pair.bet, cfg, accountId);
     updated++;
     progress(`A atualizar ${source}: ${updated}/${updates.length}…`);
   }
@@ -352,14 +357,14 @@ async function persistMapped(mapped, unsupported, source, cfg) {
   return { fetched: mapped.length, imported, updated, skipped, unsupported, cashouts };
 }
 
-async function runBetclicImport(cfg) {
+async function runBetclicImport(cfg, accountId) {
   if (!cfg.betclicToken) throw new Error("Sessão Betclic não detetada.");
   progress("A obter apostas do Betclic…");
   const mapped = await fetchBetclicBetsForImport(cfg);
-  return persistMapped(mapped, 0, "Betclic", cfg);
+  return persistMapped(mapped, 0, "Betclic", cfg, accountId);
 }
 
-async function runBetanoImport(cfg) {
+async function runBetanoImport(cfg, accountId) {
   const { tab, restoreUrl, created } = await ensureBetanoHistoryTab();
   try {
     if (!betanoSessionTokens) await waitForBetanoTokens();
@@ -370,7 +375,7 @@ async function runBetanoImport(cfg) {
     for (const bet of open) if (!byRef.has(betanoRef(bet))) byRef.set(betanoRef(bet), bet);
     byRef.delete(null);
     const mapped = mapBetanoBets([...byRef.values()]);
-    return persistMapped(mapped.bets, mapped.unsupported, "Betano", cfg);
+    return persistMapped(mapped.bets, mapped.unsupported, "Betano", cfg, accountId);
   } finally {
     if (created && tab.id !== undefined && restoreUrl) {
       await chrome.tabs.update(tab.id, { url: restoreUrl }).catch(() => {});
@@ -378,16 +383,20 @@ async function runBetanoImport(cfg) {
   }
 }
 
-async function runImport(source) {
+async function runImport(source, accountIds) {
   const cfg = await getConfig();
   if (!cfg.bettrackrToken) throw new Error("Sem sessão BetTrackr. Abre a app e inicia sessão.");
   const sources = source === "all" ? ["betclic", "betano"] : [source];
+  const chosenAccounts = accountIds && typeof accountIds === "object" ? accountIds : {};
   const results = {};
   for (const current of sources) {
+    const accountId = typeof chosenAccounts[current] === "string" && chosenAccounts[current]
+      ? chosenAccounts[current]
+      : null;
     try {
       results[current] = current === "betano"
-        ? { ok: true, ...(await runBetanoImport(cfg)) }
-        : { ok: true, ...(await runBetclicImport(cfg)) };
+        ? { ok: true, ...(await runBetanoImport(cfg, accountId)) }
+        : { ok: true, ...(await runBetclicImport(cfg, accountId)) };
     } catch (error) {
       results[current] = { ok: false, error: String(error && error.message || error) };
     }
@@ -453,7 +462,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg && msg.type === "IMPORT") {
     const source = ["betclic", "betano", "all"].includes(msg.source) ? msg.source : "all";
-    runImport(source)
+    runImport(source, msg.accountIds)
       .then(sendResponse)
       .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));
     return true;

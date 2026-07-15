@@ -49,12 +49,25 @@ export interface Bet {
   finalReturn: number;
   netProfit: number;
   bookmaker: string;
+  // Conta da casa a que a aposta pertence (ver BookieAccount); undefined = "sem conta".
+  accountId?: string;
   dateTime: string;
   notes?: string;
   origin: 'MANUAL' | 'SCREENSHOT' | 'CSV';
   comment?: string;
   tags?: string;
   metadata?: BetMetadata;
+}
+
+// ------------------------------------------------------------
+// Conta numa casa de apostas. Um utilizador pode ter várias contas na mesma
+// casa (ex.: duas contas Betclic) e associar cada aposta a uma delas.
+// ------------------------------------------------------------
+export interface BookieAccount {
+  id: string;
+  bookmaker: string;
+  label: string;
+  createdAt?: string;
 }
 
 export type ThemeMode = 'light' | 'dark' | 'system';

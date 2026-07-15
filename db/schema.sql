@@ -18,6 +18,22 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- ------------------------------------------------------------
+-- Contas por casa de apostas — um utilizador pode ter várias contas na
+-- mesma casa (ex.: duas contas Betclic). Ver migração 007.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS bookie_accounts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  bookmaker TEXT NOT NULL,
+  label TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+  CONSTRAINT bookie_accounts_label_not_blank CHECK (LENGTH(TRIM(label)) > 0),
+  CONSTRAINT bookie_accounts_bookmaker_not_blank CHECK (LENGTH(TRIM(bookmaker)) > 0),
+  CONSTRAINT bookie_accounts_unique_label UNIQUE (user_id, bookmaker, label)
+);
+
+-- ------------------------------------------------------------
 -- Apostas (bets) — PostgreSQL é a única fonte de verdade.
 --
 -- Notas de modelação:
@@ -45,6 +61,8 @@ CREATE TABLE IF NOT EXISTS bets (
   final_return DECIMAL,
   net_profit DECIMAL,
   bookmaker TEXT,
+  -- Conta da casa a que a aposta pertence (opcional; NULL = "sem conta").
+  account_id UUID REFERENCES bookie_accounts(id) ON DELETE SET NULL,
   date_time TIMESTAMP,
   notes TEXT,
   origin TEXT,
@@ -91,5 +109,7 @@ CREATE TABLE IF NOT EXISTS friendships (
 -- ------------------------------------------------------------
 CREATE UNIQUE INDEX IF NOT EXISTS users_username_key ON users(username);
 CREATE INDEX IF NOT EXISTS idx_bets_user_id ON bets(user_id);
+CREATE INDEX IF NOT EXISTS idx_bets_account_id ON bets(account_id);
+CREATE INDEX IF NOT EXISTS bookie_accounts_user_idx ON bookie_accounts (user_id, bookmaker);
 CREATE INDEX IF NOT EXISTS friendships_addressee_idx ON friendships (addressee_id, status);
 CREATE INDEX IF NOT EXISTS friendships_requester_idx ON friendships (requester_id, status);

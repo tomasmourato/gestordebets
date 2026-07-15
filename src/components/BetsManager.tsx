@@ -20,7 +20,7 @@ import {
   CheckSquare,
   CalendarRange
 } from "lucide-react";
-import { Bet, Selection, BetStatus, BetType, FreebetType } from "../types";
+import { Bet, BookieAccount, Selection, BetStatus, BetType, FreebetType } from "../types";
 import { calculateBetReturnAndProfit, AVAILABLE_BOOKMAKERS, safeNum } from "../utils";
 import { defaultFreebetTypeFor } from "../lib/bookmakers";
 import { hasCashoutSignal } from "../lib/betStatus";
@@ -29,6 +29,7 @@ import FilterDropdown from "./FilterDropdown";
 interface BetsManagerProps {
   bets: Bet[];
   currency: string;
+  accounts?: BookieAccount[];
   onAddBet: (bet: Bet) => void | Promise<void>;
   onAddBets: (bets: Bet[]) => void | Promise<void>;
   onUpdateBet: (bet: Bet) => void | Promise<void>;
@@ -41,10 +42,11 @@ type SortDirection = "asc" | "desc";
 export default function BetsManager({ 
   bets, 
   currency, 
-  onAddBet, 
+  onAddBet,
   onAddBets,
-  onUpdateBet, 
-  onDeleteBet
+  onUpdateBet,
+  onDeleteBet,
+  accounts = []
 }: BetsManagerProps) {
   const initialFilters = useMemo(() => new URLSearchParams(window.location.search), []);
   const initialFilter = (name: string) => initialFilters.get(name) || "ALL";
@@ -55,6 +57,8 @@ export default function BetsManager({
   const [typeFilter, setTypeFilter] = useState<string>(() => initialFilter("type"));
   const [freebetFilter, setFreebetFilter] = useState<string>(() => initialFilter("money"));
   const [bookmakerFilter, setBookmakerFilter] = useState<string>(() => initialFilter("bookmaker"));
+  // "ALL" | "NONE" (sem conta) | id de uma conta — também chega via drill-down (?account=)
+  const [accountFilter, setAccountFilter] = useState<string>(() => initialFilter("account"));
   const [sportFilter, setSportFilter] = useState<string>(() => initialFilter("sport"));
   const [dateFromFilter, setDateFromFilter] = useState(() => initialFilters.get("dateFrom") || "");
   const [dateToFilter, setDateToFilter] = useState(() => initialFilters.get("dateTo") || "");
@@ -76,6 +80,7 @@ export default function BetsManager({
   const [formStatus, setFormStatus] = useState<BetStatus>("POR_LIQUIDAR");
   const [formBookmaker, setFormBookmaker] = useState("Betano");
   const [formCustomBookmaker, setFormCustomBookmaker] = useState("");
+  const [formAccountId, setFormAccountId] = useState(""); // "" = sem conta
   const [formStake, setFormStake] = useState<string>("10.00");
   const [formIsFreebet, setFormIsFreebet] = useState(false);
   const [formIsRiskFree, setFormIsRiskFree] = useState(false);
@@ -146,6 +151,10 @@ export default function BetsManager({
       .sort((a, b) => a.localeCompare(b, "pt")),
     [bets]
   );
+  const accountLabelById = useMemo(
+    () => new Map(accounts.map(account => [account.id, account.label])),
+    [accounts]
+  );
 
   // Filtered and sorted bets
   const filteredBets = useMemo(() => {
@@ -167,12 +176,15 @@ export default function BetsManager({
       if (freebetFilter === "NORMAL") matchesFreebet = !bet.isFreebet && !bet.isRiskFree;
 
       const matchesBookmaker = bookmakerFilter === "ALL" || bet.bookmaker === bookmakerFilter;
+      const matchesAccount =
+        accountFilter === "ALL" ||
+        (accountFilter === "NONE" ? !bet.accountId : bet.accountId === accountFilter);
       const matchesSport = sportFilter === "ALL" || bet.selections.some(selection => selection.sport?.trim() === sportFilter);
       const betDate = bet.dateTime?.slice(0, 10) || "";
       const matchesDateFrom = !dateFromFilter || Boolean(betDate && betDate >= dateFromFilter);
       const matchesDateTo = !dateToFilter || Boolean(betDate && betDate <= dateToFilter);
 
-      return matchesSearch && matchesStatus && matchesType && matchesFreebet && matchesBookmaker && matchesSport && matchesDateFrom && matchesDateTo;
+      return matchesSearch && matchesStatus && matchesType && matchesFreebet && matchesBookmaker && matchesAccount && matchesSport && matchesDateFrom && matchesDateTo;
     });
 
     return visibleBets.sort((a, b) => {
@@ -195,7 +207,7 @@ export default function BetsManager({
 
       return sortDirection === "asc" ? comparison : -comparison;
     });
-  }, [bets, search, statusFilter, typeFilter, freebetFilter, bookmakerFilter, sportFilter, dateFromFilter, dateToFilter, sortField, sortDirection]);
+  }, [bets, search, statusFilter, typeFilter, freebetFilter, bookmakerFilter, accountFilter, sportFilter, dateFromFilter, dateToFilter, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -317,6 +329,7 @@ export default function BetsManager({
     setFormStatus("POR_LIQUIDAR");
     setFormBookmaker("Betano");
     setFormCustomBookmaker("");
+    setFormAccountId("");
     setFormStake("10.00");
     setFormIsFreebet(false);
     setFormIsRiskFree(false);
@@ -350,6 +363,7 @@ export default function BetsManager({
       setFormCustomBookmaker(bet.bookmaker);
     }
     
+    setFormAccountId(bet.accountId ?? "");
     setFormStake(bet.stake.toString());
     setFormIsFreebet(bet.isFreebet);
     setFormIsRiskFree(bet.isRiskFree ?? false);
@@ -479,6 +493,13 @@ export default function BetsManager({
       netProfit,
       bookmaker: finalBookmaker,
       dateTime: formDateTime || new Date().toISOString().replace("T", " ").slice(0, 16),
+      // Só aceita a conta se pertencer à casa escolhida (o utilizador pode
+      // ter mudado a casa depois de escolher a conta).
+      accountId: (() => {
+        if (!formAccountId) return undefined;
+        const account = accounts.find(a => a.id === formAccountId);
+        return account && account.bookmaker === finalBookmaker ? formAccountId : undefined;
+      })(),
       notes: formNotes.trim() || undefined,
       origin: editingBet ? editingBet.origin : "MANUAL",
       comment: editingBet?.comment,
@@ -517,7 +538,7 @@ export default function BetsManager({
     }
   };
 
-  const activeFilterCount = [statusFilter, typeFilter, freebetFilter, bookmakerFilter, sportFilter]
+  const activeFilterCount = [statusFilter, typeFilter, freebetFilter, bookmakerFilter, accountFilter, sportFilter]
     .filter(value => value !== "ALL").length + (dateFromFilter || dateToFilter ? 1 : 0);
   const formatFilterDate = (date: string) => date ? date.split("-").reverse().join("/") : "…";
   const clearFilters = () => {
@@ -525,6 +546,7 @@ export default function BetsManager({
     setTypeFilter("ALL");
     setFreebetFilter("ALL");
     setBookmakerFilter("ALL");
+    setAccountFilter("ALL");
     setSportFilter("ALL");
     setDateFromFilter("");
     setDateToFilter("");
@@ -649,6 +671,19 @@ export default function BetsManager({
             onChange={setBookmakerFilter}
             ariaLabel="Filtrar por casa de apostas"
           />
+
+          {accounts.length > 0 && (
+            <FilterDropdown
+              value={accountFilter}
+              options={[
+                { value: "ALL", label: "Todas as Contas" },
+                ...accounts.map(account => ({ value: account.id, label: `${account.bookmaker} · ${account.label}` })),
+                { value: "NONE", label: "Sem conta" }
+              ]}
+              onChange={setAccountFilter}
+              ariaLabel="Filtrar por conta"
+            />
+          )}
 
           <FilterDropdown
             value={sportFilter}
@@ -781,6 +816,11 @@ export default function BetsManager({
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-sm">
                     {bet.bookmaker}
                   </span>
+                  {bet.accountId && accountLabelById.get(bet.accountId) && (
+                    <span className="text-[9px] font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 px-2 py-0.5 rounded-sm uppercase border border-sky-200 dark:border-sky-900">
+                      {accountLabelById.get(bet.accountId)}
+                    </span>
+                  )}
                   {bet.isFreebet && (
                     <span className="text-[9px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-sm uppercase border border-amber-200 dark:border-amber-900">
                       Freebet
@@ -1031,6 +1071,26 @@ export default function BetsManager({
                     <option value="Outra">Outra (Escrever...)</option>
                   </select>
                 </div>
+                {(() => {
+                  const selectedBookmaker = formBookmaker === "Outra" ? formCustomBookmaker.trim() : formBookmaker;
+                  const bookieAccounts = accounts.filter(a => a.bookmaker === selectedBookmaker);
+                  if (bookieAccounts.length === 0) return null;
+                  return (
+                    <div>
+                      <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Conta</label>
+                      <select
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
+                        value={bookieAccounts.some(a => a.id === formAccountId) ? formAccountId : ""}
+                        onChange={(e) => setFormAccountId(e.target.value)}
+                      >
+                        <option value="">Sem conta</option>
+                        {bookieAccounts.map(account => (
+                          <option key={account.id} value={account.id}>{account.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })()}
                 {formBookmaker === "Outra" && (
                   <div>
                     <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Qual?</label>
