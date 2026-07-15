@@ -135,13 +135,17 @@ function waitForBetanoTokens(timeoutMs = 15000) {
   });
 }
 
-async function ensureBetanoHistoryTab() {
+async function ensureBetanoHistoryTab(opts = {}) {
   const tabs = await chrome.tabs.query({ url: ["https://www.betano.pt/*", "https://betano.pt/*"] });
   const existingSettled = tabs.find(isBetanoSettledTab);
   if (existingSettled && existingSettled.id !== undefined) {
     await waitForTabComplete(existingSettled.id).catch(() => {});
     return { tab: existingSettled, created: false };
   }
+
+  // Auto-import: nunca sequestrar o separador do utilizador. Sem um separador
+  // de histórico já aberto, salta silenciosamente (fica para o próximo gatilho).
+  if (opts.auto) return null;
 
   const source = tabs.find(isBetanoHistoryTab) || await findBetanoTab();
   if (!source || source.id === undefined) throw new Error("Abre a página principal do Betano numa tab aberta.");
@@ -364,8 +368,10 @@ async function runBetclicImport(cfg, accountId) {
   return persistMapped(mapped, 0, "Betclic", cfg, accountId);
 }
 
-async function runBetanoImport(cfg, accountId) {
-  const { tab, restoreUrl, created } = await ensureBetanoHistoryTab();
+async function runBetanoImport(cfg, accountId, opts = {}) {
+  const ensured = await ensureBetanoHistoryTab(opts);
+  if (!ensured) return { skipped: true }; // auto-import sem histórico aberto
+  const { tab, restoreUrl, created } = ensured;
   try {
     if (!betanoSessionTokens) await waitForBetanoTokens();
     progress("A obter apostas do Betano…");
@@ -383,7 +389,7 @@ async function runBetanoImport(cfg, accountId) {
   }
 }
 
-async function runImport(source, accountIds) {
+async function runImport(source, accountIds, opts = {}) {
   const cfg = await getConfig();
   if (!cfg.bettrackrToken) throw new Error("Sem sessão BetTrackr. Abre a app e inicia sessão.");
   const sources = source === "all" ? ["betclic", "betano"] : [source];
@@ -395,7 +401,7 @@ async function runImport(source, accountIds) {
       : null;
     try {
       results[current] = current === "betano"
-        ? { ok: true, ...(await runBetanoImport(cfg, accountId)) }
+        ? { ok: true, ...(await runBetanoImport(cfg, accountId, opts)) }
         : { ok: true, ...(await runBetclicImport(cfg, accountId)) };
     } catch (error) {
       results[current] = { ok: false, error: String(error && error.message || error) };
@@ -416,7 +422,7 @@ async function runImport(source, accountIds) {
 
 async function extensionStatus() {
   const [stored, tabs] = await Promise.all([
-    chrome.storage.local.get(["betclicToken", "bettrackrToken", "bettrackrBase"]),
+    chrome.storage.local.get(["betclicToken", "bettrackrToken", "bettrackrBase", "bettrackrUser", "autoImport"]),
     chrome.tabs.query({ url: ["https://www.betano.pt/*", "https://betano.pt/*"] }),
   ]);
   return {
@@ -426,7 +432,82 @@ async function extensionStatus() {
     betano: tabs.length > 0,
     bettrackr: Boolean(stored.bettrackrToken),
     bettrackrBase: stored.bettrackrBase || DEFAULT_BETTRACKR_BASE,
+    bettrackrUser: stored.bettrackrUser || null,
+    autoImport: stored.autoImport === true,
   };
+}
+
+// ============================================================
+// Login BetTrackr direto na extensão (E3). Deixa a extensão funcionar sem o
+// site do BetTrackr aberto. Guardamos APENAS o JWT devolvido (expira em 7
+// dias) — nunca a password. HTTPS via host_permissions.
+// ============================================================
+async function bettrackrLogin(email, password, base) {
+  const origin = base || DEFAULT_BETTRACKR_BASE;
+  const res = await fetch(`${origin}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.token) {
+    throw new Error(data.error || "Não foi possível iniciar sessão no BetTrackr.");
+  }
+  await chrome.storage.local.set({
+    bettrackrToken: data.token,
+    bettrackrBase: origin,
+    bettrackrUser: data.user && data.user.username ? String(data.user.username) : null,
+  });
+  return { ok: true, user: data.user || null };
+}
+
+async function bettrackrLogout() {
+  await chrome.storage.local.remove(["bettrackrToken", "bettrackrUser"]);
+  return { ok: true };
+}
+
+// ============================================================
+// Auto-import (E3) — opt-in, desligado por defeito. Disparado pela captura do
+// token de uma casa (Betclic guarda o token; Betano envia BETANO_SESSION).
+// Debounce por casa para não repetir a cada navegação/refresh.
+// ============================================================
+const AUTO_IMPORT_DEBOUNCE_MS = 10 * 60 * 1000; // 10 min por casa
+let autoImportRunning = false;
+
+async function flashBadge(text, color) {
+  try {
+    await chrome.action.setBadgeBackgroundColor({ color });
+    await chrome.action.setBadgeText({ text });
+    setTimeout(() => { chrome.action.setBadgeText({ text: "" }).catch(() => {}); }, 8000);
+  } catch (_) {}
+}
+
+async function maybeAutoImport(source) {
+  const stored = await chrome.storage.local.get([
+    "autoImport", "bettrackrToken", "importAccountChoices", "autoImportLast",
+  ]);
+  if (stored.autoImport !== true || !stored.bettrackrToken) return;
+
+  const now = Date.now();
+  const last = stored.autoImportLast && typeof stored.autoImportLast === "object" ? stored.autoImportLast : {};
+  if (last[source] && now - last[source] < AUTO_IMPORT_DEBOUNCE_MS) return;
+  if (autoImportRunning) return;
+  autoImportRunning = true;
+  // Marca já o timestamp para evitar corridas entre gatilhos próximos.
+  await chrome.storage.local.set({ autoImportLast: { ...last, [source]: now } });
+
+  const accountIds = stored.importAccountChoices && typeof stored.importAccountChoices === "object"
+    ? stored.importAccountChoices
+    : {};
+  try {
+    const result = await runImport(source, accountIds, { auto: true });
+    const changed = (result.imported || 0) + (result.updated || 0);
+    if (changed > 0) await flashBadge(String(changed), "#16a34a");
+  } catch (_) {
+    await flashBadge("!", "#dc2626");
+  } finally {
+    autoImportRunning = false;
+  }
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -446,7 +527,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         waiter.resolve();
       }
       betanoTokenWaiters.clear();
+      // Sessão Betano capturada -> tenta auto-import (se ligado e com histórico
+      // já aberto; caso contrário salta sem sequestrar o separador).
+      maybeAutoImport("betano");
     }
+    return false;
+  }
+  if (msg && msg.type === "AUTO_IMPORT_HINT") {
+    // Enviado pelos content scripts das casas quando capturam um token novo.
+    const source = msg.source === "betclic" || msg.source === "betano" ? msg.source : null;
+    if (source) maybeAutoImport(source);
     return false;
   }
   if (msg && msg.type === "BETANO_PAGE_RESULT") {
@@ -464,6 +554,24 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     const source = ["betclic", "betano", "all"].includes(msg.source) ? msg.source : "all";
     runImport(source, msg.accountIds)
       .then(sendResponse)
+      .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));
+    return true;
+  }
+  if (msg && msg.type === "LOGIN") {
+    bettrackrLogin(String(msg.email || ""), String(msg.password || ""), msg.base)
+      .then(sendResponse)
+      .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));
+    return true;
+  }
+  if (msg && msg.type === "LOGOUT") {
+    bettrackrLogout()
+      .then(sendResponse)
+      .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));
+    return true;
+  }
+  if (msg && msg.type === "SET_AUTO_IMPORT") {
+    chrome.storage.local.set({ autoImport: msg.enabled === true })
+      .then(() => sendResponse({ ok: true }))
       .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));
     return true;
   }

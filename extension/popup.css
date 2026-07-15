@@ -127,3 +127,79 @@ li { margin: 4px 0; }
   font-size: 12px;
 }
 .accounts select:last-child { margin-bottom: 0; }
+
+/* Login BetTrackr + opções de sessão */
+.login {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+.login label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 8px;
+}
+.login input {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #f1f5f9;
+  font-size: 12px;
+}
+.login button {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.login button:disabled { opacity: 0.6; cursor: default; }
+.hint {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 6px;
+  line-height: 1.35;
+}
+
+.account-box {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+.account-row {
+  justify-content: space-between;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 8px;
+}
+.link {
+  background: none;
+  border: none;
+  color: #a5b4fc;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: #e2e8f0;
+  cursor: pointer;
+}
+.toggle input { margin-top: 2px; }

@@ -29,6 +29,29 @@
       </div>
     </div>
 
+    <!-- Login BetTrackr direto na extensão (sem precisar do site aberto).
+         Mostrado só quando não há sessão. -->
+    <form class="login" id="login" hidden>
+      <label for="login-email">Iniciar sessão no BetTrackr</label>
+      <input type="email" id="login-email" placeholder="email" autocomplete="username" />
+      <input type="password" id="login-password" placeholder="password" autocomplete="current-password" />
+      <button type="submit" id="login-btn">Entrar</button>
+      <p class="hint">A extensão guarda apenas a chave de sessão (expira em 7 dias), nunca a password.</p>
+    </form>
+
+    <!-- Sessão iniciada: opções (auto-import) + terminar sessão. -->
+    <div class="account-box" id="account-box" hidden>
+      <div class="row account-row">
+        <span id="account-user">BetTrackr</span>
+        <button id="logout-btn" class="link">Sair</button>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="auto-import" />
+        <span>Importar automaticamente ao entrar numa casa</span>
+      </label>
+      <p class="hint">Opcional. Importa em segundo plano quando deteta a tua sessão numa casa (no máximo uma vez a cada 10 min por casa).</p>
+    </div>
+
     <!-- Conta de destino por casa; preenchido pelo popup.js quando o
          utilizador tem contas registadas na app (senão fica escondido). -->
     <div class="accounts" id="accounts" hidden></div>
@@ -44,10 +67,10 @@
     <details>
       <summary>Como usar</summary>
       <ol>
-        <li>Inicia sessão no <strong>BetTrackr</strong> (abre a app uma vez).</li>
+        <li>Inicia sessão no <strong>BetTrackr</strong> aqui em cima (ou abre a app uma vez).</li>
         <li>Abre <strong>betclic.pt</strong> ou a página principal de <strong>betano.pt</strong> e entra.</li>
         <li>O separador principal do Betano deve ficar aberto durante a importação.</li>
-        <li>Volta aqui e escolhe a casa de apostas ou <em>Importar tudo</em>.</li>
+        <li>Volta aqui e escolhe a casa de apostas ou <em>Importar tudo</em> — ou liga o <em>importar automaticamente</em>.</li>
       </ol>
     </details>
 

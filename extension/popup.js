@@ -21,6 +21,16 @@ const buttons = {
 };
 const msg = document.getElementById("msg");
 
+// Login / conta BetTrackr
+const loginForm = document.getElementById("login");
+const loginEmail = document.getElementById("login-email");
+const loginPassword = document.getElementById("login-password");
+const loginBtn = document.getElementById("login-btn");
+const accountBox = document.getElementById("account-box");
+const accountUser = document.getElementById("account-user");
+const logoutBtn = document.getElementById("logout-btn");
+const autoImportToggle = document.getElementById("auto-import");
+
 function setMsg(text, kind) {
   msg.textContent = text || "";
   msg.className = "msg" + (kind ? ` ${kind}` : "");
@@ -35,10 +45,18 @@ async function refreshStatus() {
   const status = await chrome.runtime.sendMessage({ type: "GET_STATUS" });
   setStatus(dotBetclic, txtBetclic, status.betclic, "Betclic: sessão detetada", "Betclic: abre 'As minhas apostas'");
   setStatus(dotBetano, txtBetano, status.betano, "Betano: página detetada", "Betano: abre betano.pt");
-  setStatus(dotBettrackr, txtBettrackr, status.bettrackr, "BetTrackr: sessão detetada", "BetTrackr: inicia sessão na app");
+  setStatus(dotBettrackr, txtBettrackr, status.bettrackr, "BetTrackr: sessão detetada", "BetTrackr: inicia sessão aqui");
   buttons.betclic.disabled = !(status.betclic && status.bettrackr);
   buttons.betano.disabled = !(status.betano && status.bettrackr);
   buttons.all.disabled = !(status.bettrackr && (status.betclic || status.betano));
+
+  // Login vs. sessão iniciada.
+  loginForm.hidden = status.bettrackr === true;
+  accountBox.hidden = status.bettrackr !== true;
+  if (status.bettrackr) {
+    accountUser.textContent = status.bettrackrUser ? `Sessão: ${status.bettrackrUser}` : "Sessão iniciada";
+    autoImportToggle.checked = status.autoImport === true;
+  }
   return status;
 }
 
@@ -144,6 +162,44 @@ async function importSource(source) {
 for (const [source, button] of Object.entries(buttons)) {
   button.addEventListener("click", () => importSource(source));
 }
+
+// --- Login / logout / auto-import ---
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const email = loginEmail.value.trim();
+  const password = loginPassword.value;
+  if (!email || !password) { setMsg("Preenche o email e a password.", "error"); return; }
+  loginBtn.disabled = true;
+  setMsg("A iniciar sessão…", null);
+  try {
+    const result = await chrome.runtime.sendMessage({ type: "LOGIN", email, password });
+    if (!result || !result.ok) {
+      setMsg(result?.error || "Falha ao iniciar sessão.", "error");
+    } else {
+      loginPassword.value = "";
+      setMsg("Sessão iniciada.", "success");
+      await refreshStatus();
+      loadAccounts();
+    }
+  } catch (error) {
+    setMsg(String(error && error.message || error), "error");
+  } finally {
+    loginBtn.disabled = false;
+  }
+});
+
+logoutBtn.addEventListener("click", async () => {
+  await chrome.runtime.sendMessage({ type: "LOGOUT" });
+  accountsBox.hidden = true;
+  accountsBox.innerHTML = "";
+  setMsg("Sessão terminada.", null);
+  await refreshStatus();
+});
+
+autoImportToggle.addEventListener("change", async () => {
+  await chrome.runtime.sendMessage({ type: "SET_AUTO_IMPORT", enabled: autoImportToggle.checked });
+  setMsg(autoImportToggle.checked ? "Importação automática ligada." : "Importação automática desligada.", null);
+});
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message && message.type === "PROGRESS") setMsg(message.text, null);
