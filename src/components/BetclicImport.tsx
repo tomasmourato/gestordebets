@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Puzzle, Download, RefreshCw, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
 import { useBetclicExtension } from "../hooks/useBetclicExtension";
 import { BookieAccount } from "../types";
+import { isNativeApp } from "../lib/apiBase";
 
 // Casas suportadas pela extensão; a chave (minúsculas) é a usada pelo service
 // worker da extensão para identificar cada fonte.
@@ -108,6 +109,11 @@ interface BetclicImportProps {
 
 export default function BetclicImport({ accounts = [] }: BetclicImportProps) {
   const { installed, version, importing, progress, result, runImport, recheck } = useBetclicExtension();
+
+  // Na app nativa (Android) não existem extensões de browser — o cartão
+  // inteiro seria só instruções impossíveis de seguir. A importação por
+  // extensão continua disponível na versão web/desktop.
+  if (isNativeApp()) return null;
 
   const [accountChoices, setAccountChoices] = useState<Record<string, string>>(loadAccountChoices);
 

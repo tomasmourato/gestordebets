@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   TrendingUp,
@@ -14,13 +14,18 @@ import {
 import { Bet, Preferences } from "./types";
 import { INITIAL_BETS, safeNum } from "./utils";
 
-import Dashboard, { DashboardBetsFilters } from "./components/Dashboard";
-import BetsManager from "./components/BetsManager";
-import ScreenshotImporter from "./components/ScreenshotImporter";
-import Settings from "./components/Settings";
-import Social from "./components/Social";
+import type { DashboardBetsFilters } from "./components/Dashboard";
 import AuthPage from "./components/AuthPage";
 import AccountPanel from "./components/AccountPanel";
+
+// Todos os separadores carregam sob demanda (React.lazy): o shell (e o ecrã
+// de login) pinta sem descarregar/parsear o Recharts (~390KB) nem o resto.
+// No WebView Android (app nativa) isto corta o arranque de forma percetível.
+const Dashboard = lazy(() => import("./components/Dashboard"));
+const BetsManager = lazy(() => import("./components/BetsManager"));
+const ScreenshotImporter = lazy(() => import("./components/ScreenshotImporter"));
+const Settings = lazy(() => import("./components/Settings"));
+const Social = lazy(() => import("./components/Social"));
 import { isAuthenticated, logout, getStoredUser } from "./lib/authApi";
 import { usePreferences } from "./hooks/usePreferences";
 import { useTheme } from "./hooks/useTheme";
@@ -403,6 +408,14 @@ export default function App() {
               transition={{ duration: 0.18 }}
               className="h-full"
             >
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center py-24 text-xs text-slate-400 dark:text-slate-500">
+                    <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                    A carregar…
+                  </div>
+                }
+              >
               {activeTab === "DASHBOARD" && (
                 <Dashboard
                   bets={bets}
@@ -452,6 +465,7 @@ export default function App() {
                   />
                 </I18nProvider>
               )}
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         )}

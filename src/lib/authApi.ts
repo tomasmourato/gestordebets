@@ -1,5 +1,7 @@
 // Autenticação e wrapper de fetch para as rotas protegidas da API.
 
+import { apiUrl } from "./apiBase";
+
 const TOKEN_KEY = "gestordebets_token";
 const USER_KEY = "gestordebets_user";
 
@@ -69,7 +71,7 @@ export function isAuthenticated(): boolean {
 // Registo
 // ------------------------------------------------------------
 export async function register(username: string, email: string, password: string) {
-  const res = await fetch("/api/auth/register", {
+  const res = await fetch(apiUrl("/api/auth/register"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, email, password }),
@@ -85,7 +87,7 @@ export async function register(username: string, email: string, password: string
 // Login
 // ------------------------------------------------------------
 export async function login(email: string, password: string) {
-  const res = await fetch("/api/auth/login", {
+  const res = await fetch(apiUrl("/api/auth/login"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -131,7 +133,10 @@ export async function authFetch(url: string, options: RequestInit = {}) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
-  const res = await fetch(url, { ...options, headers });
+  // Caminhos relativos ("/api/...") são prefixados com a base da plataforma
+  // (na app nativa a API vive noutra origem; na web fica relativo).
+  const target = url.startsWith("/") ? apiUrl(url) : url;
+  const res = await fetch(target, { ...options, headers });
 
   if (res.status === 401) {
     // Token inválido ou expirado -> força novo login
