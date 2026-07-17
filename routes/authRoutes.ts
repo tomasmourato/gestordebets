@@ -5,8 +5,10 @@ import { Router } from "express";
 // $2b$ são compatíveis entre os dois pacotes.
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { createHash, randomBytes } from "node:crypto";
 import pool from "../db/pool.js";
 import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddleware.js";
+import { sendPasswordResetEmail } from "../lib/mailer.js";
 
 const router = Router();
 const SALT_ROUNDS = 12;
@@ -150,6 +152,143 @@ router.post("/login", async (req, res) => {
   } catch (error: any) {
     console.error("Erro no login:", error);
     res.status(500).json({ error: "Erro ao autenticar." });
+  }
+});
+
+// ============================================================
+// Recuperação de password
+//
+// O token enviado por email nunca é guardado em claro: na BD fica só o
+// hash SHA-256. Expira em 1 hora e é de uso único. As respostas de
+// /forgot-password são sempre genéricas para não revelar que emails
+// estão registados (mesma razão do DUMMY_HASH no login).
+// ============================================================
+const RESET_TOKEN_TTL_MINUTES = 60;
+
+function hashResetToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+// Base para o link do email. Definida por APP_BASE_URL; sem ela, usa o
+// domínio de produção (ou localhost em dev). Nunca derivada dos headers do
+// pedido — um Host forjado poria links maliciosos em emails legítimos.
+function appBaseUrl(): string {
+  if (process.env.APP_BASE_URL) return process.env.APP_BASE_URL.replace(/\/+$/, "");
+  if (process.env.VERCEL || process.env.NODE_ENV === "production") {
+    return "https://gestordebets.vercel.app";
+  }
+  return `http://localhost:${process.env.PORT || 3000}`;
+}
+
+// ============================================================
+// POST /api/auth/forgot-password  { email }
+// ============================================================
+router.post("/forgot-password", async (req, res) => {
+  // Resposta única para todos os desfechos (email inexistente incluído).
+  const genericResponse = {
+    success: true,
+    message: "Se o email estiver registado, enviámos instruções de recuperação.",
+  };
+
+  try {
+    const { email } = req.body ?? {};
+    if (!isValidEmail(email)) {
+      // Formato inválido não revela nada — resposta genérica na mesma.
+      res.json(genericResponse);
+      return;
+    }
+
+    const result = await pool.query(
+      "SELECT id, email FROM users WHERE email = $1",
+      [email]
+    );
+    const user = result.rows[0];
+    if (!user) {
+      res.json(genericResponse);
+      return;
+    }
+
+    // Um pedido novo invalida os tokens pendentes do mesmo utilizador e
+    // aproveita para limpar tokens antigos já inúteis.
+    const token = randomBytes(32).toString("base64url");
+    await pool.query(
+      "DELETE FROM password_reset_tokens WHERE user_id = $1 OR expires_at < timezone('utc', now()) - interval '1 day'",
+      [user.id]
+    );
+    await pool.query(
+      `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+       VALUES ($1, $2, timezone('utc', now()) + ($3 || ' minutes')::interval)`,
+      [user.id, hashResetToken(token), String(RESET_TOKEN_TTL_MINUTES)]
+    );
+
+    const resetUrl = `${appBaseUrl()}/reset-password?token=${token}`;
+    try {
+      const { sent } = await sendPasswordResetEmail(user.email, resetUrl);
+      if (!sent) {
+        // Sem RESEND_API_KEY (tipicamente em desenvolvimento): o link fica no
+        // log do servidor para o fluxo poder ser testado na mesma.
+        console.log(`[mailer] RESEND_API_KEY não configurada — link de reset para ${user.email}: ${resetUrl}`);
+      }
+    } catch (mailError) {
+      // O erro de envio não chega ao cliente (senão revelava que o email
+      // existe); fica no log para diagnóstico.
+      console.error("Erro ao enviar email de recuperação:", mailError);
+    }
+
+    res.json(genericResponse);
+  } catch (error) {
+    console.error("Erro em forgot-password:", error);
+    res.status(500).json({ error: "Erro ao processar o pedido." });
+  }
+});
+
+// ============================================================
+// POST /api/auth/reset-password  { token, password }
+// ============================================================
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { token, password } = req.body ?? {};
+    if (typeof token !== "string" || token.length < 20 || token.length > 128) {
+      res.status(400).json({ error: "Link de recuperação inválido ou expirado." });
+      return;
+    }
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      res.status(400).json({ error: passwordError });
+      return;
+    }
+
+    const result = await pool.query(
+      `SELECT t.id AS token_id, u.id, u.username, u.email
+       FROM password_reset_tokens t
+       JOIN users u ON u.id = t.user_id
+       WHERE t.token_hash = $1
+         AND t.used_at IS NULL
+         AND t.expires_at > timezone('utc', now())`,
+      [hashResetToken(token)]
+    );
+    const row = result.rows[0];
+    if (!row) {
+      res.status(400).json({ error: "Link de recuperação inválido ou expirado. Pede um novo." });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2", [passwordHash, row.id]);
+    // Uso único: marca este token e apaga quaisquer outros do utilizador.
+    await pool.query("UPDATE password_reset_tokens SET used_at = timezone('utc', now()) WHERE id = $1", [row.token_id]);
+    await pool.query("DELETE FROM password_reset_tokens WHERE user_id = $1 AND id <> $2", [row.id, row.token_id]);
+
+    // Auto-login: evita obrigar o utilizador a escrever já a password nova.
+    const jwtToken = signToken(row);
+    res.json({
+      success: true,
+      token: jwtToken,
+      user: { id: row.id, username: row.username, email: row.email },
+    });
+  } catch (error) {
+    console.error("Erro em reset-password:", error);
+    res.status(500).json({ error: "Erro ao repor a password." });
   }
 });
 

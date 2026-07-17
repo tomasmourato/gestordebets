@@ -103,6 +103,36 @@ export function logout() {
 }
 
 // ------------------------------------------------------------
+// Recuperação de password
+// ------------------------------------------------------------
+/** Pede o email de recuperação. A resposta é sempre genérica (sem revelar
+ *  se o email existe); devolve a mensagem a mostrar ao utilizador. */
+export async function forgotPassword(email: string): Promise<string> {
+  const res = await fetch("/api/auth/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const data = await parseJsonResponse(res);
+  if (!res.ok) throw errorFrom(data, res, "Erro ao pedir a recuperação");
+  return data.message || "Se o email estiver registado, enviámos instruções de recuperação.";
+}
+
+/** Define a nova password com o token do email; autentica logo a seguir. */
+export async function resetPassword(token: string, password: string) {
+  const res = await fetch("/api/auth/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, password }),
+  });
+  const data = await parseJsonResponse(res);
+  if (!res.ok) throw errorFrom(data, res, "Erro ao repor a password");
+  saveToken(data.token);
+  saveUser(data.user);
+  return data.user;
+}
+
+// ------------------------------------------------------------
 // Perfil completo do utilizador autenticado (inclui created_at).
 // Usado pelo painel de conta; atualiza também a cache local.
 // ------------------------------------------------------------

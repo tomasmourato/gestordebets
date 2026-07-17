@@ -18,6 +18,19 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- ------------------------------------------------------------
+-- Recuperação de password — tokens de uso único (hash SHA-256, expiram
+-- em 1 hora). Ver migração 008.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  used_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+-- ------------------------------------------------------------
 -- Contas por casa de apostas — um utilizador pode ter várias contas na
 -- mesma casa (ex.: duas contas Betclic). Ver migração 007.
 -- ------------------------------------------------------------
@@ -111,5 +124,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS users_username_key ON users(username);
 CREATE INDEX IF NOT EXISTS idx_bets_user_id ON bets(user_id);
 CREATE INDEX IF NOT EXISTS idx_bets_account_id ON bets(account_id);
 CREATE INDEX IF NOT EXISTS bookie_accounts_user_idx ON bookie_accounts (user_id, bookmaker);
+CREATE INDEX IF NOT EXISTS password_reset_tokens_user_idx ON password_reset_tokens (user_id);
 CREATE INDEX IF NOT EXISTS friendships_addressee_idx ON friendships (addressee_id, status);
 CREATE INDEX IF NOT EXISTS friendships_requester_idx ON friendships (requester_id, status);
