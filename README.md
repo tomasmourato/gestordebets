@@ -50,12 +50,6 @@ db/               pool de conexões, schema e migrações
    node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
    ```
 
-   **Recuperação de password (opcional):** define `RESEND_API_KEY` (resend.com)
-   para os emails de reset serem realmente enviados; `MAIL_FROM` para usar um
-   remetente de domínio verificado; `APP_BASE_URL` para a base dos links do
-   email. Sem `RESEND_API_KEY`, o link de reset aparece no log do servidor
-   (suficiente para desenvolvimento).
-
    **Ambiente por branch (opcional):** um ficheiro `.env.<branch>.local`
    sobrepõe-se ao `.env.local` quando essa branch está ativa. Ex.: cria um
    `.env.test.local` com a `DATABASE_URL` da base de dados de dev e a branch
@@ -93,8 +87,6 @@ e devolvem apenas as apostas do utilizador autenticado.
 | -------- | ----------------- | ---------------------------------- |
 | `POST`   | `/api/auth/register` | Cria uma conta e devolve um JWT |
 | `POST`   | `/api/auth/login`    | Autentica e devolve um JWT      |
-| `POST`   | `/api/auth/forgot-password` | Envia email com link de reset (resposta sempre genérica) |
-| `POST`   | `/api/auth/reset-password`  | Define nova password com o token do email |
 | `GET`    | `/api/auth/me`       | Utilizador autenticado          |
 | `GET`    | `/api/health`        | Estado da função e da BD        |
 | `GET`    | `/api/bets`          | Lista as apostas                |
