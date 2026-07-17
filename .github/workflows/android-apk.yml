@@ -12,9 +12,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # O Capacitor CLI 8 exige Node 22+.
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       # O Gradle do Android exige JDK 17; o SDK Android já vem no runner.
