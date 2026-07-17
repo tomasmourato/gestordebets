@@ -69,6 +69,28 @@ db/               pool de conexões, schema e migrações
 
    A app fica disponível em `http://localhost:3000`.
 
+## App Android (Capacitor)
+
+A app nativa Android embute o build web (`dist/`) num WebView e fala com a
+API de produção (ver [src/lib/apiBase.ts](src/lib/apiBase.ts); o CORS para a
+origem nativa está em [server.ts](server.ts)).
+
+**Gerar o APK sem instalar nada:** GitHub → **Actions** → workflow
+**"Android APK"** → *Run workflow*. No fim, descarrega o ficheiro
+`bettrackr-debug-apk` dos artifacts e instala-o no telemóvel (é preciso
+permitir "instalar de fontes desconhecidas").
+
+**Desenvolvimento local (opcional):** requer Android Studio + JDK 17.
+
+```bash
+npm run android:sync   # build web + copia para android/
+npm run android:open   # abre o projeto no Android Studio
+```
+
+Notas: o APK é *debug* (não serve para a Play Store — isso exigiria assinatura
+com keystore própria); a importação por extensão de browser não existe na app
+nativa (o cartão é escondido) — usa a web para isso.
+
 ## Scripts
 
 | Comando         | Descrição                                            |

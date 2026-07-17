@@ -4,6 +4,20 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        // Divide as dependências pesadas em chunks próprios: o arranque (login,
+        // shell) deixa de descarregar/parsear o Recharts inteiro, o que pesa
+        // sobretudo no WebView Android da app nativa. Chunks separados também
+        // cacheiam melhor: mudar código da app não invalida o vendor.
+        manualChunks: {
+          'vendor-charts': ['recharts'],
+          'vendor-motion': ['motion'],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),

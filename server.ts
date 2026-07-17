@@ -78,6 +78,31 @@ app.use((req, res, next) => {
   next();
 });
 
+// CORS restrito para a app nativa (Capacitor). O WebView Android serve os
+// assets de https://localhost, por isso as chamadas à API são cross-origin.
+// A web normal (mesma origem) não é afetada — o browser nem consulta CORS.
+// A autenticação é por header Bearer (sem cookies), logo sem credenciais CORS.
+const NATIVE_APP_ORIGINS = new Set([
+  "https://localhost",     // Capacitor Android (androidScheme: https)
+  "capacitor://localhost", // Capacitor iOS, se um dia existir
+  "http://localhost",      // WebView em dev
+]);
+app.use("/api", (req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && NATIVE_APP_ORIGINS.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Max-Age", "86400");
+  }
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
+  next();
+});
+
 // Diagnóstico de deploy: confirma que a função arrancou, que variáveis de
 // ambiente estão presentes (nunca os seus valores) e se a BD responde.
 app.get("/api/health", async (_req, res) => {
