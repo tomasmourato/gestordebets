@@ -18,11 +18,11 @@ jobs:
           node-version: 22
           cache: npm
 
-      # O Gradle do Android exige JDK 17; o SDK Android já vem no runner.
+      # O Capacitor 8 compila com Java 21; o SDK Android já vem no runner.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - name: Instalar dependências
         run: npm ci
