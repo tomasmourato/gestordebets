@@ -19,6 +19,8 @@ const DICT: Record<string, Entry> = {
   "nav.overview": { pt: "Visão Geral", en: "Overview" },
   "nav.bets": { pt: "Meus Boletins", en: "My Bets" },
   "nav.import": { pt: "Importar com IA", en: "AI Import" },
+  "nav.insights": { pt: "AI Insights", en: "AI Insights" },
+  "footer.insights": { pt: "Dicas", en: "Tips" },
   "nav.social": { pt: "Social", en: "Social" },
   "nav.settings": { pt: "Configurações", en: "Settings" },
   "nav.logout": { pt: "Sair", en: "Log out" },

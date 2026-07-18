@@ -127,6 +127,7 @@ e devolvem apenas as apostas do utilizador autenticado.
 | `DELETE` | `/api/bets/:id`      | Apaga uma aposta                |
 | `DELETE` | `/api/bets`          | Apaga todas as apostas          |
 | `POST`   | `/api/parse-screenshot` | Extrai boletins de um screenshot (Gemini) |
+| `GET`    | `/api/insights`      | Dicas de picks do dia (Gemini + Google Search, cache diária) |
 | `GET`    | `/api/social/search?q=` | Procura utilizadores por username |
 | `GET`    | `/api/social/friends`   | Lista de amigos aceites       |
 | `GET`    | `/api/social/requests`  | Pedidos pendentes (recebidos/enviados) |

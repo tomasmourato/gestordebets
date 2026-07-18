@@ -8,7 +8,8 @@ import {
   Users,
   Moon,
   Sun,
-  X
+  X,
+  Lightbulb
 } from "lucide-react";
 
 import { Bet, Preferences } from "./types";
@@ -26,6 +27,7 @@ const BetsManager = lazy(() => import("./components/BetsManager"));
 const ScreenshotImporter = lazy(() => import("./components/ScreenshotImporter"));
 const Settings = lazy(() => import("./components/Settings"));
 const Social = lazy(() => import("./components/Social"));
+const AIInsights = lazy(() => import("./components/AIInsights"));
 import { isAuthenticated, logout, getStoredUser } from "./lib/authApi";
 import { usePreferences } from "./hooks/usePreferences";
 import { useTheme } from "./hooks/useTheme";
@@ -34,12 +36,13 @@ import { useBets } from "./hooks/useBets";
 import { useAccounts } from "./hooks/useAccounts";
 import { I18nProvider, translate } from "./lib/i18n";
 
-type AppTab = "DASHBOARD" | "BETS" | "IMPORT" | "SOCIAL" | "SETTINGS";
+type AppTab = "DASHBOARD" | "BETS" | "IMPORT" | "INSIGHTS" | "SOCIAL" | "SETTINGS";
 
 const TAB_PATHS: Record<AppTab, string> = {
   DASHBOARD: "/dashboard",
   BETS: "/bets",
   IMPORT: "/import",
+  INSIGHTS: "/insights",
   SOCIAL: "/social",
   SETTINGS: "/settings"
 };
@@ -319,6 +322,12 @@ export default function App() {
               <Sparkles size={13} className="text-amber-500 animate-pulse" /> {t("nav.import")}
             </button>
             <button
+              onClick={() => navigateToTab("INSIGHTS")}
+              className={`px-3.5 py-2 rounded transition-colors flex items-center gap-1 ${activeTab === "INSIGHTS" ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+            >
+              <Lightbulb size={13} className="text-amber-500" /> {t("nav.insights")}
+            </button>
+            <button
               onClick={() => navigateToTab("SOCIAL")}
               className={`px-3.5 py-2 rounded transition-colors flex items-center gap-1 ${activeTab === "SOCIAL" ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-l-2 md:border-l-0 md:border-b-2 border-indigo-600" : "hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
             >
@@ -442,6 +451,9 @@ export default function App() {
                   onAddBet={handleAddBet}
                 />
               )}
+              {activeTab === "INSIGHTS" && (
+                <AIInsights onSessionExpired={handleSessionExpired} />
+              )}
               {activeTab === "SOCIAL" && (
                 <Social currency={preferences.currency} isDark={isDark} />
               )}
@@ -473,7 +485,7 @@ export default function App() {
 
       {/* Mobile Footer Tab Bar */}
       <footer className="md:hidden bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 sticky bottom-0 z-40 shrink-0 shadow-lg">
-        <div className="grid grid-cols-5 h-16 text-[9px] font-bold text-slate-400 dark:text-slate-500">
+        <div className="grid grid-cols-6 h-16 text-[9px] font-bold text-slate-400 dark:text-slate-500">
           <button
             onClick={() => navigateToTab("DASHBOARD")}
             className={`flex flex-col items-center justify-center gap-1 ${activeTab === "DASHBOARD" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
@@ -494,6 +506,13 @@ export default function App() {
           >
             <Sparkles size={18} className="text-amber-500 animate-pulse" />
             <span>{t("footer.ai")}</span>
+          </button>
+          <button
+            onClick={() => navigateToTab("INSIGHTS")}
+            className={`flex flex-col items-center justify-center gap-1 ${activeTab === "INSIGHTS" ? "text-indigo-600 dark:text-indigo-400" : ""}`}
+          >
+            <Lightbulb size={18} />
+            <span>{t("footer.insights")}</span>
           </button>
           <button
             onClick={() => navigateToTab("SOCIAL")}

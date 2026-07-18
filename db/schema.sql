@@ -18,6 +18,18 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- ------------------------------------------------------------
+-- AI Insights — cache diária das dicas geradas (Gemini + Google Search).
+-- Uma linha por dia, partilhada por todos os utilizadores. Ver migração 009.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS daily_insights (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  insight_date DATE NOT NULL UNIQUE,
+  content JSONB NOT NULL,
+  model TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+-- ------------------------------------------------------------
 -- Contas por casa de apostas — um utilizador pode ter várias contas na
 -- mesma casa (ex.: duas contas Betclic). Ver migração 007.
 -- ------------------------------------------------------------
