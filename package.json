@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx bootstrap.ts",
-    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist-server/server.cjs && node scripts/zip-extension.mjs",
-    "vercel-build": "vite build && node scripts/zip-extension.mjs",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist-server/server.cjs && node scripts/zip-extension.mjs && node scripts/bundle-app.mjs",
+    "vercel-build": "vite build && node scripts/zip-extension.mjs && node scripts/bundle-app.mjs",
     "start": "node dist-server/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist dist-server",
@@ -19,6 +19,7 @@
   "dependencies": {
     "@capacitor/android": "^8.4.2",
     "@capacitor/core": "^8.4.2",
+    "@capgo/capacitor-updater": "^8.51.2",
     "@google/genai": "^2.4.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",

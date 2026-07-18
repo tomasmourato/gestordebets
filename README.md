@@ -91,6 +91,15 @@ Notas: o APK é *debug* (não serve para a Play Store — isso exigiria assinatu
 com keystore própria); a importação por extensão de browser não existe na app
 nativa (o cartão é escondido) — usa a web para isso.
 
+**Live update:** a app nativa atualiza o frontend sozinha, sem novo APK.
+Cada deploy gera `dist/app-bundle.zip` + `dist/app-version.json`
+([scripts/bundle-app.mjs](scripts/bundle-app.mjs)); no arranque a app compara
+versões e, se houver nova, descarrega-a e aplica-a no arranque seguinte
+([src/lib/liveUpdate.ts](src/lib/liveUpdate.ts), plugin
+`@capgo/capacitor-updater` em modo self-hosted, com rollback automático se o
+bundle novo não arrancar). Só é preciso gerar novo APK quando mudar a parte
+nativa (plugins do Capacitor, ícones, configuração do Android).
+
 ## Scripts
 
 | Comando         | Descrição                                            |

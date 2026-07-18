@@ -20,6 +20,14 @@ const config: CapacitorConfig = {
   // Cor de fundo enquanto o WebView arranca (evita flash branco no dark mode
   // e combina com o splash em ambos os temas).
   backgroundColor: '#0f172a',
+  plugins: {
+    // Live update self-hosted (src/lib/liveUpdate.ts): autoUpdate desligado
+    // para o plugin NÃO contactar a cloud da Capgo — quem verifica/descarrega
+    // somos nós, a partir da própria Vercel.
+    CapacitorUpdater: {
+      autoUpdate: false,
+    },
+  },
 };
 
 export default config;

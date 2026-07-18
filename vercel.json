@@ -42,6 +42,23 @@
       "continue": true
     },
     {
+      "src": "/app-version\\.json",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "no-store"
+      },
+      "continue": true
+    },
+    {
+      "src": "/app-bundle\\.zip",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/zip",
+        "Cache-Control": "public, max-age=0, must-revalidate"
+      },
+      "continue": true
+    },
+    {
       "handle": "filesystem"
     },
     {
