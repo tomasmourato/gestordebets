@@ -43,7 +43,7 @@ function statusMeta(status: Bet["status"]): { label: string; className: string }
     case "MEIO_PERDIDA":
       return { label: "Meio Perdida", className: "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900" };
     case "ANULADA":
-      return { label: "Anulada", className: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700" };
+      return { label: "Anulada", className: "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700" };
     case "CASHOUT":
       return { label: "Cashout", className: "bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-900" };
     default:
@@ -196,25 +196,25 @@ export default function Social({ currency, isDark }: SocialProps) {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setViewing(null)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs font-semibold transition-colors cursor-pointer"
             >
               <ArrowLeft size={14} /> Voltar
             </button>
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm uppercase">
+              <div className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm uppercase">
                 {viewing.username.slice(0, 2)}
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight font-display leading-tight">
+                <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 tracking-tight font-display leading-tight">
                   {viewing.username}
                 </h2>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold">Perfil de amigo</p>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-widest font-bold">Perfil de amigo</p>
               </div>
             </div>
           </div>
           <button
             onClick={() => handleRemoveFriend(viewing)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-sm bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-semibold transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-sm bg-white dark:bg-zinc-900 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-semibold transition-colors cursor-pointer"
           >
             <UserMinus size={14} /> Remover amigo
           </button>
@@ -227,7 +227,7 @@ export default function Social({ currency, isDark }: SocialProps) {
         )}
 
         {viewLoading ? (
-          <div className="flex items-center justify-center py-16 text-slate-400 dark:text-slate-500 text-xs gap-2">
+          <div className="flex items-center justify-center py-16 text-zinc-400 dark:text-zinc-500 text-xs gap-2">
             <Loader2 size={16} className="animate-spin" /> A carregar as estatísticas de {viewing.username}…
           </div>
         ) : (
@@ -236,23 +236,23 @@ export default function Social({ currency, isDark }: SocialProps) {
             <Dashboard bets={friendBets} currency={currency} isDark={isDark} />
 
             {/* Lista read-only das apostas do amigo. */}
-            <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800">
-              <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display mb-1">
+            <div className="bg-white dark:bg-zinc-900 rounded-sm p-5 border border-zinc-200 dark:border-zinc-800">
+              <h4 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight font-display mb-1">
                 Apostas de {viewing.username}
               </h4>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">
                 As 50 apostas mais recentes ({friendBets.length} no total)
               </p>
 
               {recentFriendBets.length === 0 ? (
-                <p className="text-xs text-slate-400 dark:text-slate-500 py-6 text-center">
+                <p className="text-xs text-zinc-400 dark:text-zinc-500 py-6 text-center">
                   Este amigo ainda não registou apostas.
                 </p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                      <tr className="border-b border-zinc-100 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500 font-semibold uppercase tracking-wider text-[10px]">
                         <th className="py-2.5">Data</th>
                         <th className="py-2.5">Evento</th>
                         <th className="py-2.5">Casa</th>
@@ -262,16 +262,16 @@ export default function Social({ currency, isDark }: SocialProps) {
                         <th className="py-2.5 text-right">Lucro</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                       {recentFriendBets.map((bet) => {
                         const meta = statusMeta(bet.status);
                         const event = bet.selections?.[0]?.event || "Múltipla";
                         const extra = (bet.selections?.length || 0) > 1 ? ` +${bet.selections.length - 1}` : "";
                         return (
-                          <tr key={bet.id} className="text-slate-600 dark:text-slate-300 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
-                            <td className="py-2.5 font-mono text-[10px] text-slate-400 dark:text-slate-500 whitespace-nowrap">{bet.dateTime}</td>
-                            <td className="py-2.5 font-medium text-slate-800 dark:text-slate-100 max-w-[220px] truncate">
-                              {event}<span className="text-slate-400 dark:text-slate-500 font-normal">{extra}</span>
+                          <tr key={bet.id} className="text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition-colors">
+                            <td className="py-2.5 font-mono text-[10px] text-zinc-400 dark:text-zinc-500 whitespace-nowrap">{bet.dateTime}</td>
+                            <td className="py-2.5 font-medium text-zinc-800 dark:text-zinc-100 max-w-[220px] truncate">
+                              {event}<span className="text-zinc-400 dark:text-zinc-500 font-normal">{extra}</span>
                             </td>
                             <td className="py-2.5">{bet.bookmaker}</td>
                             <td className="py-2.5 text-right font-mono">
@@ -305,10 +305,10 @@ export default function Social({ currency, isDark }: SocialProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-2">
-          <Users size={20} className="text-indigo-600 dark:text-indigo-400" /> Social
+        <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight font-display flex items-center gap-2">
+          <Users size={20} className="text-emerald-600 dark:text-emerald-400" /> Social
         </h2>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
           Adiciona amigos para verem as estatísticas e apostas uns dos outros.
         </p>
       </div>
@@ -326,46 +326,46 @@ export default function Social({ currency, isDark }: SocialProps) {
       )}
 
       {/* Procurar / adicionar amigos */}
-      <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 space-y-3">
-        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
-          <UserPlus size={16} className="text-indigo-600 dark:text-indigo-400" /> Adicionar amigo
+      <div className="bg-white dark:bg-zinc-900 rounded-sm p-5 border border-zinc-200 dark:border-zinc-800 space-y-3">
+        <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+          <UserPlus size={16} className="text-emerald-600 dark:text-emerald-400" /> Adicionar amigo
         </h4>
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Procurar por username…"
-            className="w-full pl-9 pr-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-sm text-slate-700 dark:text-slate-200"
+            className="w-full pl-9 pr-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:border-emerald-500 text-sm text-zinc-700 dark:text-zinc-200"
           />
         </div>
 
         {query.trim().length >= 2 && (
           <div className="space-y-1.5">
             {searching && (
-              <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1.5 px-1"><Loader2 size={12} className="animate-spin" /> A procurar…</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5 px-1"><Loader2 size={12} className="animate-spin" /> A procurar…</p>
             )}
             {!searching && results.length === 0 && (
-              <p className="text-xs text-slate-400 dark:text-slate-500 px-1">Nenhum utilizador encontrado.</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 px-1">Nenhum utilizador encontrado.</p>
             )}
             {results.map((u) => (
-              <div key={u.id} className="flex items-center justify-between gap-2 p-2 rounded-sm hover:bg-slate-50 dark:hover:bg-slate-800/60">
+              <div key={u.id} className="flex items-center justify-between gap-2 p-2 rounded-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/60">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-200 flex items-center justify-center font-bold text-[10px] uppercase shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-200 flex items-center justify-center font-bold text-[10px] uppercase shrink-0">
                     {u.username.slice(0, 2)}
                   </div>
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{u.username}</span>
+                  <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{u.username}</span>
                 </div>
                 {u.relationship === "friends" ? (
                   <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider px-2">Amigos</span>
                 ) : u.relationship === "outgoing" ? (
-                  <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-2 flex items-center gap-1"><Clock size={11} /> Pendente</span>
+                  <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider px-2 flex items-center gap-1"><Clock size={11} /> Pendente</span>
                 ) : u.relationship === "incoming" ? (
-                  <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider px-2">Pediu-te</span>
+                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider px-2">Pediu-te</span>
                 ) : (
                   <button
                     onClick={() => handleSend(u)}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors cursor-pointer shrink-0"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors cursor-pointer shrink-0"
                   >
                     <UserPlus size={13} /> Adicionar
                   </button>
@@ -377,27 +377,27 @@ export default function Social({ currency, isDark }: SocialProps) {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-12 text-slate-400 dark:text-slate-500 text-xs gap-2">
+        <div className="flex items-center justify-center py-12 text-zinc-400 dark:text-zinc-500 text-xs gap-2">
           <Loader2 size={16} className="animate-spin" /> A carregar…
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Pedidos recebidos */}
-          <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800">
-            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2 mb-3">
-              <Inbox size={16} className="text-indigo-600 dark:text-indigo-400" /> Pedidos recebidos
-              {incoming.length > 0 && <span className="text-[10px] font-bold bg-indigo-600 text-white rounded-full px-1.5 py-0.5">{incoming.length}</span>}
+          <div className="bg-white dark:bg-zinc-900 rounded-sm p-5 border border-zinc-200 dark:border-zinc-800">
+            <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2 mb-3">
+              <Inbox size={16} className="text-emerald-600 dark:text-emerald-400" /> Pedidos recebidos
+              {incoming.length > 0 && <span className="text-[10px] font-bold bg-emerald-600 text-white rounded-full px-1.5 py-0.5">{incoming.length}</span>}
             </h4>
             {incoming.length === 0 ? (
-              <p className="text-xs text-slate-400 dark:text-slate-500 py-2">Sem pedidos pendentes.</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 py-2">Sem pedidos pendentes.</p>
             ) : (
               <div className="space-y-2">
                 {incoming.map((r) => (
                   <div key={r.id} className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{r.username}</span>
+                    <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{r.username}</span>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button onClick={() => handleAccept(r)} title="Aceitar" className="p-1.5 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer"><Check size={14} /></button>
-                      <button onClick={() => handleRemoveRequest(r)} title="Recusar" className="p-1.5 rounded-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"><X size={14} /></button>
+                      <button onClick={() => handleRemoveRequest(r)} title="Recusar" className="p-1.5 rounded-sm bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 transition-colors cursor-pointer"><X size={14} /></button>
                     </div>
                   </div>
                 ))}
@@ -405,13 +405,13 @@ export default function Social({ currency, isDark }: SocialProps) {
             )}
 
             {outgoing.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <h5 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Send size={11} /> Enviados</h5>
+              <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                <h5 className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5 mb-2"><Send size={11} /> Enviados</h5>
                 <div className="space-y-2">
                   {outgoing.map((r) => (
                     <div key={r.id} className="flex items-center justify-between gap-2">
-                      <span className="text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-1.5"><Clock size={11} /> {r.username}</span>
-                      <button onClick={() => handleRemoveRequest(r)} className="text-[10px] font-semibold text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 uppercase tracking-wider transition-colors cursor-pointer">Cancelar</button>
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1.5"><Clock size={11} /> {r.username}</span>
+                      <button onClick={() => handleRemoveRequest(r)} className="text-[10px] font-semibold text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400 uppercase tracking-wider transition-colors cursor-pointer">Cancelar</button>
                     </div>
                   ))}
                 </div>
@@ -420,30 +420,30 @@ export default function Social({ currency, isDark }: SocialProps) {
           </div>
 
           {/* Amigos */}
-          <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800">
-            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2 mb-3">
-              <Users size={16} className="text-indigo-600 dark:text-indigo-400" /> Amigos
-              {friends.length > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">({friends.length})</span>}
+          <div className="bg-white dark:bg-zinc-900 rounded-sm p-5 border border-zinc-200 dark:border-zinc-800">
+            <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2 mb-3">
+              <Users size={16} className="text-emerald-600 dark:text-emerald-400" /> Amigos
+              {friends.length > 0 && <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">({friends.length})</span>}
             </h4>
             {friends.length === 0 ? (
-              <p className="text-xs text-slate-400 dark:text-slate-500 py-2">Ainda não tens amigos. Procura por username acima.</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 py-2">Ainda não tens amigos. Procura por username acima.</p>
             ) : (
               <div className="space-y-1.5">
                 {friends.map((f) => (
-                  <div key={f.id} className="flex items-center justify-between gap-2 p-2 rounded-sm hover:bg-slate-50 dark:hover:bg-slate-800/60 group">
+                  <div key={f.id} className="flex items-center justify-between gap-2 p-2 rounded-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/60 group">
                     <button onClick={() => openFriend(f)} className="flex items-center gap-2.5 min-w-0 flex-1 text-left cursor-pointer">
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-[11px] uppercase shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-[11px] uppercase shrink-0">
                         {f.username.slice(0, 2)}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{f.username}</p>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500">Ver estatísticas e apostas →</p>
+                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{f.username}</p>
+                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500">Ver estatísticas e apostas →</p>
                       </div>
                     </button>
                     <button
                       onClick={() => handleRemoveFriend(f)}
                       title="Remover amigo"
-                      className="p-1.5 rounded-sm text-slate-300 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
+                      className="p-1.5 rounded-sm text-zinc-300 dark:text-zinc-600 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
                     >
                       <UserMinus size={14} />
                     </button>

@@ -23,7 +23,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: ['pwa-192x192.png', 'pwa-512x512.png', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
       workbox: {
         // O index.html (app shell) NÃO é pré-cacheado. Cada navegação vai
         // sempre à rede e recebe o shell atual, que referencia os assets com o
@@ -44,8 +44,8 @@ export default defineConfig({
         name: 'BetTrackr',
         short_name: 'BetTrackr',
         description: 'Aplicação para gestão e análise de boletins de apostas desportivas',
-        theme_color: '#4F46E5',
-        background_color: '#ffffff',
+        theme_color: '#09090b',
+        background_color: '#09090b',
         display: 'standalone',
         start_url: '/',
         icons: [

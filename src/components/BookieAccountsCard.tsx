@@ -84,12 +84,12 @@ export default function BookieAccountsCard({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 space-y-4">
+    <div className="bg-white dark:bg-zinc-900 rounded-sm p-5 border border-zinc-200 dark:border-zinc-800 space-y-4">
       <div>
-        <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-2">
-          <Wallet size={18} className="text-indigo-600 dark:text-indigo-400" /> Contas por casa
+        <h4 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight font-display flex items-center gap-2">
+          <Wallet size={18} className="text-emerald-600 dark:text-emerald-400" /> Contas por casa
         </h4>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
           Regista as tuas contas em cada casa (podes ter várias na mesma casa). Depois associa
           apostas a cada conta e filtra o painel e a lista por conta.
         </p>
@@ -107,7 +107,7 @@ export default function BookieAccountsCard({
           value={newBookmaker}
           onChange={(e) => setNewBookmaker(e.target.value)}
           aria-label="Casa de apostas"
-          className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-sm px-2.5 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-600"
+          className="border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-sm px-2.5 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-emerald-600"
         >
           {AVAILABLE_BOOKMAKERS.map((bookie) => (
             <option key={bookie} value={bookie}>{bookie}</option>
@@ -119,12 +119,12 @@ export default function BookieAccountsCard({
           onChange={(e) => setNewLabel(e.target.value)}
           placeholder="Nome da conta (ex.: Conta principal)"
           maxLength={60}
-          className="flex-1 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-sm px-2.5 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:outline-none focus:border-indigo-600"
+          className="flex-1 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-sm px-2.5 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-emerald-600"
         />
         <button
           type="submit"
           disabled={!newLabel.trim() || saving}
-          className="px-3.5 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-xs inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+          className="px-3.5 py-2 rounded-sm bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-xs inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
         >
           <Plus size={13} /> Adicionar
         </button>
@@ -132,14 +132,14 @@ export default function BookieAccountsCard({
 
       {/* Lista de contas agrupada por casa */}
       {grouped.length === 0 ? (
-        <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+        <p className="text-xs text-zinc-400 dark:text-zinc-500 italic">
           Ainda não tens contas registadas. As apostas sem conta continuam a funcionar normalmente.
         </p>
       ) : (
         <div className="space-y-3">
           {grouped.map(([bookmaker, list]) => (
             <div key={bookmaker}>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5">
                 {bookmaker}
               </p>
               <ul className="space-y-1.5">
@@ -148,7 +148,7 @@ export default function BookieAccountsCard({
                   return (
                     <li
                       key={account.id}
-                      className="flex items-center gap-2 p-2.5 rounded-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800"
+                      className="flex items-center gap-2 p-2.5 rounded-sm bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800"
                     >
                       {editingId === account.id ? (
                         <>
@@ -162,7 +162,7 @@ export default function BookieAccountsCard({
                             }}
                             maxLength={60}
                             autoFocus
-                            className="flex-1 border border-indigo-300 dark:border-indigo-800 bg-white dark:bg-slate-800 rounded-sm px-2 py-1 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-600"
+                            className="flex-1 border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-zinc-800 rounded-sm px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-emerald-600"
                           />
                           <button
                             onClick={submitRename}
@@ -174,7 +174,7 @@ export default function BookieAccountsCard({
                           <button
                             onClick={() => setEditingId(null)}
                             title="Cancelar"
-                            className="p-1.5 rounded-sm text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-sm text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                           >
                             <X size={13} />
                           </button>
@@ -182,8 +182,8 @@ export default function BookieAccountsCard({
                       ) : (
                         <>
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">{account.label}</p>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100 truncate">{account.label}</p>
+                            <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
                               {betCount === 1 ? "1 aposta associada" : `${betCount} apostas associadas`}
                             </p>
                           </div>
@@ -200,7 +200,7 @@ export default function BookieAccountsCard({
                               </button>
                               <button
                                 onClick={() => setConfirmDeleteId(null)}
-                                className="px-2 py-1 rounded-sm bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold transition-colors cursor-pointer"
+                                className="px-2 py-1 rounded-sm bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-[10px] font-bold transition-colors cursor-pointer"
                               >
                                 Não
                               </button>
@@ -210,14 +210,14 @@ export default function BookieAccountsCard({
                               <button
                                 onClick={() => startRename(account)}
                                 title="Renomear conta"
-                                className="p-1.5 rounded-sm text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-sm text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:bg-white dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                               >
                                 <Pencil size={13} />
                               </button>
                               <button
                                 onClick={() => { clearError(); setEditingId(null); setConfirmDeleteId(account.id); }}
                                 title="Apagar conta"
-                                className="p-1.5 rounded-sm text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-sm text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                               >
                                 <Trash2 size={13} />
                               </button>
@@ -234,7 +234,7 @@ export default function BookieAccountsCard({
         </div>
       )}
 
-      <p className="text-[10px] text-slate-400 dark:text-slate-500">
+      <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
         Apagar uma conta não apaga as apostas — ficam apenas "sem conta", associadas à casa.
       </p>
     </div>

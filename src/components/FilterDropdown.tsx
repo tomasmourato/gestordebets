@@ -64,7 +64,7 @@ export default function FilterDropdown<T extends string>({
           if (onTriggerClick) onTriggerClick();
           else setOpen(!isOpen);
         }}
-        className="flex h-9 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-left text-xs font-semibold text-slate-800 outline-none transition-colors hover:border-slate-300 hover:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-50 dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:focus:border-indigo-500 cursor-pointer"
+        className="flex h-9 w-full min-w-0 items-center justify-between gap-2 rounded-sm border border-zinc-200 bg-zinc-50 px-3 text-left text-xs font-semibold text-zinc-800 outline-none transition-colors hover:border-zinc-300 hover:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-50 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:focus:border-emerald-500 cursor-pointer"
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
@@ -72,7 +72,7 @@ export default function FilterDropdown<T extends string>({
         <span className="truncate">{selectedOption?.label}</span>
         <ChevronDown
           size={14}
-          className={`shrink-0 text-slate-400 transition-transform duration-150 dark:text-slate-300 ${isOpen ? "rotate-180" : ""}`}
+          className={`shrink-0 text-zinc-400 transition-transform duration-150 dark:text-zinc-300 ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -83,7 +83,7 @@ export default function FilterDropdown<T extends string>({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.14, ease: "easeOut" }}
-            className="absolute right-0 top-[calc(100%+0.5rem)] z-[60] max-h-72 min-w-full origin-top overflow-y-auto rounded-lg border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-950/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/30"
+            className="absolute right-0 top-[calc(100%+0.5rem)] z-[60] max-h-72 min-w-full origin-top overflow-y-auto rounded-sm border border-zinc-200 bg-white p-1.5 shadow-xl shadow-zinc-950/10 dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-black/30"
             role="listbox"
             aria-label={ariaLabel}
           >
@@ -97,16 +97,16 @@ export default function FilterDropdown<T extends string>({
                     setOpen(false);
                     onChange(option.value);
                   }}
-                  className={`flex w-full items-center justify-between gap-3 whitespace-nowrap rounded-md px-3 py-2 text-left text-xs font-semibold transition-colors cursor-pointer ${
+                  className={`flex w-full items-center justify-between gap-3 whitespace-nowrap rounded-sm px-3 py-2 text-left text-xs font-semibold transition-colors cursor-pointer ${
                     isSelected
-                      ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-white"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-950 dark:text-slate-100 dark:hover:bg-slate-800 dark:hover:text-white"
+                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-white"
+                      : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white"
                   }`}
                   role="option"
                   aria-selected={isSelected}
                 >
                   <span>{option.label}</span>
-                  {isSelected && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500 dark:bg-indigo-400" />}
+                  {isSelected && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500 dark:bg-emerald-400" />}
                 </button>
               );
             })}

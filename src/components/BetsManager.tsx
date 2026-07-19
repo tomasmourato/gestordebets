@@ -310,8 +310,8 @@ export default function BetsManager({
         onClick={() => handleSort(field)}
         className={`inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-widest transition-colors cursor-pointer ${
           isActive
-            ? "text-indigo-600 dark:text-indigo-300"
-            : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+            ? "text-emerald-600 dark:text-emerald-300"
+            : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
         } ${extraClasses}`}
         aria-label={`Ordenar por ${label}${isActive ? `, direção ${sortDirection === "asc" ? "ascendente" : "descendente"}` : ""}`}
         title={`Ordenar por ${label}`}
@@ -528,7 +528,7 @@ export default function BetsManager({
       case "PERDIDA":
         return <span className={`${base} bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-300 border-rose-200 dark:border-rose-900`}><X size={10} /> Perdida</span>;
       case "ANULADA":
-        return <span className={`${base} bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700`}><MinusCircle size={10} /> Anulada</span>;
+        return <span className={`${base} bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700`}><MinusCircle size={10} /> Anulada</span>;
       case "MEIO_GANHA":
         return <span className={`${base} bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900`}><Check size={10} /> Meio Ganha</span>;
       case "MEIO_PERDIDA":
@@ -556,22 +556,22 @@ export default function BetsManager({
     <div className="space-y-4" id="bets-tab">
       
       {/* Search and Filters Toolbar */}
-      <div className="overflow-visible rounded-lg border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900" id="bets-toolbar">
+      <div className="overflow-visible rounded-sm border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900" id="bets-toolbar">
         <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
           {/* Search */}
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
             <input
               type="search"
               placeholder="Pesquisar equipa, mercado ou notas..."
-              className="h-10 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-4 text-xs text-slate-800 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-600 dark:focus:border-indigo-500 dark:focus:bg-slate-800"
+              className="h-10 w-full rounded-sm border border-zinc-200 bg-zinc-50 pl-9 pr-4 text-xs text-zinc-800 outline-none transition-all placeholder:text-zinc-400 hover:border-zinc-300 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:hover:border-zinc-600 dark:focus:border-emerald-500 dark:focus:bg-zinc-800"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
           {(dateFromFilter || dateToFilter) && (
-            <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-2.5 text-[10px] font-semibold text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-200">
+            <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-sm border border-emerald-200 bg-emerald-50 px-2.5 text-[10px] font-semibold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200">
               <CalendarRange size={13} />
               {formatFilterDate(dateFromFilter)} — {formatFilterDate(dateToFilter)}
               <button
@@ -580,7 +580,7 @@ export default function BetsManager({
                   setDateFromFilter("");
                   setDateToFilter("");
                 }}
-                className="ml-0.5 rounded p-0.5 transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900 cursor-pointer"
+                className="ml-0.5 rounded p-0.5 transition-colors hover:bg-emerald-100 dark:hover:bg-emerald-900 cursor-pointer"
                 aria-label="Remover filtro de período"
               >
                 <X size={11} />
@@ -588,14 +588,14 @@ export default function BetsManager({
             </span>
           )}
 
-          <span className="hidden text-[11px] font-medium text-slate-400 lg:block dark:text-slate-500">
+          <span className="hidden text-[11px] font-medium text-zinc-400 lg:block dark:text-zinc-500">
             {filteredBets.length} de {bets.length} apostas
           </span>
 
           {/* New Bet Button */}
           <button
             onClick={openAddModal}
-            className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-md bg-indigo-600 px-4 text-xs font-semibold text-white shadow-sm shadow-indigo-950/15 transition-all hover:bg-indigo-500 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:ring-offset-2 dark:focus:ring-offset-slate-900 cursor-pointer"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-sm bg-emerald-600 px-4 text-xs font-semibold text-white shadow-sm shadow-emerald-950/15 transition-all hover:bg-emerald-500 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 cursor-pointer"
             id="btn-new-bet"
           >
             <Plus size={15} strokeWidth={2.5} /> Registar Aposta
@@ -603,12 +603,12 @@ export default function BetsManager({
         </div>
 
         {/* Dynamic Filters */}
-        <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/20 xl:flex-row xl:items-center">
+        <div className="flex flex-col gap-3 border-t border-zinc-100 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-950/20 xl:flex-row xl:items-center">
           <div className="flex min-w-fit items-center justify-between gap-3 xl:justify-start">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
               <Filter size={13} /> Filtros
               {activeFilterCount > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-100 px-1.5 text-[10px] text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-100 px-1.5 text-[10px] text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                   {activeFilterCount}
                 </span>
               )}
@@ -617,7 +617,7 @@ export default function BetsManager({
               <button
                 type="button"
                 onClick={clearFilters}
-                className="text-[10px] font-semibold text-slate-400 transition-colors hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-300 cursor-pointer"
+                className="text-[10px] font-semibold text-zinc-400 transition-colors hover:text-emerald-600 dark:text-zinc-500 dark:hover:text-emerald-300 cursor-pointer"
               >
                 Limpar
               </button>
@@ -698,10 +698,10 @@ export default function BetsManager({
           <button
             type="button"
             onClick={toggleSelectionMode}
-            className={`inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-md border px-3 text-xs font-semibold transition-colors cursor-pointer ${
+            className={`inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-sm border px-3 text-xs font-semibold transition-colors cursor-pointer ${
               isSelecting
-                ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-900 text-indigo-700 dark:text-indigo-300"
-                : "bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-300 hover:text-indigo-600 dark:hover:border-indigo-700 dark:hover:text-indigo-300"
+                ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300"
+                : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-emerald-300 hover:text-emerald-600 dark:hover:border-emerald-700 dark:hover:text-emerald-300"
             }`}
           >
             <CheckSquare size={14} />
@@ -713,7 +713,7 @@ export default function BetsManager({
               type="button"
               onClick={toggleAllFilteredBets}
               disabled={filteredBets.length === 0}
-              className="h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition-colors hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:border-indigo-700 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+              className="h-9 rounded-sm border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-600 transition-colors hover:border-emerald-300 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:border-emerald-700 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
             >
               {allFilteredBetsSelected ? "Desmarcar filtradas" : `Selecionar filtradas (${filteredBets.length})`}
             </button>
@@ -723,9 +723,9 @@ export default function BetsManager({
       </div>
 
       {isSelecting && selectedBetIds.size > 0 && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-sm px-3 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm px-3 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
           <span>
-            <strong className="text-indigo-600 dark:text-indigo-300">{selectedBetIds.size}</strong>{" "}
+            <strong className="text-emerald-600 dark:text-emerald-300">{selectedBetIds.size}</strong>{" "}
             {selectedBetIds.size === 1 ? "aposta selecionada" : "apostas selecionadas"}
           </span>
 
@@ -747,7 +747,7 @@ export default function BetsManager({
                   type="button"
                   onClick={() => setIsConfirmingBulkDelete(false)}
                   disabled={isBulkActionRunning}
-                  className="p-1 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="p-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
                   aria-label="Cancelar eliminação"
                 >
                   <X size={14} />
@@ -759,7 +759,7 @@ export default function BetsManager({
                   type="button"
                   onClick={handleBulkDuplicate}
                   disabled={isBulkActionRunning}
-                  className="px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
                 >
                   <Copy size={13} /> Duplicar
                 </button>
@@ -784,10 +784,10 @@ export default function BetsManager({
           return (
             <div
               key={bet.id}
-              className={`bg-white dark:bg-slate-900 rounded-sm border p-4 md:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors ${
+              className={`bg-white dark:bg-zinc-900 rounded-sm border p-4 md:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition-colors ${
                 selectedBetIds.has(bet.id)
-                  ? "border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-100 dark:ring-indigo-950"
-                  : "border-slate-200 dark:border-slate-800"
+                  ? "border-emerald-300 dark:border-emerald-700 ring-1 ring-emerald-100 dark:ring-emerald-950"
+                  : "border-zinc-200 dark:border-zinc-800"
               }`}
             >
 
@@ -797,7 +797,7 @@ export default function BetsManager({
                     type="checkbox"
                     checked={selectedBetIds.has(bet.id)}
                     onChange={() => toggleBetSelection(bet.id)}
-                    className="h-4 w-4 rounded-sm border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    className="h-4 w-4 rounded-sm border-zinc-300 dark:border-zinc-600 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                     aria-label={`Selecionar aposta de ${bet.dateTime}`}
                   />
                 </label>
@@ -806,14 +806,14 @@ export default function BetsManager({
               {/* Left Column: Selections and Details */}
               <div className="space-y-2 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[9px] font-bold text-indigo-700 dark:text-indigo-300 tracking-wider uppercase bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900 px-2 py-0.5 rounded-sm font-mono">
+                  <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-300 tracking-wider uppercase bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-900 px-2 py-0.5 rounded-sm font-mono">
                     {bet.type}
                   </span>
                   <span className="inline-flex items-center gap-1 font-mono">
                     {sortButton("Data", "date")}
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">{bet.dateTime}</span>
+                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{bet.dateTime}</span>
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-sm">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-sm">
                     {bet.bookmaker}
                   </span>
                   {bet.accountId && accountLabelById.get(bet.accountId) && (
@@ -827,7 +827,7 @@ export default function BetsManager({
                     </span>
                   )}
                   {bet.isRiskFree && (
-                    <span className="text-[9px] font-bold bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 px-2 py-0.5 rounded-sm uppercase border border-teal-200 dark:border-teal-900">
+                    <span className="text-[9px] font-bold bg-cyan-50 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300 px-2 py-0.5 rounded-sm uppercase border border-cyan-200 dark:border-cyan-900">
                       Sem risco
                     </span>
                   )}
@@ -838,37 +838,37 @@ export default function BetsManager({
                 <div className="space-y-1.5">
                   {(bet.selections || []).map((sel, sIdx) => (
                     <div key={sel.id || sIdx} className="flex flex-wrap items-center gap-x-2 text-xs">
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">{sel.event}</span>
-                      <span className="text-slate-300 dark:text-slate-600 shrink-0">|</span>
-                      <span className="text-slate-500 dark:text-slate-400 shrink-0">{sel.market}:</span>
-                      <span className="font-medium text-slate-700 dark:text-slate-300">{sel.choice}</span>
-                      <span className="text-[10px] text-indigo-700 dark:text-indigo-300 font-bold ml-1 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100/50 dark:border-indigo-900 px-1.5 py-0.5 rounded-sm">@{safeNum(sel.odd).toFixed(2)}</span>
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">{sel.event}</span>
+                      <span className="text-zinc-300 dark:text-zinc-600 shrink-0">|</span>
+                      <span className="text-zinc-500 dark:text-zinc-400 shrink-0">{sel.market}:</span>
+                      <span className="font-medium text-zinc-700 dark:text-zinc-300">{sel.choice}</span>
+                      <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold ml-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100/50 dark:border-emerald-900 px-1.5 py-0.5 rounded-sm">@{safeNum(sel.odd).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Notes and Audit info */}
                 {bet.notes && (
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 p-2 rounded-sm italic">
+                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500 bg-zinc-50/50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-800 p-2 rounded-sm italic">
                     {bet.notes}
                   </p>
                 )}
               </div>
 
               {/* Right Column: Financial Figures and Action Buttons */}
-              <div className="flex items-center gap-6 self-stretch md:self-auto justify-between border-t border-slate-100 dark:border-slate-800 md:border-0 pt-3 md:pt-0 shrink-0">
+              <div className="flex items-center gap-6 self-stretch md:self-auto justify-between border-t border-zinc-100 dark:border-zinc-800 md:border-0 pt-3 md:pt-0 shrink-0">
 
                 {/* Financial Summary */}
                 <div className="flex gap-4 text-right pr-2">
                   <div className="flex flex-col">
                     {sortButton("Stake", "stake", "self-end")}
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-100 font-mono mt-0.5">
+                    <span className="text-xs font-bold text-zinc-800 dark:text-zinc-100 font-mono mt-0.5">
                       {safeNum(bet.stake).toFixed(2)}{currency}
                     </span>
                   </div>
                   <div className="flex flex-col">
                     {sortButton("Odd", "odd", "self-end")}
-                    <span className="text-xs font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900 px-1.5 py-0.5 rounded-sm self-end mt-0.5">
+                    <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-900 px-1.5 py-0.5 rounded-sm self-end mt-0.5">
                       {safeNum(bet.odd).toFixed(2)}
                     </span>
                   </div>
@@ -876,12 +876,12 @@ export default function BetsManager({
                     {sortButton(isSettled ? "Lucro" : "Potencial", "profit", "self-end")}
                     <span className={`text-xs font-bold font-mono mt-0.5 ${
                       !isSettled
-                        ? "text-slate-500 dark:text-slate-400"
+                        ? "text-zinc-500 dark:text-zinc-400"
                         : safeNum(bet.netProfit) > 0
                           ? "text-emerald-600 dark:text-emerald-400"
                           : safeNum(bet.netProfit) < 0
                             ? "text-rose-600 dark:text-rose-400"
-                            : "text-slate-600 dark:text-slate-300"
+                            : "text-zinc-600 dark:text-zinc-300"
                     }`}>
                       {isSettled 
                         ? `${safeNum(bet.netProfit) >= 0 ? "+" : ""}${safeNum(bet.netProfit).toFixed(2)}${currency}` 
@@ -891,7 +891,7 @@ export default function BetsManager({
                 </div>
 
                 {/* Operations */}
-                <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-800 pl-4">
+                <div className="flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-800 pl-4">
                   {deletingId === bet.id ? (
                     <div className="flex items-center gap-1 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 p-1 rounded-sm animate-pulse">
                       <span className="text-[9px] text-rose-800 dark:text-rose-200 font-bold uppercase tracking-wider mr-1">Apagar?</span>
@@ -907,7 +907,7 @@ export default function BetsManager({
                       </button>
                       <button
                         onClick={() => setDeletingId(null)}
-                        className="p-1 rounded-xs bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+                        className="p-1 rounded-xs bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer"
                         title="Cancelar"
                       >
                         <X size={10} />
@@ -918,21 +918,21 @@ export default function BetsManager({
                       <button
                         onClick={() => handleDuplicate(bet)}
                         title="Duplicar Aposta"
-                        className="p-1.5 rounded-sm text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-sm text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                       >
                         <Copy size={13} />
                       </button>
                       <button
                         onClick={() => openEditModal(bet)}
                         title="Editar Aposta"
-                        className="p-1.5 rounded-sm text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-sm text-zinc-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                       >
                         <Edit size={13} />
                       </button>
                       <button
                         onClick={() => setDeletingId(bet.id)}
                         title="Apagar Aposta"
-                        className="p-1.5 rounded-sm text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-sm text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -947,12 +947,12 @@ export default function BetsManager({
         })}
 
         {filteredBets.length === 0 && (
-          <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500">
-            <HelpCircle className="mx-auto text-slate-300 dark:text-slate-600 mb-2 stroke-1" size={32} />
+          <div className="text-center py-12 bg-white dark:bg-zinc-900 rounded-sm border border-zinc-100 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500">
+            <HelpCircle className="mx-auto text-zinc-300 dark:text-zinc-600 mb-2 stroke-1" size={32} />
             <p className="text-xs">Nenhuma aposta encontrada com os filtros selecionados.</p>
             <button
               onClick={openAddModal}
-              className="mt-3 px-3.5 py-1.5 text-xs text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-lg transition-colors font-semibold"
+              className="mt-3 px-3.5 py-1.5 text-xs text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 rounded-sm transition-colors font-semibold"
             >
               Adicionar Nova Aposta
             </button>
@@ -962,17 +962,17 @@ export default function BetsManager({
 
       {/* Registar/Editar Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto" id="bet-form-modal">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-xl shadow-2xl border border-slate-100 dark:border-slate-800 max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 bg-zinc-900/60 dark:bg-zinc-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto" id="bet-form-modal">
+          <div className="bg-white dark:bg-zinc-900 rounded-md w-full max-w-xl shadow-2xl border border-zinc-100 dark:border-zinc-800 max-h-[90vh] flex flex-col">
 
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-slate-50 dark:border-slate-800 shrink-0">
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 font-display">
+            <div className="flex justify-between items-center p-6 border-b border-zinc-50 dark:border-zinc-800 shrink-0">
+              <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-100 font-display">
                 {editingBet ? "Editar Registo de Aposta" : "Registar Nova Aposta"}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 transition-colors"
+                className="p-1 rounded-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-400 transition-colors"
               >
                 <X size={18} />
               </button>
@@ -982,7 +982,7 @@ export default function BetsManager({
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
 
               {formError && (
-                <div className="p-3 bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-200 rounded-xl border border-rose-100 dark:border-rose-900 flex items-center gap-2 font-medium">
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-200 rounded-sm border border-rose-100 dark:border-rose-900 flex items-center gap-2 font-medium">
                   <AlertTriangle size={14} className="text-rose-600 dark:text-rose-400 shrink-0" />
                   <span>{formError}</span>
                 </div>
@@ -991,9 +991,9 @@ export default function BetsManager({
               {/* Type & Status */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Tipo de Aposta</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Tipo de Aposta</label>
                   <select
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
+                    className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:border-emerald-500 text-zinc-700 dark:text-zinc-200"
                     value={formType}
                     onChange={(e) => {
                       const newType = e.target.value as BetType;
@@ -1009,9 +1009,9 @@ export default function BetsManager({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Estado de Liquidação</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Estado de Liquidação</label>
                   <select
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
+                    className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:border-emerald-500 text-zinc-700 dark:text-zinc-200"
                     value={formStatus}
                     onChange={(e) => {
                       const nextStatus = e.target.value as BetStatus;
@@ -1032,7 +1032,7 @@ export default function BetsManager({
 
               {/* Cashout: valor recebido ao encerrar antecipadamente (editável) */}
               {formStatus === "CASHOUT" && (
-                <div className="p-4 bg-violet-50/60 dark:bg-violet-950/30 rounded-2xl border border-violet-100 dark:border-violet-900">
+                <div className="p-4 bg-violet-50/60 dark:bg-violet-950/30 rounded-sm border border-violet-100 dark:border-violet-900">
                   <label className="block text-violet-900 dark:text-violet-200 font-semibold mb-1">
                     Valor do Cashout ({currency})
                   </label>
@@ -1040,7 +1040,7 @@ export default function BetsManager({
                     type="number"
                     step="0.01"
                     min="0"
-                    className="w-full px-3 py-2 rounded-xl border border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-800 focus:outline-none focus:border-violet-500 text-slate-700 dark:text-slate-200 font-mono font-bold"
+                    className="w-full px-3 py-2 rounded-sm border border-violet-200 dark:border-violet-800 bg-white dark:bg-zinc-800 focus:outline-none focus:border-violet-500 text-zinc-700 dark:text-zinc-200 font-mono font-bold"
                     placeholder="0.00"
                     value={formCashoutReturn}
                     onChange={(e) => setFormCashoutReturn(e.target.value)}
@@ -1054,9 +1054,9 @@ export default function BetsManager({
               {/* Bookmaker Choice */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Casa de Apostas</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Casa de Apostas</label>
                   <select
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
+                    className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:border-emerald-500 text-zinc-700 dark:text-zinc-200"
                     value={formBookmaker}
                     onChange={(e) => {
                       const bk = e.target.value;
@@ -1077,9 +1077,9 @@ export default function BetsManager({
                   if (bookieAccounts.length === 0) return null;
                   return (
                     <div>
-                      <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Conta</label>
+                      <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Conta</label>
                       <select
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
+                        className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:border-emerald-500 text-zinc-700 dark:text-zinc-200"
                         value={bookieAccounts.some(a => a.id === formAccountId) ? formAccountId : ""}
                         onChange={(e) => setFormAccountId(e.target.value)}
                       >
@@ -1093,10 +1093,10 @@ export default function BetsManager({
                 })()}
                 {formBookmaker === "Outra" && (
                   <div>
-                    <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Qual?</label>
+                    <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Qual?</label>
                     <input
                       type="text"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
+                      className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:border-emerald-500 text-zinc-700 dark:text-zinc-200"
                       placeholder="Ex: Betfair, Betclic.fr"
                       value={formCustomBookmaker}
                       onChange={(e) => setFormCustomBookmaker(e.target.value)}
@@ -1104,10 +1104,10 @@ export default function BetsManager({
                   </div>
                 )}
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Data / Hora</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Data / Hora</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200 font-mono"
+                    className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:border-emerald-500 text-zinc-700 dark:text-zinc-200 font-mono"
                     placeholder="YYYY-MM-DD HH:mm"
                     value={formDateTime}
                     onChange={(e) => setFormDateTime(e.target.value)}
@@ -1116,8 +1116,8 @@ export default function BetsManager({
               </div>
 
               {/* Tipo de aposta: Normal / Freebet / Sem risco */}
-              <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-2xl border border-indigo-100/50 dark:border-indigo-900 space-y-3">
-                <label className="block font-semibold text-indigo-900 dark:text-indigo-200">
+              <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/30 rounded-sm border border-emerald-100/50 dark:border-emerald-900 space-y-3">
+                <label className="block font-semibold text-emerald-900 dark:text-emerald-200">
                   Tipo de aposta
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -1139,14 +1139,14 @@ export default function BetsManager({
                           setFormIsFreebet(mode.key === "FREEBET");
                           setFormIsRiskFree(mode.key === "RISK_FREE");
                         }}
-                        className={`px-3 py-2 rounded-xl border text-xs font-semibold transition-colors text-center ${
+                        className={`px-3 py-2 rounded-sm border text-xs font-semibold transition-colors text-center ${
                           active
-                            ? "bg-indigo-600 border-indigo-600 text-white"
-                            : "bg-white dark:bg-slate-800 border-indigo-200 dark:border-indigo-800 text-slate-600 dark:text-slate-300 hover:border-indigo-400"
+                            ? "bg-emerald-600 border-emerald-600 text-white"
+                            : "bg-white dark:bg-zinc-800 border-emerald-200 dark:border-emerald-800 text-zinc-600 dark:text-zinc-300 hover:border-emerald-400"
                         }`}
                       >
                         <span className="block">{mode.label}</span>
-                        <span className={`block text-[9px] font-normal mt-0.5 ${active ? "text-indigo-100" : "text-slate-400 dark:text-slate-500"}`}>
+                        <span className={`block text-[9px] font-normal mt-0.5 ${active ? "text-emerald-100" : "text-zinc-400 dark:text-zinc-500"}`}>
                           {mode.hint}
                         </span>
                       </button>
@@ -1156,25 +1156,25 @@ export default function BetsManager({
 
                 {formIsFreebet && (
                   <div>
-                    <label className="block text-indigo-900/80 dark:text-indigo-200/80 font-semibold mb-1">
+                    <label className="block text-emerald-900/80 dark:text-emerald-200/80 font-semibold mb-1">
                       Tipo de Freebet
                     </label>
                     <select
-                      className="w-full px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
+                      className="w-full px-3 py-2 rounded-sm border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-zinc-800 focus:outline-none focus:border-emerald-500 text-zinc-700 dark:text-zinc-200"
                       value={formFreebetType}
                       onChange={(e) => setFormFreebetType(e.target.value as FreebetType)}
                     >
                       <option value="SNR">Stake não devolvida — SNR (ganho = (odd−1)×stake)</option>
                       <option value="SR">Stake devolvida — SR (ganho = odd×stake)</option>
                     </select>
-                    <p className="text-[11px] text-indigo-700/70 dark:text-indigo-300/70 mt-1">
+                    <p className="text-[11px] text-emerald-700/70 dark:text-emerald-300/70 mt-1">
                       Predefinido pela casa ({formBookmaker}). SNR é o padrão; o Betclic usa SR.
                     </p>
                   </div>
                 )}
 
                 {formIsRiskFree && (
-                  <p className="text-[11px] text-indigo-700/70 dark:text-indigo-300/70">
+                  <p className="text-[11px] text-emerald-700/70 dark:text-emerald-300/70">
                     Aposta sem risco: a stake é dinheiro real. Se <strong>ganhar</strong>, o lucro é
                     normal; se <strong>perder</strong>, a stake é devolvida (resultado neutro).
                     Regista a freebet devolvida como uma aposta à parte quando a usares.
@@ -1185,22 +1185,22 @@ export default function BetsManager({
               {/* Stake & Notes */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Valor da Aposta (Stake)</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Valor da Aposta (Stake)</label>
                   <input
                     type="number"
                     step="0.01"
                     min="0.01"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200 font-mono font-bold"
+                    className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:border-emerald-500 text-zinc-700 dark:text-zinc-200 font-mono font-bold"
                     placeholder="10.00"
                     value={formStake}
                     onChange={(e) => setFormStake(e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Notas adicionais (opcional)</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Notas adicionais (opcional)</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
+                    className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none focus:border-emerald-500 text-zinc-700 dark:text-zinc-200"
                     placeholder="Ex: Segui tipster X, jogo crucial"
                     value={formNotes}
                     onChange={(e) => setFormNotes(e.target.value)}
@@ -1211,14 +1211,14 @@ export default function BetsManager({
               {/* Selections Section */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <h4 className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide text-[10px]">
+                  <h4 className="font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wide text-[10px]">
                     Seleções do Bilhete ({formSelections.length})
                   </h4>
                   {formType === "MULTIPLA" && (
                     <button
                       type="button"
                       onClick={addSelection}
-                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-1 font-semibold"
+                      className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 flex items-center gap-1 font-semibold"
                     >
                       <PlusCircle size={14} /> Adicionar Seleção
                     </button>
@@ -1229,13 +1229,13 @@ export default function BetsManager({
                   {formSelections.map((sel, idx) => (
                     <div 
                       key={idx} 
-                      className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700 space-y-2.5 relative"
+                      className="p-3.5 bg-zinc-50 dark:bg-zinc-800/50 rounded-sm border border-zinc-100 dark:border-zinc-700 space-y-2.5 relative"
                     >
                       {formSelections.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeSelection(idx)}
-                          className="absolute right-3 top-3 text-slate-400 hover:text-rose-500"
+                          className="absolute right-3 top-3 text-zinc-400 hover:text-rose-500"
                         >
                           <MinusCircle size={14} />
                         </button>
@@ -1243,22 +1243,22 @@ export default function BetsManager({
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold mb-0.5">Evento / Jogo</label>
+                          <label className="block text-zinc-400 dark:text-zinc-500 text-[10px] uppercase font-bold mb-0.5">Evento / Jogo</label>
                           <input
                             type="text"
                             required
-                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-[11px]"
+                            className="w-full px-2.5 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 text-[11px]"
                             placeholder="Ex: Benfica vs Porto"
                             value={sel.event}
                             onChange={(e) => handleSelectionChange(idx, "event", e.target.value)}
                           />
                         </div>
                         <div>
-                          <label className="block text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold mb-0.5">Mercado</label>
+                          <label className="block text-zinc-400 dark:text-zinc-500 text-[10px] uppercase font-bold mb-0.5">Mercado</label>
                           <input
                             type="text"
                             required
-                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-[11px]"
+                            className="w-full px-2.5 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 text-[11px]"
                             placeholder="Ex: Resultado Final, Total de Golos"
                             value={sel.market}
                             onChange={(e) => handleSelectionChange(idx, "market", e.target.value)}
@@ -1268,24 +1268,24 @@ export default function BetsManager({
 
                       <div className="grid grid-cols-3 gap-3">
                         <div className="col-span-2">
-                          <label className="block text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold mb-0.5">Escolha / Prognóstico</label>
+                          <label className="block text-zinc-400 dark:text-zinc-500 text-[10px] uppercase font-bold mb-0.5">Escolha / Prognóstico</label>
                           <input
                             type="text"
                             required
-                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-[11px]"
+                            className="w-full px-2.5 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 text-[11px]"
                             placeholder="Ex: Benfica, Mais de 2.5"
                             value={sel.choice}
                             onChange={(e) => handleSelectionChange(idx, "choice", e.target.value)}
                           />
                         </div>
                         <div>
-                          <label className="block text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold mb-0.5">Odd Individual</label>
+                          <label className="block text-zinc-400 dark:text-zinc-500 text-[10px] uppercase font-bold mb-0.5">Odd Individual</label>
                           <input
                             type="number"
                             step="0.01"
                             min="1.01"
                             required
-                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-mono text-[11px]"
+                            className="w-full px-2.5 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 font-mono text-[11px]"
                             placeholder="1.80"
                             value={sel.odd}
                             onChange={(e) => handleSelectionChange(idx, "odd", e.target.value)}
@@ -1298,15 +1298,15 @@ export default function BetsManager({
               </div>
 
               {/* Live Preview Box */}
-              <div className="p-4 bg-slate-900 dark:bg-slate-950 dark:border dark:border-slate-800 text-slate-100 rounded-2xl flex justify-between items-center font-display shadow-inner">
+              <div className="p-4 bg-zinc-900 dark:bg-zinc-950 dark:border dark:border-zinc-800 text-zinc-100 rounded-sm flex justify-between items-center font-display shadow-inner">
                 <div>
-                  <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Simulação do Boletim</p>
+                  <p className="text-[9px] text-zinc-400 font-semibold uppercase tracking-wider">Simulação do Boletim</p>
                   <p className="text-sm font-bold mt-0.5">
-                    Odd Total: <span className="font-mono text-indigo-300">@{calculatedOdd.toFixed(2)}</span>
+                    Odd Total: <span className="font-mono text-emerald-300">@{calculatedOdd.toFixed(2)}</span>
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
+                  <p className="text-[9px] text-zinc-400 font-semibold uppercase tracking-wider">
                     {formStatus === "POR_LIQUIDAR" ? "Retorno Potencial" : "Retorno Liquidado"}
                   </p>
                   {formStatus === "MEIO_GANHA" || formStatus === "MEIO_PERDIDA" ? (
@@ -1318,7 +1318,7 @@ export default function BetsManager({
                         required
                         value={formSettledReturn !== "" ? formSettledReturn : potentialWinningsInfo.finalReturn.toFixed(2)}
                         onChange={(e) => setFormSettledReturn(e.target.value)}
-                        className="w-24 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-right font-mono text-base font-black text-emerald-400 focus:border-indigo-400 focus:outline-none"
+                        className="w-24 rounded-sm border border-zinc-700 bg-zinc-800 px-2 py-1 text-right font-mono text-base font-black text-emerald-400 focus:border-emerald-400 focus:outline-none"
                         aria-label="Retorno liquidado"
                       />
                       <span className="text-lg font-black text-emerald-400">{currency}</span>
@@ -1338,13 +1338,13 @@ export default function BetsManager({
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 font-semibold"
+                  className="px-4 py-2.5 rounded-sm border border-zinc-100 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-300 font-semibold"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-xs transition-colors"
+                  className="px-5 py-2.5 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-xs transition-colors"
                 >
                   {editingBet ? "Guardar Alterações" : "Registar Aposta"}
                 </button>

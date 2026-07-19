@@ -43,7 +43,7 @@ function ConfidenceDots({ level }: { level: number }) {
         <span
           key={i}
           className={`w-1.5 h-1.5 rounded-full ${
-            i <= level ? "bg-indigo-500" : "bg-slate-200 dark:bg-slate-700"
+            i <= level ? "bg-emerald-500" : "bg-zinc-200 dark:bg-zinc-700"
           }`}
         ></span>
       ))}
@@ -100,10 +100,10 @@ export default function AIInsights({ onSessionExpired }: AIInsightsProps) {
       {/* Cabeçalho */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight font-display flex items-center gap-2">
             <Lightbulb size={20} className="text-amber-500" /> AI Insights
           </h3>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
             {formattedDate ? `Dicas para ${formattedDate}` : "Dicas de picks para os jogos de hoje"}
             {generatedTime && ` · geradas às ${generatedTime}`}
           </p>
@@ -111,7 +111,7 @@ export default function AIInsights({ onSessionExpired }: AIInsightsProps) {
         <button
           onClick={load}
           disabled={loading}
-          className="px-3 py-1.5 rounded-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+          className="px-3 py-1.5 rounded-sm bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 font-semibold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
         >
           <RefreshCw size={13} className={loading ? "animate-spin" : ""} /> Atualizar
         </button>
@@ -130,24 +130,24 @@ export default function AIInsights({ onSessionExpired }: AIInsightsProps) {
 
       {/* Estados */}
       {loading && (
-        <div className="bg-white dark:bg-slate-900 rounded-sm border border-slate-200 dark:border-slate-800 p-10 flex flex-col items-center gap-3 text-center">
-          <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="bg-white dark:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 p-10 flex flex-col items-center gap-3 text-center">
+          <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
             A analisar os jogos de hoje…
           </p>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500">
+          <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
             Na primeira visita do dia a análise é gerada na hora — pode demorar até um minuto.
           </p>
         </div>
       )}
 
       {!loading && error && (
-        <div className="bg-white dark:bg-slate-900 rounded-sm border border-slate-200 dark:border-slate-800 p-8 flex flex-col items-center gap-3 text-center">
+        <div className="bg-white dark:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 p-8 flex flex-col items-center gap-3 text-center">
           <AlertTriangle size={20} className="text-rose-500" />
           <p className="text-xs font-medium text-rose-600 dark:text-rose-300">{error}</p>
           <button
             onClick={load}
-            className="px-3.5 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-colors cursor-pointer"
+            className="px-3.5 py-2 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-colors cursor-pointer"
           >
             Tentar novamente
           </button>
@@ -158,30 +158,30 @@ export default function AIInsights({ onSessionExpired }: AIInsightsProps) {
         <>
           {/* Resumo do dia */}
           {data.summary && (
-            <div className="bg-white dark:bg-slate-900 rounded-sm border border-slate-200 dark:border-slate-800 p-4 flex items-start gap-3">
-              <Sparkles size={16} className="text-indigo-500 shrink-0 mt-0.5" />
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{data.summary}</p>
+            <div className="bg-white dark:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 p-4 flex items-start gap-3">
+              <Sparkles size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">{data.summary}</p>
             </div>
           )}
 
           {/* Picks por desporto */}
           {[...groups.entries()].map(([sport, picks]) => (
             <div key={sport}>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-2">
                 {sport}
               </p>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {picks.map((pick, i) => (
                   <div
                     key={`${pick.match}-${i}`}
-                    className="bg-white dark:bg-slate-900 rounded-sm border border-slate-200 dark:border-slate-800 p-4 space-y-2.5"
+                    className="bg-white dark:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 p-4 space-y-2.5"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug">
+                        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug">
                           {pick.match}
                         </p>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1">
+                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5 flex items-center gap-1">
                           {pick.competition}
                           {pick.kickoffLisbon && (
                             <>
@@ -192,21 +192,21 @@ export default function AIInsights({ onSessionExpired }: AIInsightsProps) {
                         </p>
                       </div>
                       {pick.approxOdd !== null && (
-                        <span className="shrink-0 text-xs font-bold font-mono bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900 px-2 py-1 rounded-sm">
+                        <span className="shrink-0 text-xs font-bold font-mono bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900 px-2 py-1 rounded-sm">
                           @{pick.approxOdd.toFixed(2)}
                         </span>
                       )}
                     </div>
 
                     <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <span className="text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-sm">
-                        {pick.market}: <span className="text-indigo-600 dark:text-indigo-300">{pick.selection}</span>
+                      <span className="text-[11px] font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-sm">
+                        {pick.market}: <span className="text-emerald-600 dark:text-emerald-300">{pick.selection}</span>
                       </span>
                       <ConfidenceDots level={pick.confidence} />
                     </div>
 
                     {pick.rationale && (
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
                         {pick.rationale}
                       </p>
                     )}
@@ -216,7 +216,7 @@ export default function AIInsights({ onSessionExpired }: AIInsightsProps) {
             </div>
           ))}
 
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center pb-2">
+          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 text-center pb-2">
             As odds são aproximadas no momento da geração e mudam ao longo do dia — confirma
             sempre na casa de apostas. Uma análise nova é gerada a cada dia.
           </p>

@@ -1,13 +1,28 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Tema único (escuro) com bom contraste — evita o problema de a deteção
-   claro/escuro do browser deixar texto quase branco sobre um painel claro. */
+/* Tema único (escuro) alinhado com o "trading terminal" da app: fundo
+   quase preto, superfícies zinc, accent verde esmeralda. Evita também o
+   problema de a deteção claro/escuro do browser deixar texto quase branco
+   sobre um painel claro. */
+:root {
+  --bg: #09090b;
+  --surface: #18181b;
+  --border: #27272a;
+  --text: #f4f4f5;
+  --text-dim: #a1a1aa;
+  --text-faint: #71717a;
+  --accent: #10b981;
+  --accent-bright: #34d399;
+  --accent-dark: #059669;
+  --danger: #ef4444;
+}
+
 body {
   width: 300px;
   padding: 16px;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  color: #f1f5f9;
-  background: #0f172a;
+  color: var(--text);
+  background: var(--bg);
 }
 
 header {
@@ -18,30 +33,30 @@ header {
 }
 
 .logo {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: #4f46e5;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
-.logo::after {
-  content: "";
-  width: 12px;
-  height: 12px;
-  background: #fff;
-  transform: rotate(45deg);
-}
+.logo svg, .logo img { width: 100%; height: 100%; display: block; }
 
-h1 { font-size: 14px; font-weight: 700; line-height: 1.1; color: #f8fafc; }
-header p { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: #94a3b8; font-weight: 700; }
+h1 { font-size: 14px; font-weight: 700; line-height: 1.1; color: #fafafa; letter-spacing: -0.01em; }
+header p {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+  font-weight: 700;
+  font-family: ui-monospace, "JetBrains Mono", Consolas, monospace;
+}
 
 .status {
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  border-radius: 4px;
   padding: 10px 12px;
   margin-bottom: 14px;
   font-size: 12px;
@@ -51,59 +66,69 @@ header p { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; co
   align-items: center;
   gap: 8px;
   padding: 3px 0;
-  color: #e2e8f0;
+  color: #e4e4e7;
   font-weight: 500;
 }
 
 .dot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: #64748b;
+  background: var(--text-faint);
   flex-shrink: 0;
 }
-.dot.ok { background: #22c55e; }
-.dot.bad { background: #ef4444; }
+.dot.ok { background: var(--accent); box-shadow: 0 0 6px rgba(16, 185, 129, 0.6); }
+.dot.bad { background: var(--danger); }
 
 button {
   width: 100%;
   padding: 10px;
   border: none;
-  border-radius: 8px;
-  background: #4f46e5;
+  border-radius: 4px;
+  background: var(--accent-dark);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
 }
-button:hover:not(:disabled) { background: #4338ca; }
+button:hover:not(:disabled) { background: var(--accent); box-shadow: 0 0 12px rgba(16, 185, 129, 0.25); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .actions { display: grid; gap: 7px; }
-.actions button:nth-child(3) { background: #334155; }
-.actions button:nth-child(3):hover:not(:disabled) { background: #475569; }
+.actions button:nth-child(3) {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.actions button:nth-child(3):hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--accent-dark);
+  color: var(--accent-bright);
+  box-shadow: none;
+}
 
 .msg {
   font-size: 12px;
   margin-top: 12px;
   min-height: 16px;
   line-height: 1.4;
-  color: #e2e8f0;
+  color: #e4e4e7;
 }
 .msg.error { color: #f87171; }
-.msg.success { color: #4ade80; }
+.msg.success { color: var(--accent-bright); }
 
-details { margin-top: 14px; font-size: 11px; color: #94a3b8; }
-summary { cursor: pointer; font-weight: 600; color: #cbd5e1; }
+details { margin-top: 14px; font-size: 11px; color: var(--text-dim); }
+summary { cursor: pointer; font-weight: 600; color: #d4d4d8; }
+summary:hover { color: var(--accent-bright); }
 ol { margin: 8px 0 0 16px; }
 li { margin: 4px 0; }
 
 /* Seletores de conta de destino (aparecem só com contas registadas na app) */
 .accounts {
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
   padding: 10px 12px;
   margin-bottom: 14px;
 }
@@ -111,28 +136,30 @@ li { margin: 4px 0; }
   display: block;
   font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #94a3b8;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
   font-weight: 700;
+  font-family: ui-monospace, "JetBrains Mono", Consolas, monospace;
   margin-bottom: 3px;
 }
 .accounts select {
   width: 100%;
   margin-bottom: 8px;
   padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #334155;
-  background: #0f172a;
-  color: #f1f5f9;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
   font-size: 12px;
 }
+.accounts select:focus { outline: none; border-color: var(--accent); }
 .accounts select:last-child { margin-bottom: 0; }
 
 /* Login BetTrackr + opções de sessão */
 .login {
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
   padding: 12px;
   margin-bottom: 14px;
 }
@@ -140,66 +167,70 @@ li { margin: 4px 0; }
   display: block;
   font-size: 12px;
   font-weight: 700;
-  color: #f1f5f9;
+  color: var(--text);
   margin-bottom: 8px;
 }
 .login input {
   width: 100%;
   margin-bottom: 8px;
   padding: 7px 9px;
-  border-radius: 6px;
-  border: 1px solid #334155;
-  background: #0f172a;
-  color: #f1f5f9;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
   font-size: 12px;
 }
+.login input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15); }
 .login button {
   width: 100%;
   padding: 8px;
   border: none;
-  border-radius: 6px;
-  background: #4f46e5;
+  border-radius: 4px;
+  background: var(--accent-dark);
   color: #fff;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
+.login button:hover:not(:disabled) { background: var(--accent); }
 .login button:disabled { opacity: 0.6; cursor: default; }
 .hint {
   font-size: 10px;
-  color: #94a3b8;
+  color: var(--text-faint);
   margin-top: 6px;
   line-height: 1.35;
 }
 
 .account-box {
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
   padding: 10px 12px;
   margin-bottom: 14px;
 }
 .account-row {
   justify-content: space-between;
   font-weight: 600;
-  color: #f1f5f9;
+  color: var(--text);
   margin-bottom: 8px;
 }
 .link {
   background: none;
   border: none;
-  color: #a5b4fc;
+  color: var(--accent-bright);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   padding: 0;
+  width: auto;
 }
+.link:hover:not(:disabled) { background: none; box-shadow: none; text-decoration: underline; }
 .toggle {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   font-size: 12px;
-  color: #e2e8f0;
+  color: #e4e4e7;
   cursor: pointer;
 }
-.toggle input { margin-top: 2px; }
+.toggle input { margin-top: 2px; accent-color: var(--accent); }
