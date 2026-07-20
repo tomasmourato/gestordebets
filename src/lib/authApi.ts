@@ -3,7 +3,7 @@
 const TOKEN_KEY = "gestordebets_token";
 const USER_KEY = "gestordebets_user";
 
-interface StoredUser {
+export interface StoredUser {
   id: string;
   username: string;
   email: string;
@@ -65,6 +65,15 @@ export function isAuthenticated(): boolean {
   return !!getToken();
 }
 
+export async function restoreBrowserSession(): Promise<StoredUser | null> {
+  if (!getToken()) return null;
+  const res = await authFetch("/api/auth/me");
+  const data = await parseJsonResponse(res);
+  if (!res.ok || !data?.user) return null;
+  saveUser(data.user);
+  return data.user;
+}
+
 // ------------------------------------------------------------
 // Registo
 // ------------------------------------------------------------
@@ -100,6 +109,7 @@ export async function login(email: string, password: string) {
 export function logout() {
   clearToken();
   localStorage.removeItem(USER_KEY);
+  void fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => undefined);
 }
 
 // ------------------------------------------------------------
@@ -114,7 +124,7 @@ export async function authFetch(url: string, options: RequestInit = {}) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
-  const res = await fetch(url, { ...options, headers });
+  const res = await fetch(url, { ...options, headers, credentials: "same-origin" });
 
   if (res.status === 401) {
     // Token inválido ou expirado -> força novo login

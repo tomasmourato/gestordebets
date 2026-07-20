@@ -5,6 +5,46 @@ const STATUS_LOSS = 3;
 const MIN_HISTORY_YEAR = 2012;
 const CASHOUT_STATUS_TOKENS = new Set(["CASHOUT", "CASHEDOUT", "FULLCASHOUT", "PARTIALCASHOUT"]);
 
+const SELECTION_STATUS_MAP = new Map([
+  ["1", "POR_LIQUIDAR"],
+  ["2", "GANHA"],
+  ["3", "PERDIDA"],
+  ["OPEN", "POR_LIQUIDAR"],
+  ["PENDING", "POR_LIQUIDAR"],
+  ["NOTSET", "POR_LIQUIDAR"],
+  ["WIN", "GANHA"],
+  ["WON", "GANHA"],
+  ["GANHA", "GANHA"],
+  ["LOSE", "PERDIDA"],
+  ["LOSS", "PERDIDA"],
+  ["LOST", "PERDIDA"],
+  ["PERDIDA", "PERDIDA"],
+  ["VOID", "ANULADA"],
+  ["REFUNDED", "ANULADA"],
+  ["CANCELED", "ANULADA"],
+  ["CANCELLED", "ANULADA"],
+  ["ANULADA", "ANULADA"],
+  ["HALFWIN", "MEIO_GANHA"],
+  ["HALFWON", "MEIO_GANHA"],
+  ["HALFLOSE", "MEIO_PERDIDA"],
+  ["HALFLOST", "MEIO_PERDIDA"],
+]);
+
+export function mapBetanoSelectionResult(value) {
+  if (value === undefined || value === null || value === "") return undefined;
+  const token = String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+  return SELECTION_STATUS_MAP.get(token);
+}
+
+function resultValue(value) {
+  if (!value || typeof value !== "object") return undefined;
+  return value.Result ?? value.Status ?? value.State ?? value.Outcome ?? value.SettlementStatus;
+}
+
 export function parseBetanoMoney(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
   if (value === undefined || value === null) return 0;
@@ -81,8 +121,19 @@ export function mapBetanoStatus(bet) {
 function flattenSelections(bet, ref) {
   const selections = [];
   for (const leg of Array.isArray(bet.Legs) ? bet.Legs : []) {
-    for (const item of Array.isArray(leg && leg.LegItems) ? leg.LegItems : []) {
-      for (const selection of Array.isArray(item && item.Selections) ? item.Selections : []) {
+    const legItems = Array.isArray(leg && leg.LegItems) ? leg.LegItems : [];
+    const legSelectionCount = legItems.reduce(
+      (count, item) => count + (Array.isArray(item && item.Selections) ? item.Selections.length : 0),
+      0
+    );
+    for (const item of legItems) {
+      const itemSelections = Array.isArray(item && item.Selections) ? item.Selections : [];
+      for (const selection of itemSelections) {
+        const result = mapBetanoSelectionResult(
+          resultValue(selection) ??
+          (itemSelections.length === 1 ? resultValue(item) : undefined) ??
+          (legSelectionCount === 1 ? resultValue(leg) : undefined)
+        );
         selections.push({
           id: `betano-${ref || "x"}-${selections.length}`,
           event: selection.Game || "",
@@ -91,6 +142,7 @@ function flattenSelections(bet, ref) {
           odd: parseBetanoMoney(selection.Odd),
           sport: selection.Sport || undefined,
           betType: selection.Market || undefined,
+          ...(result ? { result } : {}),
         });
       }
     }

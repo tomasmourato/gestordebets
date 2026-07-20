@@ -1,5 +1,6 @@
 export type BetStatus = 'POR_LIQUIDAR' | 'GANHA' | 'PERDIDA' | 'ANULADA' | 'MEIO_GANHA' | 'MEIO_PERDIDA' | 'CASHOUT';
 export type BetType = 'SIMPLES' | 'MULTIPLA';
+export type SelectionResult = Exclude<BetStatus, 'CASHOUT'>;
 
 // Regra de pagamento de uma freebet:
 //  SNR = Stake Not Returned (ganho = (odd-1) * stake) — padrão da indústria
@@ -14,6 +15,7 @@ export interface Selection {
   odd: number;
   sport?: string;
   betType?: string;
+  result?: SelectionResult;
 }
 
 export interface BetMetadata {

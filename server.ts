@@ -1,5 +1,6 @@
 import express from "express";
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "path";
@@ -9,8 +10,16 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import betsRoutes from "./routes/betsRoutes.js";
 import pool from "./db/pool.js";
-import { authenticateToken, AuthenticatedRequest } from "./middleware/authMiddleware.js";
+import {
+  authenticateToken,
+  authenticatedUserFromRequest,
+  AuthenticatedRequest,
+  SESSION_COOKIE,
+} from "./middleware/authMiddleware.js";
 import { rateLimit } from "./middleware/rateLimit.js";
+import { renderApp } from "./src/entry-server.js";
+import { mapBetFromApi } from "./src/lib/betsApi.js";
+import type { InitialAppData } from "./src/initialData.js";
 
 // O .env.local sobrepõe-se ao .env.
 dotenv.config({ path: ".env" });
@@ -20,6 +29,18 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const execFileAsync = promisify(execFile);
 const extensionZipPath = path.join(process.cwd(), "dist", "bettrackr-extension.zip");
+const SSR_PATHS = ["/dashboard", "/bets"];
+const SSR_BET_COLUMNS = `
+  id, type, status,
+  stake::float8 AS stake, odd::float8 AS odd,
+  is_freebet, freebet_type,
+  potential_return::float8 AS potential_return,
+  final_return::float8 AS final_return,
+  net_profit::float8 AS net_profit,
+  bookmaker,
+  to_char(date_time, 'YYYY-MM-DD HH24:MI') AS date_time,
+  notes, origin, selections, comment, tags, metadata, created_at
+`;
 
 // Atrás do proxy da Vercel, o IP real do cliente vem no X-Forwarded-For.
 // Sem isto o rate limiting veria o IP do proxy para todos os pedidos.
@@ -86,6 +107,84 @@ app.use("/api/parse-screenshot", rateLimit({ windowMs: 10 * 60 * 1000, max: 30 }
 
 app.use("/api/auth", authRoutes);
 app.use("/api/bets", betsRoutes);
+
+function clearServerSessionCookie(res: express.Response) {
+  res.clearCookie(SESSION_COOKIE, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: Boolean(process.env.VERCEL) || process.env.COOKIE_SECURE === "true",
+    path: "/",
+  });
+}
+
+async function loadInitialAppData(req: express.Request, res: express.Response): Promise<InitialAppData> {
+  const sessionUser = authenticatedUserFromRequest(req);
+  let user: InitialAppData["user"] = null;
+  let bets: InitialAppData["bets"] = [];
+
+  if (sessionUser) {
+    const [userResult, betsResult] = await Promise.all([
+      pool.query("SELECT id, username, email FROM users WHERE id = $1", [sessionUser.id]),
+      pool.query(
+        `SELECT ${SSR_BET_COLUMNS}
+         FROM bets
+         WHERE user_id = $1
+         ORDER BY date_time DESC NULLS LAST, created_at DESC`,
+        [sessionUser.id]
+      ),
+    ]);
+
+    if (userResult.rows[0]) {
+      user = userResult.rows[0];
+      bets = betsResult.rows.map(mapBetFromApi);
+    } else {
+      clearServerSessionCookie(res);
+    }
+  } else if (req.headers.cookie?.includes(`${SESSION_COOKIE}=`)) {
+    clearServerSessionCookie(res);
+  }
+
+  return {
+    authenticated: Boolean(user),
+    user,
+    bets,
+    pathname: req.path,
+    search: req.originalUrl.includes("?") ? `?${req.originalUrl.split("?").slice(1).join("?")}` : "",
+  };
+}
+
+function serializeInitialData(data: InitialAppData): string {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
+async function renderDocument(
+  req: express.Request,
+  res: express.Response,
+  template: string
+) {
+  const initialData = await loadInitialAppData(req, res);
+  const appHtml = renderApp(initialData);
+  const bootScript = `<script>window.__BETTRACKR_INITIAL_DATA__=${serializeInitialData(initialData)}</script>`;
+  const html = template
+    .replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`)
+    .replace("</body>", `${bootScript}</body>`);
+
+  res.setHeader("Cache-Control", "private, no-store");
+  res.status(200).type("html").send(html);
+}
+
+function productionSsrHandler(req: express.Request, res: express.Response, next: express.NextFunction) {
+  readFile(path.join(process.cwd(), "dist", "index.html"), "utf8")
+    .then((template) => renderDocument(req, res, template))
+    .catch(next);
+}
+
+if (process.env.VERCEL) {
+  app.get(SSR_PATHS, productionSsrHandler);
+}
 
 let aiClient: GoogleGenAI | null = null;
 function getAiClient(): GoogleGenAI {
@@ -348,13 +447,33 @@ async function start() {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: "spa",
+      appType: "custom",
     });
     app.use(vite.middlewares);
+    app.get(SSR_PATHS, async (req, res, next) => {
+      try {
+        const source = await readFile(path.join(process.cwd(), "index.html"), "utf8");
+        const template = await vite.transformIndexHtml(req.originalUrl, source);
+        await renderDocument(req, res, template);
+      } catch (error) {
+        vite.ssrFixStacktrace(error as Error);
+        next(error);
+      }
+    });
+    app.get("*", async (req, res, next) => {
+      try {
+        const source = await readFile(path.join(process.cwd(), "index.html"), "utf8");
+        res.status(200).type("html").send(await vite.transformIndexHtml(req.originalUrl, source));
+      } catch (error) {
+        vite.ssrFixStacktrace(error as Error);
+        next(error);
+      }
+    });
     console.log("Modo de desenvolvimento: Middleware do Vite ativado.");
   } else {
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, { index: false }));
+    app.get(SSR_PATHS, productionSsrHandler);
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });

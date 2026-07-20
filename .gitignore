@@ -7,6 +7,6 @@ coverage/
 *.log
 .env*
 !.env.example
-graphify-out/
+graphify-out/cost.json
 .agents/
 .codex/

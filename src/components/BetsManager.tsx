@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { 
   Plus, 
   Search, 
@@ -9,7 +9,7 @@ import {
   X, 
   PlusCircle, 
   MinusCircle, 
-  Check, 
+  Check,
   HelpCircle,
   Eye,
   Trash,
@@ -17,13 +17,18 @@ import {
   AlertTriangle,
   ArrowUp,
   ArrowDown,
-  CheckSquare,
-  CalendarRange
+  CheckSquare
 } from "lucide-react";
-import { Bet, Selection, BetStatus, BetType, FreebetType } from "../types";
+import { Bet, Selection, BetStatus, BetType, FreebetType, SelectionResult } from "../types";
 import { calculateBetReturnAndProfit, AVAILABLE_BOOKMAKERS, safeNum } from "../utils";
 import { defaultFreebetTypeFor } from "../lib/bookmakers";
 import FilterDropdown from "./FilterDropdown";
+import TimeframeFilter, {
+  EMPTY_TIMEFRAME_FILTER,
+  isTimeframe,
+  resolveTimeframeRange,
+  TimeframeFilterValue,
+} from "./TimeframeFilter";
 
 interface BetsManagerProps {
   bets: Bet[];
@@ -32,6 +37,7 @@ interface BetsManagerProps {
   onAddBets: (bets: Bet[]) => void | Promise<void>;
   onUpdateBet: (bet: Bet) => void | Promise<void>;
   onDeleteBet: (id: string) => void | Promise<void>;
+  initialSearch?: string;
 }
 
 type SortField = "date" | "stake" | "odd" | "profit";
@@ -43,9 +49,13 @@ export default function BetsManager({
   onAddBet, 
   onAddBets,
   onUpdateBet, 
-  onDeleteBet
+  onDeleteBet,
+  initialSearch,
 }: BetsManagerProps) {
-  const initialFilters = useMemo(() => new URLSearchParams(window.location.search), []);
+  const initialFilters = useMemo(
+    () => new URLSearchParams(initialSearch ?? window.location.search),
+    [initialSearch]
+  );
   const initialFilter = (name: string) => initialFilters.get(name) || "ALL";
   
   // Search & Filter state
@@ -55,8 +65,18 @@ export default function BetsManager({
   const [freebetFilter, setFreebetFilter] = useState<string>(() => initialFilter("money"));
   const [bookmakerFilter, setBookmakerFilter] = useState<string>(() => initialFilter("bookmaker"));
   const [sportFilter, setSportFilter] = useState<string>(() => initialFilter("sport"));
-  const [dateFromFilter, setDateFromFilter] = useState(() => initialFilters.get("dateFrom") || "");
-  const [dateToFilter, setDateToFilter] = useState(() => initialFilters.get("dateTo") || "");
+  const [timeframeFilter, setTimeframeFilter] = useState<TimeframeFilterValue>(() => {
+    const startDate = initialFilters.get("dateFrom") || "";
+    const endDate = initialFilters.get("dateTo") || "";
+    const requestedTimeframe = initialFilters.get("timeframe");
+    return {
+      timeframe: isTimeframe(requestedTimeframe)
+        ? requestedTimeframe
+        : (startDate || endDate ? "CUSTOM" : "ALL"),
+      startDate,
+      endDate,
+    };
+  });
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [isSelecting, setIsSelecting] = useState(false);
@@ -67,6 +87,7 @@ export default function BetsManager({
   // Form / Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBet, setEditingBet] = useState<Bet | null>(null);
+  const [detailBet, setDetailBet] = useState<Bet | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -87,7 +108,22 @@ export default function BetsManager({
     market: string;
     choice: string;
     odd: string;
+    result?: SelectionResult;
   }>>([{ event: "", market: "", choice: "", odd: "1.80" }]);
+
+  useEffect(() => {
+    if (!detailBet) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDetailBet(null);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [detailBet]);
 
   // Combined Odd Calculator based on selections
   const calculatedOdd = useMemo(() => {
@@ -143,6 +179,7 @@ export default function BetsManager({
       .sort((a, b) => a.localeCompare(b, "pt")),
     [bets]
   );
+  const timeframeRange = useMemo(() => resolveTimeframeRange(timeframeFilter), [timeframeFilter]);
 
   // Filtered and sorted bets
   const filteredBets = useMemo(() => {
@@ -165,8 +202,8 @@ export default function BetsManager({
       const matchesBookmaker = bookmakerFilter === "ALL" || bet.bookmaker === bookmakerFilter;
       const matchesSport = sportFilter === "ALL" || bet.selections.some(selection => selection.sport?.trim() === sportFilter);
       const betDate = bet.dateTime?.slice(0, 10) || "";
-      const matchesDateFrom = !dateFromFilter || Boolean(betDate && betDate >= dateFromFilter);
-      const matchesDateTo = !dateToFilter || Boolean(betDate && betDate <= dateToFilter);
+      const matchesDateFrom = !timeframeRange.start || Boolean(betDate && betDate >= timeframeRange.start);
+      const matchesDateTo = !timeframeRange.end || Boolean(betDate && betDate <= timeframeRange.end);
 
       return matchesSearch && matchesStatus && matchesType && matchesFreebet && matchesBookmaker && matchesSport && matchesDateFrom && matchesDateTo;
     });
@@ -191,7 +228,7 @@ export default function BetsManager({
 
       return sortDirection === "asc" ? comparison : -comparison;
     });
-  }, [bets, search, statusFilter, typeFilter, freebetFilter, bookmakerFilter, sportFilter, dateFromFilter, dateToFilter, sortField, sortDirection]);
+  }, [bets, search, statusFilter, typeFilter, freebetFilter, bookmakerFilter, sportFilter, timeframeRange, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -288,7 +325,10 @@ export default function BetsManager({
     return (
       <button
         type="button"
-        onClick={() => handleSort(field)}
+        onClick={(event) => {
+          event.stopPropagation();
+          handleSort(field);
+        }}
         className={`inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-widest transition-colors cursor-pointer ${
           isActive
             ? "text-indigo-600 dark:text-indigo-300"
@@ -357,7 +397,8 @@ export default function BetsManager({
       event: s.event,
       market: s.market,
       choice: s.choice,
-      odd: s.odd.toString()
+      odd: s.odd.toString(),
+      result: s.result,
     })));
     setIsModalOpen(true);
   };
@@ -424,7 +465,8 @@ export default function BetsManager({
         event: s.event.trim(),
         market: s.market.trim(),
         choice: s.choice.trim(),
-        odd: oddVal
+        odd: oddVal,
+        ...(s.result ? { result: s.result } : {}),
       });
     });
 
@@ -489,17 +531,52 @@ export default function BetsManager({
     }
   };
 
+  const getSelectionResultBadge = (result?: SelectionResult) => {
+    const base = "inline-flex w-max items-center gap-1 rounded-sm border px-2 py-1 text-[9px] font-bold uppercase tracking-wider";
+    switch (result) {
+      case "GANHA":
+        return <span className={`${base} border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300`}><Check size={10} /> Ganha</span>;
+      case "PERDIDA":
+        return <span className={`${base} border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-200`}><X size={10} /> Perdida</span>;
+      case "ANULADA":
+        return <span className={`${base} border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300`}><MinusCircle size={10} /> Anulada</span>;
+      case "POR_LIQUIDAR":
+        return <span className={`${base} border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300`}><Clock size={10} /> Pendente</span>;
+      case "MEIO_GANHA":
+        return <span className={`${base} border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300`}><Check size={10} /> Meio ganha</span>;
+      case "MEIO_PERDIDA":
+        return <span className={`${base} border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300`}><X size={10} /> Meio perdida</span>;
+      default:
+        return null;
+    }
+  };
+
+  const selectionDetailClass = (result?: SelectionResult) => {
+    if (result === "PERDIDA" || result === "MEIO_PERDIDA") {
+      return "border-rose-200 bg-rose-50/70 dark:border-rose-900 dark:bg-rose-950/25";
+    }
+    if (result === "GANHA" || result === "MEIO_GANHA") {
+      return "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20";
+    }
+    return "border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-800/50";
+  };
+
+  const betTitleClass = (status: BetStatus) => {
+    if (status === "GANHA" || status === "MEIO_GANHA") return "text-emerald-600 dark:text-emerald-400";
+    if (status === "PERDIDA" || status === "MEIO_PERDIDA") return "text-rose-600 dark:text-rose-400";
+    if (status === "CASHOUT") return "text-slate-900 dark:text-white";
+    return "text-slate-900 dark:text-slate-100";
+  };
+
   const activeFilterCount = [statusFilter, typeFilter, freebetFilter, bookmakerFilter, sportFilter]
-    .filter(value => value !== "ALL").length + (dateFromFilter || dateToFilter ? 1 : 0);
-  const formatFilterDate = (date: string) => date ? date.split("-").reverse().join("/") : "…";
+    .filter(value => value !== "ALL").length + (timeframeFilter.timeframe !== "ALL" ? 1 : 0);
   const clearFilters = () => {
     setStatusFilter("ALL");
     setTypeFilter("ALL");
     setFreebetFilter("ALL");
     setBookmakerFilter("ALL");
     setSportFilter("ALL");
-    setDateFromFilter("");
-    setDateToFilter("");
+    setTimeframeFilter({ ...EMPTY_TIMEFRAME_FILTER });
   };
 
   return (
@@ -519,24 +596,6 @@ export default function BetsManager({
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-
-          {(dateFromFilter || dateToFilter) && (
-            <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-2.5 text-[10px] font-semibold text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-200">
-              <CalendarRange size={13} />
-              {formatFilterDate(dateFromFilter)} — {formatFilterDate(dateToFilter)}
-              <button
-                type="button"
-                onClick={() => {
-                  setDateFromFilter("");
-                  setDateToFilter("");
-                }}
-                className="ml-0.5 rounded p-0.5 transition-colors hover:bg-indigo-100 dark:hover:bg-indigo-900 cursor-pointer"
-                aria-label="Remover filtro de período"
-              >
-                <X size={11} />
-              </button>
-            </span>
-          )}
 
           <span className="hidden text-[11px] font-medium text-slate-400 lg:block dark:text-slate-500">
             {filteredBets.length} de {bets.length} apostas
@@ -574,7 +633,7 @@ export default function BetsManager({
             )}
           </div>
 
-          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
           
           <FilterDropdown
             value={statusFilter}
@@ -627,6 +686,8 @@ export default function BetsManager({
             onChange={setSportFilter}
             ariaLabel="Filtrar por desporto"
           />
+
+          <TimeframeFilter value={timeframeFilter} onChange={setTimeframeFilter} />
 
           </div>
 
@@ -720,7 +781,21 @@ export default function BetsManager({
           return (
             <div
               key={bet.id}
-              className={`bg-white dark:bg-slate-900 rounded-sm border p-4 md:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors ${
+              role="button"
+              tabIndex={0}
+              aria-label={`${isSelecting ? "Selecionar" : "Ver detalhes da"} aposta de ${bet.dateTime}`}
+              onClick={() => {
+                if (isSelecting) toggleBetSelection(bet.id);
+                else setDetailBet(bet);
+              }}
+              onKeyDown={(event) => {
+                if (event.target !== event.currentTarget) return;
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                if (isSelecting) toggleBetSelection(bet.id);
+                else setDetailBet(bet);
+              }}
+              className={`bg-white dark:bg-slate-900 rounded-sm border p-4 md:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/40 ${
                 selectedBetIds.has(bet.id)
                   ? "border-indigo-300 dark:border-indigo-700 ring-1 ring-indigo-100 dark:ring-indigo-950"
                   : "border-slate-200 dark:border-slate-800"
@@ -728,7 +803,12 @@ export default function BetsManager({
             >
 
               {isSelecting && (
-                <label className="flex items-center self-start md:self-center cursor-pointer" title="Selecionar aposta">
+                <label
+                  className="flex items-center self-start md:self-center cursor-pointer"
+                  title="Selecionar aposta"
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
                   <input
                     type="checkbox"
                     checked={selectedBetIds.has(bet.id)}
@@ -764,7 +844,7 @@ export default function BetsManager({
                 <div className="space-y-1.5">
                   {(bet.selections || []).map((sel, sIdx) => (
                     <div key={sel.id || sIdx} className="flex flex-wrap items-center gap-x-2 text-xs">
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">{sel.event}</span>
+                      <span className={`font-semibold ${betTitleClass(bet.status)}`}>{sel.event}</span>
                       <span className="text-slate-300 dark:text-slate-600 shrink-0">|</span>
                       <span className="text-slate-500 dark:text-slate-400 shrink-0">{sel.market}:</span>
                       <span className="font-medium text-slate-700 dark:text-slate-300">{sel.choice}</span>
@@ -817,7 +897,11 @@ export default function BetsManager({
                 </div>
 
                 {/* Operations */}
-                <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-800 pl-4">
+                <div
+                  className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-800 pl-4"
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
                   {deletingId === bet.id ? (
                     <div className="flex items-center gap-1 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 p-1 rounded-sm animate-pulse">
                       <span className="text-[9px] text-rose-800 dark:text-rose-200 font-bold uppercase tracking-wider mr-1">Apagar?</span>
@@ -885,6 +969,160 @@ export default function BetsManager({
           </div>
         )}
       </div>
+
+      {/* Read-only bet details */}
+      {detailBet && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-950/75 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="bet-details-title"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setDetailBet(null);
+          }}
+        >
+          <div className="flex h-[96vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:h-auto sm:max-h-[90vh] sm:rounded-2xl">
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 dark:border-slate-800 sm:px-6">
+              <div className="min-w-0">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  {getStatusBadge(detailBet.status)}
+                  <span className="rounded-sm border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-300">
+                    {detailBet.type}
+                  </span>
+                </div>
+                <h2 id="bet-details-title" className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
+                  <Eye size={19} className="text-indigo-500" /> Detalhes da aposta
+                </h2>
+                <p className="mt-1 truncate font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                  ID {detailBet.id}
+                  {detailBet.metadata?.ref ? ` · Ref. ${detailBet.metadata.ref}` : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setDetailBet(null)}
+                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:hover:bg-slate-800 dark:hover:text-white cursor-pointer"
+                aria-label="Fechar detalhes da aposta"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6">
+              <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  ["Casa", detailBet.bookmaker || "—"],
+                  ["Data e hora", detailBet.dateTime || "—"],
+                  ["Origem", detailBet.origin || "—"],
+                  ["Dinheiro", detailBet.isFreebet ? `Freebet ${detailBet.freebetType || ""}`.trim() : "Dinheiro real"],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/40">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{label}</p>
+                    <p className="mt-1 break-words text-xs font-semibold text-slate-800 dark:text-slate-100">{value}</p>
+                  </div>
+                ))}
+              </section>
+
+              <section>
+                <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                  Resumo financeiro
+                </h3>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                    <p className="text-[9px] font-bold uppercase text-slate-400">Stake</p>
+                    <p className="mt-1 font-mono text-sm font-bold text-slate-800 dark:text-slate-100">{safeNum(detailBet.stake).toFixed(2)}{currency}</p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                    <p className="text-[9px] font-bold uppercase text-slate-400">Odd total</p>
+                    <p className="mt-1 font-mono text-sm font-bold text-indigo-600 dark:text-indigo-300">{safeNum(detailBet.odd).toFixed(2)}</p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                    <p className="text-[9px] font-bold uppercase text-slate-400">Potencial</p>
+                    <p className="mt-1 font-mono text-sm font-bold text-slate-800 dark:text-slate-100">{safeNum(detailBet.potentialReturn).toFixed(2)}{currency}</p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                    <p className="text-[9px] font-bold uppercase text-slate-400">Retorno</p>
+                    <p className="mt-1 font-mono text-sm font-bold text-slate-800 dark:text-slate-100">{safeNum(detailBet.finalReturn).toFixed(2)}{currency}</p>
+                  </div>
+                  <div className="col-span-2 rounded-lg border border-slate-200 p-3 dark:border-slate-800 sm:col-span-1">
+                    <p className="text-[9px] font-bold uppercase text-slate-400">Lucro líquido</p>
+                    <p className={`mt-1 font-mono text-sm font-bold ${safeNum(detailBet.netProfit) > 0 ? "text-emerald-600 dark:text-emerald-400" : safeNum(detailBet.netProfit) < 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-700 dark:text-slate-200"}`}>
+                      {safeNum(detailBet.netProfit) > 0 ? "+" : ""}{safeNum(detailBet.netProfit).toFixed(2)}{currency}
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    Seleções do boletim
+                  </h3>
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                    {detailBet.selections.length}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {detailBet.selections.length > 0 ? detailBet.selections.map((selection, index) => (
+                    <article key={selection.id || index} className={`rounded-xl border p-4 ${selectionDetailClass(selection.result)}`}>
+                      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Seleção {index + 1}</p>
+                          <h4 className={`mt-1 text-sm font-bold ${betTitleClass(detailBet.status)}`}>{selection.event || "Evento indisponível"}</h4>
+                          {selection.sport && <p className="mt-0.5 text-[10px] font-semibold text-indigo-600 dark:text-indigo-300">{selection.sport}</p>}
+                        </div>
+                        {getSelectionResultBadge(selection.result)}
+                      </div>
+                      <div className="mt-3 grid grid-cols-1 gap-2 border-t border-slate-200/70 pt-3 dark:border-slate-700 sm:grid-cols-[1fr_1fr_auto]">
+                        <div>
+                          <p className="text-[9px] font-bold uppercase text-slate-400">Mercado</p>
+                          <p className="mt-0.5 text-xs font-medium text-slate-700 dark:text-slate-200">{selection.market || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-bold uppercase text-slate-400">Escolha</p>
+                          <p className="mt-0.5 text-xs font-semibold text-slate-900 dark:text-white">{selection.choice || "—"}</p>
+                        </div>
+                        <div className="sm:text-right">
+                          <p className="text-[9px] font-bold uppercase text-slate-400">Odd</p>
+                          <p className="mt-0.5 font-mono text-xs font-bold text-indigo-600 dark:text-indigo-300">@{safeNum(selection.odd).toFixed(2)}</p>
+                        </div>
+                      </div>
+                    </article>
+                  )) : (
+                    <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
+                      Esta aposta não tem seleções guardadas.
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {(detailBet.notes || detailBet.comment || detailBet.tags) && (
+                <section className="grid gap-3 sm:grid-cols-2">
+                  {detailBet.notes && (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Notas</p>
+                      <p className="mt-1 whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-200">{detailBet.notes}</p>
+                    </div>
+                  )}
+                  {detailBet.comment && (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Comentário</p>
+                      <p className="mt-1 whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-200">{detailBet.comment}</p>
+                    </div>
+                  )}
+                  {detailBet.tags && (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Etiquetas</p>
+                      <p className="mt-1 text-xs font-semibold text-indigo-600 dark:text-indigo-300">{detailBet.tags}</p>
+                    </div>
+                  )}
+                </section>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Registar/Editar Modal */}
       {isModalOpen && (

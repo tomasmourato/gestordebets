@@ -7,6 +7,27 @@ import { fetchBetclicHistory } from "../src/betclic-history.js";
 import { importedBetChanged, reconcileImportedBets } from "../src/import-utils.js";
 
 describe("Betclic mapper", () => {
+  test("maps only explicit selection outcomes", () => {
+    const mapped = mapBetclicBet({
+      bet_reference: "selection-results",
+      bet_type: "multiple",
+      result: "Lose",
+      stake: 10,
+      odds: 3,
+      bet_selections: [
+        { selection_label: "Casa", result: "Win" },
+        { selection_label: "Mais de 2.5", result: "Lose" },
+        { selection_label: "Ambas marcam" },
+      ],
+    });
+
+    expect(mapped.selections.map((selection) => selection.result)).toEqual([
+      "GANHA",
+      "PERDIDA",
+      undefined,
+    ]);
+  });
+
   test("maps FullCashout using the actual cashout return", () => {
     const mapped = mapBetclicBet({
       id: -1,
@@ -119,6 +140,28 @@ describe("Betclic pagination", () => {
 });
 
 describe("Betano mapper", () => {
+  test("maps selection outcomes without falling back to the overall bet result", () => {
+    const mapped = mapBetanoBets([{
+      BetId: "selection-results",
+      Type: "Triple",
+      Settled: true,
+      Status: 3,
+      Stake: "10,00 €",
+      DecimalOdds: 3,
+      Legs: [{ LegItems: [{ Selections: [
+        { Title: "Casa", Status: 2 },
+        { Title: "Mais de 2.5", Result: "Lost" },
+        { Title: "Ambas marcam" },
+      ] }] }],
+    }]).bets[0];
+
+    expect(mapped.selections.map((selection) => selection.result)).toEqual([
+      "GANHA",
+      "PERDIDA",
+      undefined,
+    ]);
+  });
+
   test("parses Portuguese money formats", () => {
     expect(parseBetanoMoney("5,00 €")).toBe(5);
     expect(parseBetanoMoney("1.234,56 €")).toBe(1234.56);
@@ -197,5 +240,39 @@ describe("source-aware reconciliation", () => {
     expect(result.updates).toHaveLength(1);
     expect(result.updates[0].id).toBe("1");
     expect(importedBetChanged(existing[1], incoming[1])).toBe(false);
+  });
+
+  test("updates an existing import when a selection result becomes available", () => {
+    const existing = {
+      id: "selection-update",
+      type: "MULTIPLA",
+      status: "PERDIDA",
+      stake: 10,
+      odd: 3,
+      is_freebet: false,
+      potential_return: 30,
+      final_return: 0,
+      net_profit: -10,
+      bookmaker: "Betclic",
+      date_time: "2026-07-15 12:00",
+      selections: [{ event: "A - B", market: "Resultado", choice: "A", odd: 2 }],
+      metadata: { source: "betclic", ref: "selection-update", importKey: "betclic:selection-update" },
+    };
+    const incoming = {
+      type: "MULTIPLA",
+      status: "PERDIDA",
+      stake: 10,
+      odd: 3,
+      isFreebet: false,
+      potentialReturn: 30,
+      finalReturn: 0,
+      netProfit: -10,
+      bookmaker: "Betclic",
+      dateTime: "2026-07-15 12:00",
+      selections: [{ event: "A - B", market: "Resultado", choice: "A", odd: 2, result: "PERDIDA" }],
+      metadata: { source: "betclic", ref: "selection-update", importKey: "betclic:selection-update" },
+    };
+
+    expect(importedBetChanged(existing, incoming)).toBe(true);
   });
 });

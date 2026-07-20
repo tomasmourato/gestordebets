@@ -22,6 +22,7 @@ import {
 import { Bet, BetStatus, DashboardStats } from "../types";
 import { calculateDashboardStats, safeNum } from "../utils";
 import FilterDropdown from "./FilterDropdown";
+import { rangeSpansAtLeastTwoMonths } from "./TimeframeFilter";
 import { 
   ResponsiveContainer, 
   AreaChart, 
@@ -53,6 +54,7 @@ export interface DashboardBetsFilters {
   sport?: string;
   type?: string;
   money?: string;
+  timeframe?: Timeframe;
   dateFrom?: string;
   dateTo?: string;
 }
@@ -251,6 +253,7 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
       sport: filterSport !== "ALL" ? filterSport : undefined,
       type: filterType !== "ALL" ? filterType : undefined,
       money: filterFreebet !== "ALL" ? filterFreebet : undefined,
+      timeframe: filterTimeframe !== "ALL" ? filterTimeframe : undefined,
       dateFrom: timeframeRange.start || undefined,
       dateTo: timeframeRange.end || undefined
     });
@@ -306,17 +309,35 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
     return [{ index: 0, data: "Início", lucro: 0, lucroIndividual: 0, evento: "Início" }, ...data];
   }, [bets]);
 
-  // 1b. Prepare data for Monthly Performance (last 6 months)
+  const monthlyChartBounds = useMemo(() => {
+    const settledDates = bets
+      .filter(b => b.status !== "POR_LIQUIDAR")
+      .map(b => fromLocalDateKey(b.dateTime?.slice(0, 10) || ""))
+      .filter((date): date is Date => date !== null)
+      .sort((a, b) => a.getTime() - b.getTime());
+    const fallback = new Date();
+    const rangeStart = fromLocalDateKey(timeframeRange.start) || settledDates[0] || fallback;
+    const rangeEnd = fromLocalDateKey(timeframeRange.end) || settledDates.at(-1) || rangeStart;
+    const chronologicalStart = rangeStart <= rangeEnd ? rangeStart : rangeEnd;
+    const chronologicalEnd = rangeStart <= rangeEnd ? rangeEnd : rangeStart;
+    return { start: chronologicalStart, end: chronologicalEnd };
+  }, [bets, timeframeRange]);
+
+  const showMonthlyPerformance = useMemo(() => {
+    return rangeSpansAtLeastTwoMonths(monthlyChartBounds.start, monthlyChartBounds.end);
+  }, [monthlyChartBounds]);
+
+  // 1b. Prepare monthly buckets for the active timeframe. Empty months inside
+  // the selected range stay visible with zero values, but months outside it do not.
   const monthlyPerformanceData = useMemo(() => {
-    const now = new Date();
     const monthsData: { year: number; month: number; label: string; profit: number; volume: number; betsCount: number }[] = [];
-    
     const monthNamesPT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-    
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const y = d.getFullYear();
-      const m = d.getMonth();
+    const firstMonth = new Date(monthlyChartBounds.start.getFullYear(), monthlyChartBounds.start.getMonth(), 1);
+    const lastMonth = new Date(monthlyChartBounds.end.getFullYear(), monthlyChartBounds.end.getMonth(), 1);
+
+    for (let cursor = new Date(firstMonth); cursor <= lastMonth; cursor.setMonth(cursor.getMonth() + 1)) {
+      const y = cursor.getFullYear();
+      const m = cursor.getMonth();
       monthsData.push({
         year: y,
         month: m,
@@ -356,7 +377,7 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
       "Volume": Number(md.volume.toFixed(2)),
       "Apostas": md.betsCount
     }));
-  }, [bets]);
+  }, [bets, monthlyChartBounds]);
 
   // 2. Prepare data for Bookmaker distribution
   const bookmakerData = useMemo(() => {
@@ -784,7 +805,7 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
       </div>
 
       {/* Main Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 gap-6 ${showMonthlyPerformance ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
         
         {/* Evolution Chart */}
         <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 flex flex-col h-[380px]" id="chart-profit-evolution">
@@ -914,11 +935,12 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
         </div>
 
         {/* Monthly Performance Chart */}
+        {showMonthlyPerformance && (
         <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 flex flex-col h-[380px]" id="chart-monthly-performance">
           <div className="flex justify-between items-center mb-4">
             <div>
               <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display">Desempenho Mensal</h4>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Evolução do lucro líquido nos últimos 6 meses</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Lucro líquido dentro do período selecionado</p>
             </div>
           </div>
           <div className="flex-1 w-full min-h-0">
@@ -963,6 +985,7 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets 
             </ResponsiveContainer>
           </div>
         </div>
+        )}
 
       </div>
 

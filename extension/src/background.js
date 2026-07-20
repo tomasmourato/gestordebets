@@ -5,9 +5,15 @@ import { mapBetclicBets, betclicRef } from "./mapper.js";
 import { fetchBetclicHistory } from "./betclic-history.js";
 import { mapBetanoBets, betanoHistoryStart, betanoRef } from "./mapper-betano.js";
 import { fetchBetanoHistory } from "./betano-history.js";
+import { runAfterBettrackrVerification } from "./bettrackr-identity.js";
 
 const PAGE_SIZE = 20;
 const DEFAULT_BETTRACKR_BASE = "https://gestordebets.vercel.app";
+const BETTRACKR_TAB_URLS = [
+  "https://gestordebets.vercel.app/*",
+  "http://localhost/*",
+  "http://127.0.0.1/*",
+];
 const pendingBetanoRequests = new Map();
 const betanoTokenWaiters = new Set();
 let betanoSessionTokens = null;
@@ -19,14 +25,59 @@ function progress(text) {
 
 async function getConfig() {
   const stored = await chrome.storage.local.get([
-    "betclicToken", "betclicApiBase", "bettrackrToken", "bettrackrBase",
+    "betclicToken", "betclicApiBase", "bettrackrToken", "bettrackrBase", "bettrackrUserId",
   ]);
   return {
     betclicToken: stored.betclicToken || null,
     betclicApiBase: stored.betclicApiBase || "https://betting.begmedia.pt",
     bettrackrToken: stored.bettrackrToken || null,
     bettrackrBase: stored.bettrackrBase || DEFAULT_BETTRACKR_BASE,
+    bettrackrUserId: stored.bettrackrUserId || null,
   };
+}
+
+function validSessionSnapshot(value) {
+  if (!value || typeof value !== "object") return null;
+  const token = typeof value.token === "string" ? value.token.trim() : "";
+  const baseUrl = typeof value.baseUrl === "string" ? value.baseUrl.trim().replace(/\/+$/, "") : "";
+  const expectedUserId = typeof value.expectedUserId === "string" ? value.expectedUserId.trim() : "";
+  if (!token || !baseUrl) return null;
+  return { token, baseUrl, expectedUserId };
+}
+
+async function sessionFromOpenBettrackrTab() {
+  const tabs = await chrome.tabs.query({ url: BETTRACKR_TAB_URLS });
+  const ordered = [...tabs].sort((a, b) => Number(Boolean(b.active)) - Number(Boolean(a.active)));
+  for (const tab of ordered) {
+    if (tab.id === undefined) continue;
+    try {
+      const response = await chrome.tabs.sendMessage(tab.id, { type: "GET_BETTRACKR_SESSION" });
+      const session = validSessionSnapshot(response?.session);
+      if (session) return session;
+    } catch (_) {}
+  }
+  return null;
+}
+
+async function configForImport(sessionSnapshot) {
+  const suppliedSnapshot = sessionSnapshot !== undefined && sessionSnapshot !== null;
+  const session = validSessionSnapshot(sessionSnapshot) || await sessionFromOpenBettrackrTab();
+
+  if (suppliedSnapshot && !session) {
+    throw new Error("A sessão enviada pela app é inválida. Recarrega a página e tenta novamente.");
+  }
+  if (session) {
+    if (!session.expectedUserId) {
+      throw new Error("Não foi possível identificar o utilizador atual. Termina sessão e volta a entrar na app.");
+    }
+    await chrome.storage.local.set({
+      bettrackrToken: session.token,
+      bettrackrBase: session.baseUrl,
+      bettrackrUserId: session.expectedUserId,
+    });
+  }
+
+  return getConfig();
 }
 
 async function fetchBetclicBets(kind, cfg) {
@@ -240,6 +291,7 @@ function selectionsSignature(selections) {
     market: selection.market || "",
     choice: selection.choice || "",
     odd: Number(selection.odd) || 0,
+    result: selection.result || null,
   })));
 }
 
@@ -354,9 +406,7 @@ async function runBetanoImport(cfg) {
   }
 }
 
-async function runImport(source) {
-  const cfg = await getConfig();
-  if (!cfg.bettrackrToken) throw new Error("Sem sessão BetTrackr. Abre a app e inicia sessão.");
+async function runImportSources(source, cfg) {
   const sources = source === "all" ? ["betclic", "betano"] : [source];
   const results = {};
   for (const current of sources) {
@@ -379,6 +429,18 @@ async function runImport(source) {
     return sum;
   }, { fetched: 0, imported: 0, updated: 0, skipped: 0, unsupported: 0, cashouts: 0 });
   return { ok: true, sourceResults: results, ...totals };
+}
+
+async function runImport(source, sessionSnapshot) {
+  const cfg = await configForImport(sessionSnapshot);
+  return runAfterBettrackrVerification({
+    token: cfg.bettrackrToken,
+    baseUrl: cfg.bettrackrBase,
+    expectedUserId: cfg.bettrackrUserId,
+  }, async (identity) => {
+    await chrome.storage.local.set({ bettrackrUserId: identity.userId });
+    return runImportSources(source, cfg);
+  });
 }
 
 async function extensionStatus() {
@@ -429,7 +491,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg && msg.type === "IMPORT") {
     const source = ["betclic", "betano", "all"].includes(msg.source) ? msg.source : "all";
-    runImport(source)
+    runImport(source, msg.bettrackrSession)
       .then(sendResponse)
       .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));
     return true;

@@ -4,7 +4,7 @@
 // e traduzem entre o formato snake_case da BD e o modelo Bet do frontend.
 
 import { authFetch, parseJsonResponse } from "./authApi";
-import { Bet, BetStatus, BetType, FreebetType, Selection } from "../types";
+import { Bet, BetStatus, BetType, FreebetType, Selection, SelectionResult } from "../types";
 import { safeNum } from "../utils";
 import { normalizeBetStatus, parseBetMetadata } from "./betStatus";
 
@@ -13,6 +13,14 @@ type ApiBetRow = Record<string, any>;
 
 const VALID_ORIGINS = ["MANUAL", "SCREENSHOT", "CSV"];
 const VALID_FREEBET_TYPES: FreebetType[] = ["SNR", "SR"];
+const VALID_SELECTION_RESULTS: SelectionResult[] = [
+  "POR_LIQUIDAR",
+  "GANHA",
+  "PERDIDA",
+  "ANULADA",
+  "MEIO_GANHA",
+  "MEIO_PERDIDA",
+];
 
 // ------------------------------------------------------------
 // Normaliza as seleções vindas da BD (array, string JSON ou null)
@@ -39,6 +47,7 @@ function normalizeSelections(raw: any, rowId: string): Selection[] {
     odd: safeNum(s?.odd),
     sport: s?.sport,
     betType: s?.betType,
+    result: VALID_SELECTION_RESULTS.includes(s?.result) ? s.result : undefined,
   }));
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import {
   TrendingUp,
   Layers,
@@ -19,12 +19,14 @@ import BetsManager from "./components/BetsManager";
 import ScreenshotImporter from "./components/ScreenshotImporter";
 import Settings from "./components/Settings";
 import AuthPage from "./components/AuthPage";
-import { isAuthenticated, logout, getStoredUser } from "./lib/authApi";
+import { isAuthenticated, logout, getStoredUser, restoreBrowserSession } from "./lib/authApi";
 import { usePreferences } from "./hooks/usePreferences";
 import { useTheme } from "./hooks/useTheme";
 import { useAuditLog } from "./hooks/useAuditLog";
 import { useBets } from "./hooks/useBets";
 import { I18nProvider, translate } from "./lib/i18n";
+import { DEFAULT_PREFERENCES } from "./hooks/usePreferences";
+import type { InitialAppData } from "./initialData";
 
 type AppTab = "DASHBOARD" | "BETS" | "IMPORT" | "SETTINGS";
 
@@ -43,14 +45,28 @@ const tabFromPath = (pathname: string): AppTab => {
   return matchingTab || "DASHBOARD";
 };
 
-export default function App() {
+interface AppProps {
+  initialData?: InitialAppData;
+}
+
+export default function App({ initialData }: AppProps) {
 
   // Autenticação: gate de login/registo antes de mostrar a app
-  const [authed, setAuthed] = useState<boolean>(isAuthenticated());
-  const [currentUser, setCurrentUser] = useState(getStoredUser());
+  const [authed, setAuthed] = useState<boolean>(() =>
+    initialData ? initialData.authenticated : isAuthenticated()
+  );
+  const [currentUser, setCurrentUser] = useState(() =>
+    initialData ? initialData.user : getStoredUser()
+  );
 
   // Cada área tem um URL próprio e continua a navegar como SPA.
-  const [activeTab, setActiveTab] = useState<AppTab>(() => tabFromPath(window.location.pathname));
+  const [activeTab, setActiveTab] = useState<AppTab>(() =>
+    tabFromPath(initialData?.pathname ?? window.location.pathname)
+  );
+  const [locationSearch, setLocationSearch] = useState(() =>
+    initialData?.search ?? window.location.search
+  );
+  const [routeAnimationsReady, setRouteAnimationsReady] = useState(false);
 
   const navigateToTab = (tab: AppTab) => {
     const nextPath = TAB_PATHS[tab];
@@ -58,6 +74,7 @@ export default function App() {
       window.history.pushState({ tab }, "", nextPath);
     }
     setActiveTab(tab);
+    setLocationSearch("");
   };
 
   const navigateToFilteredBets = (filters: DashboardBetsFilters) => {
@@ -68,10 +85,13 @@ export default function App() {
     const nextPath = `/bets?${params.toString()}`;
     window.history.pushState({ tab: "BETS" }, "", nextPath);
     setActiveTab("BETS");
+    setLocationSearch(`?${params.toString()}`);
   };
 
   // Preferências (armazenamento local) e auditoria (em memória)
-  const { preferences, updatePreferences } = usePreferences();
+  const { preferences, updatePreferences } = usePreferences(
+    initialData ? DEFAULT_PREFERENCES : undefined
+  );
   const { auditLogs, addLog } = useAuditLog();
 
   // Tradução do shell (i18n). O resto da app usa <I18nProvider> + useI18n().
@@ -99,10 +119,39 @@ export default function App() {
     removeBet,
     clearAllBets,
     replaceAllBets
-  } = useBets(authed, handleSessionExpired);
+  } = useBets(
+    authed,
+    handleSessionExpired,
+    initialData?.authenticated ? initialData.bets : undefined
+  );
 
   // Online status
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator === "undefined" ? true : navigator.onLine
+  );
+
+  // One-time migration for sessions created before the SSR cookie existed.
+  // A valid local bearer token is verified by /me, which also sets the cookie
+  // used by the next document request.
+  useEffect(() => {
+    if (!initialData || initialData.authenticated || !isAuthenticated()) return;
+    let cancelled = false;
+    restoreBrowserSession()
+      .then((user) => {
+        if (!cancelled && user) {
+          setCurrentUser(user);
+          setAuthed(true);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [initialData]);
+
+  useEffect(() => {
+    setRouteAnimationsReady(true);
+  }, []);
 
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -117,7 +166,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const syncTabWithUrl = () => setActiveTab(tabFromPath(window.location.pathname));
+    const syncTabWithUrl = () => {
+      setActiveTab(tabFromPath(window.location.pathname));
+      setLocationSearch(window.location.search);
+    };
 
     // Normaliza a página inicial e URLs desconhecidos para a visão geral.
     const currentTab = tabFromPath(window.location.pathname);
@@ -265,15 +317,20 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
 
           {/* Logo Brand */}
-          <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigateToTab("DASHBOARD")}
+            className="group flex items-center gap-3 rounded-lg text-left outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-indigo-500/50 cursor-pointer"
+            aria-label="Ir para a página principal"
+          >
             <div className="w-8 h-8 bg-indigo-600 flex items-center justify-center rounded shadow-xs">
-              <div className="w-3.5 h-3.5 bg-white rotate-45"></div>
+              <div className="w-3.5 h-3.5 bg-white rotate-45 transition-transform group-hover:rotate-[50deg]"></div>
             </div>
             <div>
               <h1 className="text-sm font-bold text-slate-900 dark:text-slate-50 tracking-tight leading-tight font-display">BetTrackr</h1>
               <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">{t("app.brandTagline")}</p>
             </div>
-          </div>
+          </button>
 
           {/* Desktop Navigation Menu */}
           <nav className="hidden md:flex items-center gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -367,15 +424,13 @@ export default function App() {
             {t("app.loadingBets")}
           </div>
         ) : (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.18 }}
-              className="h-full"
-            >
+          <motion.div
+            key={activeTab}
+            initial={routeAnimationsReady ? { opacity: 0 } : false}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="h-full"
+          >
               {activeTab === "DASHBOARD" && (
                 <Dashboard
                   bets={bets}
@@ -386,8 +441,10 @@ export default function App() {
               )}
               {activeTab === "BETS" && (
                 <BetsManager
+                  key={locationSearch}
                   bets={bets}
                   currency={preferences.currency}
+                  initialSearch={locationSearch}
                   onAddBet={handleAddBet}
                   onAddBets={handleDuplicateBets}
                   onUpdateBet={handleUpdateBet}
@@ -414,8 +471,7 @@ export default function App() {
                   />
                 </I18nProvider>
               )}
-            </motion.div>
-          </AnimatePresence>
+          </motion.div>
         )}
       </main>
 

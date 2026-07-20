@@ -15,10 +15,11 @@ import {
   deleteAllBets,
 } from "../lib/betsApi";
 
-export function useBets(enabled: boolean, onSessionExpired: () => void) {
-  const [bets, setBets] = useState<Bet[]>([]);
+export function useBets(enabled: boolean, onSessionExpired: () => void, initialBets?: Bet[]) {
+  const [bets, setBets] = useState<Bet[]>(() => initialBets ?? []);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const canUseInitialBetsRef = useRef(enabled && initialBets !== undefined);
 
   // Ref estável para o callback de sessão expirada, para que o efeito de
   // carregamento não volte a correr quando a identidade do callback muda.
@@ -43,7 +44,15 @@ export function useBets(enabled: boolean, onSessionExpired: () => void) {
   // Carregamento inicial (e sempre que `enabled` muda).
   useEffect(() => {
     if (!enabled) {
+      canUseInitialBetsRef.current = false;
       setBets([]);
+      return;
+    }
+
+    // The SSR document already contains this user's bets. Keep them and avoid
+    // the duplicate post-hydration request that previously caused the loader.
+    if (canUseInitialBetsRef.current) {
+      setIsLoading(false);
       return;
     }
 

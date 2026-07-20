@@ -14,12 +14,15 @@ function systemPrefersDark(): boolean {
 }
 
 export function useTheme(theme: ThemeMode): boolean {
-  const [systemDark, setSystemDark] = useState<boolean>(systemPrefersDark);
+  // Keep the server render and hydration render deterministic. The inline
+  // document script still applies the visual theme before React starts.
+  const [systemDark, setSystemDark] = useState(false);
 
   // Acompanha mudanças na definição do sistema operativo enquanto a app
   // está aberta (só tem efeito quando theme === "system").
   useEffect(() => {
     const media = window.matchMedia(DARK_QUERY);
+    setSystemDark(media.matches);
     const onChange = (event: MediaQueryListEvent) => setSystemDark(event.matches);
     media.addEventListener("change", onChange);
     return () => media.removeEventListener("change", onChange);
