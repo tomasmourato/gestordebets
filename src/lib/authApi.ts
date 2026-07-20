@@ -1,5 +1,7 @@
 // Autenticação e wrapper de fetch para as rotas protegidas da API.
 
+import { apiUrl } from "./apiBase";
+
 const TOKEN_KEY = "gestordebets_token";
 const USER_KEY = "gestordebets_user";
 
@@ -78,7 +80,7 @@ export async function restoreBrowserSession(): Promise<StoredUser | null> {
 // Registo
 // ------------------------------------------------------------
 export async function register(username: string, email: string, password: string) {
-  const res = await fetch("/api/auth/register", {
+  const res = await fetch(apiUrl("/api/auth/register"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, email, password }),
@@ -94,7 +96,7 @@ export async function register(username: string, email: string, password: string
 // Login
 // ------------------------------------------------------------
 export async function login(email: string, password: string) {
-  const res = await fetch("/api/auth/login", {
+  const res = await fetch(apiUrl("/api/auth/login"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -109,7 +111,24 @@ export async function login(email: string, password: string) {
 export function logout() {
   clearToken();
   localStorage.removeItem(USER_KEY);
-  void fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => undefined);
+  void fetch(apiUrl("/api/auth/logout"), { method: "POST", credentials: "same-origin" }).catch(() => undefined);
+}
+
+// ------------------------------------------------------------
+// Perfil completo do utilizador autenticado (inclui created_at).
+// Usado pelo painel de conta; atualiza também a cache local.
+// ------------------------------------------------------------
+export interface CurrentUser extends StoredUser {
+  created_at?: string;
+}
+
+export async function fetchCurrentUser(): Promise<CurrentUser> {
+  const res = await authFetch("/api/auth/me");
+  const data = await parseJsonResponse(res);
+  if (!res.ok) throw errorFrom(data, res, "Erro ao obter o utilizador");
+  const user = data.user as CurrentUser;
+  saveUser({ id: user.id, username: user.username, email: user.email });
+  return user;
 }
 
 // ------------------------------------------------------------
@@ -124,7 +143,12 @@ export async function authFetch(url: string, options: RequestInit = {}) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
-  const res = await fetch(url, { ...options, headers, credentials: "same-origin" });
+  // Caminhos relativos ("/api/...") são prefixados com a base da plataforma
+  // (na app nativa a API vive noutra origem; na web fica relativo).
+  const target = url.startsWith("/") ? apiUrl(url) : url;
+  // credentials same-origin: na web o cookie de sessão do SSR tem de seguir no
+  // pedido para o servidor conseguir render o documento já autenticado.
+  const res = await fetch(target, { ...options, headers, credentials: "same-origin" });
 
   if (res.status === 401) {
     // Token inválido ou expirado -> força novo login

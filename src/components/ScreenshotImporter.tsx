@@ -58,7 +58,7 @@ function AiChip() {
   return (
     <span
       title="Preenchido automaticamente pela IA — confirma antes de gravar"
-      className="inline-flex items-center gap-0.5 text-[8px] font-bold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900 px-1 py-0.5 rounded-xs"
+      className="inline-flex items-center gap-0.5 text-[8px] font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900 px-1 py-0.5 rounded-xs"
     >
       <Sparkles size={8} /> IA
     </span>
@@ -148,10 +148,18 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
     }
   };
 
+  // O servidor aceita payloads JSON até 4MB; em base64 a imagem cresce ~37%,
+  // por isso o ficheiro original não pode passar dos ~3MB.
+  const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
+
   // Convert file and send to backend
   const handleFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
       setErrorMessage("Por favor, seleciona apenas ficheiros de imagem (PNG, JPG, WEBP).");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setErrorMessage("A imagem excede 3MB. Recorta o screenshot ou reduz a resolução e tenta novamente.");
       return;
     }
 
@@ -446,16 +454,17 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
     <div className="space-y-6" id="import-tab">
       
       {/* Intro Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-sm p-6 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
+      <div className="relative overflow-hidden bg-zinc-900 dark:bg-zinc-950 border border-zinc-800 dark:border-zinc-800 border-l-2 border-l-emerald-500 rounded-sm p-6 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div aria-hidden="true" className="pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="relative">
           <h4 className="text-lg font-semibold tracking-tight font-display flex items-center gap-1.5">
-            <Sparkles size={18} className="text-amber-300" /> Importador Inteligente de Apostas
+            <Sparkles size={18} className="text-emerald-400" /> Importador Inteligente de Apostas
           </h4>
-          <p className="text-xs text-indigo-100 mt-1 max-w-xl">
+          <p className="text-xs text-zinc-400 mt-1 max-w-xl">
             Tira um screenshot ao teu boletim na Betano, Betclic ou Placard, cola-o com Ctrl+V ou faz o upload — o Gemini AI extrai as seleções, odds, stake, casa de apostas, estado e freebet por ti.
           </p>
         </div>
-        <div className="text-xs bg-white/10 px-3 py-2 rounded-sm border border-white/15 shrink-0">
+        <div className="relative text-[10px] font-mono uppercase tracking-wider bg-emerald-500/10 text-emerald-300 px-3 py-2 rounded-sm border border-emerald-500/25 shrink-0">
           Powered by <strong>Gemini 2.5 Flash</strong>
         </div>
       </div>
@@ -472,8 +481,8 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-sm p-10 text-center cursor-pointer transition-colors ${
               dragActive
-                ? "border-indigo-600 bg-indigo-50/20 dark:bg-indigo-950/30"
-                : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-indigo-500 hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
+                ? "border-emerald-600 bg-emerald-50/20 dark:bg-emerald-950/30"
+                : "border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-emerald-500 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50"
             }`}
             id="drag-drop-zone"
           >
@@ -486,22 +495,22 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
             />
 
             <div className="flex flex-col items-center">
-              <div className="p-4 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-sm mb-4">
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-sm mb-4">
                 <Upload size={30} />
               </div>
-              <h5 className="font-semibold text-slate-800 dark:text-slate-100 text-sm sm:text-base">Arrasta o screenshot para aqui</h5>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Ou clica para pesquisar nos teus ficheiros</p>
+              <h5 className="font-semibold text-zinc-800 dark:text-zinc-100 text-sm sm:text-base">Arrasta o screenshot para aqui</h5>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Ou clica para pesquisar nos teus ficheiros</p>
 
               {/* Atalho de colagem (apenas relevante em desktop) */}
-              <p className="hidden sm:flex items-center gap-1.5 text-[11px] text-indigo-700 dark:text-indigo-300 mt-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900 px-3 py-1.5 rounded-sm">
+              <p className="hidden sm:flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300 mt-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-100 dark:border-emerald-900 px-3 py-1.5 rounded-sm">
                 <ClipboardPaste size={12} className="shrink-0" />
                 Podes colar diretamente com
-                <kbd className="font-mono font-bold bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-xs px-1">Ctrl</kbd>
+                <kbd className="font-mono font-bold bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800 rounded-xs px-1">Ctrl</kbd>
                 +
-                <kbd className="font-mono font-bold bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-xs px-1">V</kbd>
+                <kbd className="font-mono font-bold bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800 rounded-xs px-1">V</kbd>
               </p>
 
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-4 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-sm">PNG, JPG ou WEBP até 10MB</p>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-4 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-1 rounded-sm">PNG, JPG ou WEBP até 3MB</p>
             </div>
           </div>
 
@@ -524,16 +533,16 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
 
       {/* Loading State with simulated progressive steps */}
       {isLoading && (
-        <div className="max-w-md mx-auto p-10 bg-white dark:bg-slate-900 rounded-sm border border-slate-300 dark:border-slate-700 text-center space-y-6" id="loading-import">
+        <div className="max-w-md mx-auto p-10 bg-white dark:bg-zinc-900 rounded-sm border border-zinc-300 dark:border-zinc-700 text-center space-y-6" id="loading-import">
           <div className="relative mx-auto w-12 h-12 flex items-center justify-center">
-            <div className="absolute inset-0 rounded-full border-2 border-indigo-100 dark:border-indigo-900 animate-pulse" />
-            <RefreshCw className="text-indigo-600 dark:text-indigo-400 animate-spin" size={20} />
+            <div className="absolute inset-0 rounded-full border-2 border-emerald-100 dark:border-emerald-900 animate-pulse" />
+            <RefreshCw className="text-emerald-600 dark:text-emerald-400 animate-spin" size={20} />
           </div>
           <div className="space-y-1.5">
-            <h5 className="font-semibold text-slate-800 dark:text-slate-100 text-sm">O Gemini está a analisar o teu boletim...</h5>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto animate-pulse">{loadingStep}</p>
+            <h5 className="font-semibold text-zinc-800 dark:text-zinc-100 text-sm">O Gemini está a analisar o teu boletim...</h5>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto animate-pulse">{loadingStep}</p>
           </div>
-          <div className="pt-3 border-t border-slate-200 dark:border-slate-700 text-[10px] text-slate-400 dark:text-slate-500">
+          <div className="pt-3 border-t border-zinc-200 dark:border-zinc-700 text-[10px] text-zinc-400 dark:text-zinc-500">
             Falta muito pouco. O processamento com visão computacional demora cerca de 5-10 segundos.
           </div>
         </div>
@@ -545,18 +554,18 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
           
           {/* Left Panel: Preview Image */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white dark:bg-slate-900 rounded-sm p-4 border border-slate-200 dark:border-slate-800">
+            <div className="bg-white dark:bg-zinc-900 rounded-sm p-4 border border-zinc-200 dark:border-zinc-800">
               <div className="flex justify-between items-center mb-3">
-                <h5 className="font-bold text-slate-700 dark:text-slate-300 text-[10px] uppercase tracking-wider">Screenshot Fornecido</h5>
+                <h5 className="font-bold text-zinc-700 dark:text-zinc-300 text-[10px] uppercase tracking-wider">Screenshot Fornecido</h5>
                 <button
                   onClick={handleResetImport}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs flex items-center gap-1 cursor-pointer"
+                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-xs flex items-center gap-1 cursor-pointer"
                 >
                   <X size={14} /> Remover
                 </button>
               </div>
               {selectedImage && (
-                <div className="rounded-sm overflow-hidden border border-slate-200 dark:border-slate-800 max-h-[420px] bg-slate-900 flex items-center justify-center">
+                <div className="rounded-sm overflow-hidden border border-zinc-200 dark:border-zinc-800 max-h-[420px] bg-zinc-900 flex items-center justify-center">
                   <img
                     src={selectedImage}
                     alt="Screenshot do boletim"
@@ -564,7 +573,7 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
                   />
                 </div>
               )}
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 text-center truncate">{imageFileName}</p>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2 text-center truncate">{imageFileName}</p>
             </div>
 
             <div className="p-4 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-900 rounded-sm flex gap-2.5 text-xs leading-normal">
@@ -578,21 +587,21 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
 
           {/* Right Panel: Progressive Form */}
           <div className="lg:col-span-3">
-            <form onSubmit={handleConfirmAndSave} className="bg-white dark:bg-slate-900 rounded-sm p-6 border border-slate-200 dark:border-slate-800 space-y-5 text-xs">
+            <form onSubmit={handleConfirmAndSave} className="bg-white dark:bg-zinc-900 rounded-sm p-6 border border-zinc-200 dark:border-zinc-800 space-y-5 text-xs">
 
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                <h5 className="text-sm font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-1.5">
-                  <Sparkles size={16} className="text-indigo-600 dark:text-indigo-400" /> Validar Dados Extraídos
+              <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3">
+                <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight font-display flex items-center gap-1.5">
+                  <Sparkles size={16} className="text-emerald-600 dark:text-emerald-400" /> Validar Dados Extraídos
                 </h5>
                 {detectedBets.length > 1 ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-[9px] bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider border border-indigo-200 dark:border-indigo-900">
+                    <span className="text-[9px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider border border-emerald-200 dark:border-emerald-900">
                       Boletim {detectedIndex + 1} de {detectedBets.length}
                     </span>
                     <button
                       type="button"
                       onClick={skipDetectedBet}
-                      className="text-[9px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 uppercase tracking-wider cursor-pointer"
+                      className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 uppercase tracking-wider cursor-pointer"
                     >
                       Saltar
                     </button>
@@ -612,12 +621,12 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
               {/* Bookmaker & Type */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-semibold mb-1">
+                  <label className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 font-semibold mb-1">
                     Casa de Apostas
                     <AiChip />
                   </label>
                   <select
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100 font-medium"
+                    className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-zinc-800 dark:text-zinc-100 font-medium"
                     value={editBookmaker}
                     onChange={(e) => setEditBookmaker(e.target.value)}
                   >
@@ -628,9 +637,9 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Tipo de Aposta</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Tipo de Aposta</label>
                   <select
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100 font-medium"
+                    className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-zinc-800 dark:text-zinc-100 font-medium"
                     value={editType}
                     onChange={(e) => {
                       const newType = e.target.value as BetType;
@@ -649,23 +658,23 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
               {/* Stake & Status */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Valor Apostado (Stake)</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Valor Apostado (Stake)</label>
                   <input
                     type="number"
                     step="0.01"
                     min="0.01"
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100 font-mono font-bold"
+                    className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-zinc-800 dark:text-zinc-100 font-mono font-bold"
                     value={editStake}
                     onChange={(e) => setEditStake(e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 font-semibold mb-1">
+                  <label className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 font-semibold mb-1">
                     Estado de Liquidação
                     <AiChip />
                   </label>
                   <select
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100"
+                    className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-zinc-800 dark:text-zinc-100"
                     value={editStatus}
                     onChange={(e) => setEditStatus(e.target.value as BetStatus)}
                   >
@@ -683,14 +692,14 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
               {/* Cashout: valor recebido ao encerrar antecipadamente */}
               {editStatus === "CASHOUT" && (
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">
                     Valor do Cashout ({currency})
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
-                    className="w-full px-3 py-2 rounded-sm border border-violet-200 dark:border-violet-800 bg-white dark:bg-slate-800 focus:outline-none focus:border-violet-500 text-slate-800 dark:text-slate-100 font-mono font-bold"
+                    className="w-full px-3 py-2 rounded-sm border border-violet-200 dark:border-violet-800 bg-white dark:bg-zinc-800 focus:outline-none focus:border-violet-500 text-zinc-800 dark:text-zinc-100 font-mono font-bold"
                     placeholder="0.00"
                     value={editCashoutReturn}
                     onChange={(e) => setEditCashoutReturn(e.target.value)}
@@ -699,11 +708,11 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
               )}
 
               {/* Freebet Checkbox + tipo */}
-              <div className="p-3.5 bg-indigo-50/30 dark:bg-indigo-950/30 rounded-sm border border-indigo-100 dark:border-indigo-900 space-y-2.5">
-                <label className="flex items-center gap-2 font-semibold text-indigo-900 dark:text-indigo-200 cursor-pointer">
+              <div className="p-3.5 bg-emerald-50/30 dark:bg-emerald-950/30 rounded-sm border border-emerald-100 dark:border-emerald-900 space-y-2.5">
+                <label className="flex items-center gap-2 font-semibold text-emerald-900 dark:text-emerald-200 cursor-pointer">
                   <input
                     type="checkbox"
-                    className="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                    className="rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
                     checked={isFreebet}
                     onChange={(e) => setIsFreebet(e.target.checked)}
                   />
@@ -713,7 +722,7 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
 
                 {isFreebet && (
                   <select
-                    className="w-full px-3 py-2 rounded-sm border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-100 text-[11px]"
+                    className="w-full px-3 py-2 rounded-sm border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-zinc-800 focus:outline-none focus:border-emerald-500 text-zinc-800 dark:text-zinc-100 text-[11px]"
                     value={editFreebetType}
                     onChange={(e) => setEditFreebetType(e.target.value as FreebetType)}
                   >
@@ -726,12 +735,12 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
               {/* Selections Extraction Form */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <label className="text-slate-500 dark:text-slate-400 font-semibold">Seleções Detetadas ({editSelections.length})</label>
+                  <label className="text-zinc-500 dark:text-zinc-400 font-semibold">Seleções Detetadas ({editSelections.length})</label>
                   {editType === "MULTIPLA" && (
                     <button
                       type="button"
                       onClick={addSelection}
-                      className="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-0.5 cursor-pointer"
+                      className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:text-emerald-800 dark:hover:text-emerald-300 flex items-center gap-0.5 cursor-pointer"
                     >
                       <PlusCircle size={12} /> Adicionar Seleção
                     </button>
@@ -742,13 +751,13 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
                   {editSelections.map((sel, idx) => (
                     <div
                       key={idx}
-                      className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-sm border border-slate-200 dark:border-slate-700 space-y-2 relative"
+                      className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-sm border border-zinc-200 dark:border-zinc-700 space-y-2 relative"
                     >
                       {editSelections.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeSelection(idx)}
-                          className="absolute right-2.5 top-2.5 text-slate-400 hover:text-rose-600 cursor-pointer"
+                          className="absolute right-2.5 top-2.5 text-zinc-400 hover:text-rose-600 cursor-pointer"
                         >
                           <MinusCircle size={12} />
                         </button>
@@ -756,21 +765,21 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
 
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Evento</label>
+                          <label className="block text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Evento</label>
                           <input
                             type="text"
                             required
-                            className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-sm text-[11px] text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600"
+                            className="w-full px-2 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] text-zinc-800 dark:text-zinc-100 focus:outline-none focus:border-emerald-600"
                             value={sel.event}
                             onChange={(e) => handleSelectionEdit(idx, "event", e.target.value)}
                           />
                         </div>
                         <div>
-                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Mercado Detetado</label>
+                          <label className="block text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Mercado Detetado</label>
                           <input
                             type="text"
                             required
-                            className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-sm text-[11px] text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600"
+                            className="w-full px-2 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] text-zinc-800 dark:text-zinc-100 focus:outline-none focus:border-emerald-600"
                             value={sel.market}
                             onChange={(e) => handleSelectionEdit(idx, "market", e.target.value)}
                           />
@@ -779,23 +788,23 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
 
                       <div className="grid grid-cols-3 gap-2">
                         <div className="col-span-2">
-                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Escolha</label>
+                          <label className="block text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Escolha</label>
                           <input
                             type="text"
                             required
-                            className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-sm text-[11px] text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600"
+                            className="w-full px-2 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] text-zinc-800 dark:text-zinc-100 focus:outline-none focus:border-emerald-600"
                             value={sel.choice}
                             onChange={(e) => handleSelectionEdit(idx, "choice", e.target.value)}
                           />
                         </div>
                         <div>
-                          <label className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Odd</label>
+                          <label className="block text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Odd</label>
                           <input
                             type="number"
                             step="0.01"
                             min="1.01"
                             required
-                            className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-sm text-[11px] text-slate-800 dark:text-slate-100 font-mono focus:outline-none focus:border-indigo-600"
+                            className="w-full px-2 py-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-sm text-[11px] text-zinc-800 dark:text-zinc-100 font-mono focus:outline-none focus:border-emerald-600"
                             value={sel.odd}
                             onChange={(e) => handleSelectionEdit(idx, "odd", e.target.value)}
                           />
@@ -809,19 +818,19 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
               {/* Calculations review */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Data de Registo</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Data de Registo</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600 font-mono text-[11px]"
+                    className="w-full px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:border-emerald-600 font-mono text-[11px]"
                     value={editDateTime}
                     onChange={(e) => setEditDateTime(e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Notas adicionais</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Notas adicionais</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-1.5 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-600 text-[11px]"
+                    className="w-full px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:border-emerald-600 text-[11px]"
                     value={editNotes}
                     onChange={(e) => setEditNotes(e.target.value)}
                   />
@@ -829,18 +838,18 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
               </div>
 
               {/* Simulation Result preview */}
-              <div className="p-4 bg-slate-900 dark:bg-slate-950 dark:border dark:border-slate-800 text-slate-100 rounded-sm flex justify-between items-center shadow-inner">
+              <div className="p-4 bg-zinc-900 dark:bg-zinc-950 dark:border dark:border-zinc-800 text-zinc-100 rounded-sm flex justify-between items-center shadow-inner">
                 <div>
-                  <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Resultado da Validação</p>
+                  <p className="text-[9px] text-zinc-400 font-semibold uppercase tracking-wider">Resultado da Validação</p>
                   <p className="text-xs font-semibold mt-1">
-                    Odd Total: <span className="font-mono text-indigo-300 font-bold">@{calculatedTotalOdd.toFixed(2)}</span>
+                    Odd Total: <span className="font-mono text-emerald-300 font-bold">@{calculatedTotalOdd.toFixed(2)}</span>
                   </p>
                   {isFreebet && (
                     <p className="text-[9px] text-amber-300 font-bold uppercase tracking-wider mt-1">Freebet — a stake não conta para o lucro</p>
                   )}
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">
+                  <p className="text-[9px] text-zinc-400 font-semibold uppercase tracking-wider">
                     {editStatus === "POR_LIQUIDAR" ? "Retorno Potencial" : "Lucro Líquido"}
                   </p>
                   <p className={`text-base font-bold font-mono mt-0.5 ${
@@ -850,7 +859,7 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
                         ? "text-emerald-400"
                         : previewReturns.netProfit < 0
                           ? "text-rose-400"
-                          : "text-slate-300"
+                          : "text-zinc-300"
                   }`}>
                     {editStatus === "POR_LIQUIDAR"
                       ? `${previewReturns.potentialReturn.toFixed(2)}${currency}`
@@ -860,17 +869,17 @@ export default function ScreenshotImporter({ currency, onAddBet }: ScreenshotImp
               </div>
 
               {/* Action buttons */}
-              <div className="flex gap-2 justify-end pt-3 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex gap-2 justify-end pt-3 border-t border-zinc-200 dark:border-zinc-800">
                 <button
                   type="button"
                   onClick={handleResetImport}
-                  className="px-4 py-2 rounded-sm border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold cursor-pointer"
+                  className="px-4 py-2 rounded-sm border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-semibold cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                  className="px-5 py-2 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                 >
                   <Check size={14} /> {detectedIndex + 1 < detectedBets.length ? "Gravar e Seguinte" : "Confirmar e Gravar Aposta"}
                 </button>

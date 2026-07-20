@@ -1,5 +1,5 @@
 import express from "express";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -9,6 +9,9 @@ import dotenv from "dotenv";
 
 import authRoutes from "./routes/authRoutes.js";
 import betsRoutes from "./routes/betsRoutes.js";
+import socialRoutes from "./routes/socialRoutes.js";
+import accountsRoutes from "./routes/accountsRoutes.js";
+import insightsRoutes from "./routes/insightsRoutes.js";
 import pool from "./db/pool.js";
 import {
   authenticateToken,
@@ -21,9 +24,27 @@ import { renderApp } from "./src/entry-server.js";
 import { mapBetFromApi } from "./src/lib/betsApi.js";
 import type { InitialAppData } from "./src/initialData.js";
 
-// O .env.local sobrepõe-se ao .env.
+// O .env.local sobrepõe-se ao .env; um .env.<branch>.local sobrepõe-se aos
+// dois. Assim a branch "test" pode apontar para a BD de dev criando um
+// .env.test.local (ignorado pelo git), sem tocar no .env.local partilhado.
+// Na Vercel nada disto corre — as variáveis vêm do dashboard.
+function currentGitBranch(): string | null {
+  try {
+    const head = readFileSync(".git/HEAD", "utf8").trim();
+    const match = head.match(/^ref: refs\/heads\/(.+)$/);
+    return match ? match[1] : null; // HEAD solto (detached) -> sem override
+  } catch {
+    return null; // fora de um repositório git
+  }
+}
+
 dotenv.config({ path: ".env" });
 dotenv.config({ path: ".env.local", override: true });
+const gitBranch = currentGitBranch();
+if (gitBranch && existsSync(`.env.${gitBranch}.local`)) {
+  dotenv.config({ path: `.env.${gitBranch}.local`, override: true });
+  console.log(`Ambiente: a usar .env.${gitBranch}.local (branch ${gitBranch}).`);
+}
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -79,6 +100,31 @@ app.use((req, res, next) => {
   next();
 });
 
+// CORS restrito para a app nativa (Capacitor). O WebView Android serve os
+// assets de https://localhost, por isso as chamadas à API são cross-origin.
+// A web normal (mesma origem) não é afetada — o browser nem consulta CORS.
+// A autenticação é por header Bearer (sem cookies), logo sem credenciais CORS.
+const NATIVE_APP_ORIGINS = new Set([
+  "https://localhost",     // Capacitor Android (androidScheme: https)
+  "capacitor://localhost", // Capacitor iOS, se um dia existir
+  "http://localhost",      // WebView em dev
+]);
+app.use("/api", (req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && NATIVE_APP_ORIGINS.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Max-Age", "86400");
+  }
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
+  next();
+});
+
 // Diagnóstico de deploy: confirma que a função arrancou, que variáveis de
 // ambiente estão presentes (nunca os seus valores) e se a BD responde.
 app.get("/api/health", async (_req, res) => {
@@ -104,9 +150,13 @@ app.get("/api/health", async (_req, res) => {
 // Gemini. Janela de 10 minutos.
 app.use("/api/auth", rateLimit({ windowMs: 10 * 60 * 1000, max: 30 }));
 app.use("/api/parse-screenshot", rateLimit({ windowMs: 10 * 60 * 1000, max: 30 }));
+app.use("/api/insights", rateLimit({ windowMs: 10 * 60 * 1000, max: 30 }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/bets", betsRoutes);
+app.use("/api/social", socialRoutes);
+app.use("/api/accounts", accountsRoutes);
+app.use("/api/insights", insightsRoutes);
 
 function clearServerSessionCookie(res: express.Response) {
   res.clearCookie(SESSION_COOKIE, {
@@ -166,7 +216,7 @@ async function renderDocument(
   template: string
 ) {
   const initialData = await loadInitialAppData(req, res);
-  const appHtml = renderApp(initialData);
+  const appHtml = await renderApp(initialData);
   const bootScript = `<script>window.__BETTRACKR_INITIAL_DATA__=${serializeInitialData(initialData)}</script>`;
   const html = template
     .replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`)

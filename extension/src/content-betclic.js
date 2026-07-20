@@ -12,5 +12,9 @@ window.addEventListener("message", (event) => {
     betclicToken: data.token,
     betclicApiBase: data.apiBase || "https://betting.begmedia.pt",
     betclicCapturedAt: Date.now(),
+  }, () => {
+    // Token novo capturado -> pede ao service worker para tentar auto-import
+    // (só corre se o utilizador tiver ligado a opção; caso contrário é ignorado).
+    chrome.runtime.sendMessage({ type: "AUTO_IMPORT_HINT", source: "betclic" }).catch(() => {});
   });
 });

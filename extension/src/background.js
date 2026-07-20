@@ -9,11 +9,29 @@ import { runAfterBettrackrVerification } from "./bettrackr-identity.js";
 
 const PAGE_SIZE = 20;
 const DEFAULT_BETTRACKR_BASE = "https://gestordebets.vercel.app";
-const BETTRACKR_TAB_URLS = [
+const BETTRACKR_APP_URLS = [
   "https://gestordebets.vercel.app/*",
   "http://localhost/*",
   "http://127.0.0.1/*",
 ];
+
+// Recarregar/atualizar a extensão mata os content scripts das tabs já abertas
+// e o Chrome NÃO os reinjeta — a app deixava de detetar a extensão (PING sem
+// resposta) até o utilizador recarregar a página à mão. Numa reinstalação o
+// chrome.storage também vem vazio (token BetTrackr perdido). Reinjetar a ponte
+// nas tabs abertas da app repõe a deteção e ressincroniza o token de imediato.
+chrome.runtime.onInstalled.addListener(async () => {
+  try {
+    const tabs = await chrome.tabs.query({ url: BETTRACKR_APP_URLS });
+    for (const tab of tabs) {
+      if (tab.id === undefined) continue;
+      chrome.scripting
+        .executeScript({ target: { tabId: tab.id }, files: ["src/content-bettrackr.js"] })
+        .catch(() => {}); // tab protegida/descarregada — o reload manual continua a funcionar
+    }
+  } catch (_) {}
+});
+
 const pendingBetanoRequests = new Map();
 const betanoTokenWaiters = new Set();
 let betanoSessionTokens = null;
@@ -46,7 +64,7 @@ function validSessionSnapshot(value) {
 }
 
 async function sessionFromOpenBettrackrTab() {
-  const tabs = await chrome.tabs.query({ url: BETTRACKR_TAB_URLS });
+  const tabs = await chrome.tabs.query({ url: BETTRACKR_APP_URLS });
   const ordered = [...tabs].sort((a, b) => Number(Boolean(b.active)) - Number(Boolean(a.active)));
   for (const tab of ordered) {
     if (tab.id === undefined) continue;
@@ -164,13 +182,17 @@ function waitForBetanoTokens(timeoutMs = 15000) {
   });
 }
 
-async function ensureBetanoHistoryTab() {
+async function ensureBetanoHistoryTab(opts = {}) {
   const tabs = await chrome.tabs.query({ url: ["https://www.betano.pt/*", "https://betano.pt/*"] });
   const existingSettled = tabs.find(isBetanoSettledTab);
   if (existingSettled && existingSettled.id !== undefined) {
     await waitForTabComplete(existingSettled.id).catch(() => {});
     return { tab: existingSettled, created: false };
   }
+
+  // Auto-import: nunca sequestrar o separador do utilizador. Sem um separador
+  // de histórico já aberto, salta silenciosamente (fica para o próximo gatilho).
+  if (opts.auto) return null;
 
   const source = tabs.find(isBetanoHistoryTab) || await findBetanoTab();
   if (!source || source.id === undefined) throw new Error("Abre a página principal do Betano numa tab aberta.");
@@ -295,31 +317,36 @@ function selectionsSignature(selections) {
   })));
 }
 
-function needsUpdate(existing, incoming) {
+function needsUpdate(existing, incoming, accountId) {
   // Cashouts são sempre reenviados. Versões antigas do mapper guardavam
   // FullCashout como POR_LIQUIDAR; forçar o PUT garante a correção mesmo que
   // a comparação local esteja a olhar para dados normalizados/stale.
-  return incoming?.metadata?.isCashout === true ||
+  // Uma conta escolhida também "preenche" apostas antigas ainda sem conta.
+  return (Boolean(accountId) && !existing.account_id) ||
+    incoming?.metadata?.isCashout === true ||
     existing.status !== incoming.status ||
     Number(existing.stake) !== Number(incoming.stake) ||
     Number(existing.odd) !== Number(incoming.odd) ||
     Number(existing.final_return) !== Number(incoming.finalReturn) ||
     Number(existing.net_profit) !== Number(incoming.netProfit) ||
     Boolean(existing.is_freebet) !== Boolean(incoming.isFreebet) ||
+    String(existing.freebet_type || "") !== String(incoming.freebetType || "") ||
     selectionsSignature(existing.selections) !== selectionsSignature(incoming.selections);
 }
 
-function betPayload(bet) {
+function betPayload(bet, accountId) {
   return {
     type: bet.type,
     status: bet.status,
     stake: bet.stake,
     odd: bet.odd,
     isFreebet: bet.isFreebet,
+    freebetType: bet.freebetType,
     potentialReturn: bet.potentialReturn,
     finalReturn: bet.finalReturn,
     netProfit: bet.netProfit,
     bookmaker: bet.bookmaker,
+    accountId: accountId || null,
     dateTime: bet.dateTime,
     notes: bet.notes,
     origin: bet.origin,
@@ -330,28 +357,30 @@ function betPayload(bet) {
   };
 }
 
-async function postBulk(bets, cfg) {
+async function postBulk(bets, cfg, accountId) {
   const res = await fetch(`${cfg.bettrackrBase}/api/bets/bulk`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.bettrackrToken}` },
-    body: JSON.stringify({ bets: bets.map(betPayload) }),
+    body: JSON.stringify({ bets: bets.map((bet) => betPayload(bet, accountId)) }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `BetTrackr respondeu ${res.status} ao importar.`);
   return Array.isArray(data.bets) ? data.bets.length : bets.length;
 }
 
-async function updateBet(existing, incoming, cfg) {
+async function updateBet(existing, incoming, cfg, accountId) {
+  // Uma aposta já associada a uma conta mantém-na; só as "sem conta" herdam
+  // a conta escolhida para esta importação.
   const res = await fetch(`${cfg.bettrackrBase}/api/bets/${encodeURIComponent(existing.id)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.bettrackrToken}` },
-    body: JSON.stringify(betPayload(incoming)),
+    body: JSON.stringify(betPayload(incoming, existing.account_id || accountId)),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `BetTrackr respondeu ${res.status} ao atualizar.`);
 }
 
-async function persistMapped(mapped, unsupported, source, cfg) {
+async function persistMapped(mapped, unsupported, source, cfg, accountId) {
   const existing = await fetchExistingBets(cfg);
   const fresh = [];
   const updates = [];
@@ -360,19 +389,19 @@ async function persistMapped(mapped, unsupported, source, cfg) {
     const key = importKey(bet);
     const old = key && existing.get(key);
     if (!old) fresh.push(bet);
-    else if (needsUpdate(old, bet)) updates.push({ old, bet });
+    else if (needsUpdate(old, bet, accountId)) updates.push({ old, bet });
     else skipped++;
   }
 
   let imported = 0;
   const chunkSize = 500;
   for (let i = 0; i < fresh.length; i += chunkSize) {
-    imported += await postBulk(fresh.slice(i, i + chunkSize), cfg);
+    imported += await postBulk(fresh.slice(i, i + chunkSize), cfg, accountId);
     progress(`A importar ${source}: ${Math.min(i + chunkSize, fresh.length)}/${fresh.length}…`);
   }
   let updated = 0;
   for (const pair of updates) {
-    await updateBet(pair.old, pair.bet, cfg);
+    await updateBet(pair.old, pair.bet, cfg, accountId);
     updated++;
     progress(`A atualizar ${source}: ${updated}/${updates.length}…`);
   }
@@ -380,15 +409,17 @@ async function persistMapped(mapped, unsupported, source, cfg) {
   return { fetched: mapped.length, imported, updated, skipped, unsupported, cashouts };
 }
 
-async function runBetclicImport(cfg) {
+async function runBetclicImport(cfg, accountId) {
   if (!cfg.betclicToken) throw new Error("Sessão Betclic não detetada.");
   progress("A obter apostas do Betclic…");
   const mapped = await fetchBetclicBetsForImport(cfg);
-  return persistMapped(mapped, 0, "Betclic", cfg);
+  return persistMapped(mapped, 0, "Betclic", cfg, accountId);
 }
 
-async function runBetanoImport(cfg) {
-  const { tab, restoreUrl, created } = await ensureBetanoHistoryTab();
+async function runBetanoImport(cfg, accountId, opts = {}) {
+  const ensured = await ensureBetanoHistoryTab(opts);
+  if (!ensured) return { skipped: true }; // auto-import sem histórico aberto
+  const { tab, restoreUrl, created } = ensured;
   try {
     if (!betanoSessionTokens) await waitForBetanoTokens();
     progress("A obter apostas do Betano…");
@@ -398,7 +429,7 @@ async function runBetanoImport(cfg) {
     for (const bet of open) if (!byRef.has(betanoRef(bet))) byRef.set(betanoRef(bet), bet);
     byRef.delete(null);
     const mapped = mapBetanoBets([...byRef.values()]);
-    return persistMapped(mapped.bets, mapped.unsupported, "Betano", cfg);
+    return persistMapped(mapped.bets, mapped.unsupported, "Betano", cfg, accountId);
   } finally {
     if (created && tab.id !== undefined && restoreUrl) {
       await chrome.tabs.update(tab.id, { url: restoreUrl }).catch(() => {});
@@ -406,14 +437,19 @@ async function runBetanoImport(cfg) {
   }
 }
 
-async function runImportSources(source, cfg) {
+async function runImportSources(source, cfg, accountIds, opts = {}) {
+  if (!cfg.bettrackrToken) throw new Error("Sem sessão BetTrackr. Abre a app e inicia sessão.");
   const sources = source === "all" ? ["betclic", "betano"] : [source];
+  const chosenAccounts = accountIds && typeof accountIds === "object" ? accountIds : {};
   const results = {};
   for (const current of sources) {
+    const accountId = typeof chosenAccounts[current] === "string" && chosenAccounts[current]
+      ? chosenAccounts[current]
+      : null;
     try {
       results[current] = current === "betano"
-        ? { ok: true, ...(await runBetanoImport(cfg)) }
-        : { ok: true, ...(await runBetclicImport(cfg)) };
+        ? { ok: true, ...(await runBetanoImport(cfg, accountId, opts)) }
+        : { ok: true, ...(await runBetclicImport(cfg, accountId)) };
     } catch (error) {
       results[current] = { ok: false, error: String(error && error.message || error) };
     }
@@ -431,7 +467,7 @@ async function runImportSources(source, cfg) {
   return { ok: true, sourceResults: results, ...totals };
 }
 
-async function runImport(source, sessionSnapshot) {
+async function runImport(source, sessionSnapshot, accountIds, opts = {}) {
   const cfg = await configForImport(sessionSnapshot);
   return runAfterBettrackrVerification({
     token: cfg.bettrackrToken,
@@ -439,13 +475,13 @@ async function runImport(source, sessionSnapshot) {
     expectedUserId: cfg.bettrackrUserId,
   }, async (identity) => {
     await chrome.storage.local.set({ bettrackrUserId: identity.userId });
-    return runImportSources(source, cfg);
+    return runImportSources(source, cfg, accountIds, opts);
   });
 }
 
 async function extensionStatus() {
   const [stored, tabs] = await Promise.all([
-    chrome.storage.local.get(["betclicToken", "bettrackrToken", "bettrackrBase"]),
+    chrome.storage.local.get(["betclicToken", "bettrackrToken", "bettrackrBase", "bettrackrUser", "autoImport"]),
     chrome.tabs.query({ url: ["https://www.betano.pt/*", "https://betano.pt/*"] }),
   ]);
   return {
@@ -455,7 +491,84 @@ async function extensionStatus() {
     betano: tabs.length > 0,
     bettrackr: Boolean(stored.bettrackrToken),
     bettrackrBase: stored.bettrackrBase || DEFAULT_BETTRACKR_BASE,
+    bettrackrUser: stored.bettrackrUser || null,
+    autoImport: stored.autoImport === true,
   };
+}
+
+// ============================================================
+// Login BetTrackr direto na extensão (E3). Deixa a extensão funcionar sem o
+// site do BetTrackr aberto. Guardamos APENAS o JWT devolvido (expira em 7
+// dias) — nunca a password. HTTPS via host_permissions.
+// ============================================================
+async function bettrackrLogin(email, password, base) {
+  const origin = base || DEFAULT_BETTRACKR_BASE;
+  const res = await fetch(`${origin}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.token) {
+    throw new Error(data.error || "Não foi possível iniciar sessão no BetTrackr.");
+  }
+  await chrome.storage.local.set({
+    bettrackrToken: data.token,
+    bettrackrBase: origin,
+    bettrackrUser: data.user && data.user.username ? String(data.user.username) : null,
+  });
+  return { ok: true, user: data.user || null };
+}
+
+async function bettrackrLogout() {
+  await chrome.storage.local.remove(["bettrackrToken", "bettrackrUser"]);
+  return { ok: true };
+}
+
+// ============================================================
+// Auto-import (E3) — opt-in, desligado por defeito. Disparado pela captura do
+// token de uma casa (Betclic guarda o token; Betano envia BETANO_SESSION).
+// Debounce por casa para não repetir a cada navegação/refresh.
+// ============================================================
+const AUTO_IMPORT_DEBOUNCE_MS = 10 * 60 * 1000; // 10 min por casa
+let autoImportRunning = false;
+
+async function flashBadge(text, color) {
+  try {
+    await chrome.action.setBadgeBackgroundColor({ color });
+    await chrome.action.setBadgeText({ text });
+    setTimeout(() => { chrome.action.setBadgeText({ text: "" }).catch(() => {}); }, 8000);
+  } catch (_) {}
+}
+
+async function maybeAutoImport(source) {
+  const stored = await chrome.storage.local.get([
+    "autoImport", "bettrackrToken", "importAccountChoices", "autoImportLast",
+  ]);
+  if (stored.autoImport !== true || !stored.bettrackrToken) return;
+
+  const now = Date.now();
+  const last = stored.autoImportLast && typeof stored.autoImportLast === "object" ? stored.autoImportLast : {};
+  if (last[source] && now - last[source] < AUTO_IMPORT_DEBOUNCE_MS) return;
+  if (autoImportRunning) return;
+  autoImportRunning = true;
+  // Marca já o timestamp para evitar corridas entre gatilhos próximos.
+  await chrome.storage.local.set({ autoImportLast: { ...last, [source]: now } });
+
+  const accountIds = stored.importAccountChoices && typeof stored.importAccountChoices === "object"
+    ? stored.importAccountChoices
+    : {};
+  try {
+    // Sem snapshot da app: o auto-import é disparado pela sessão da casa, por
+    // isso a sessão BetTrackr vem de uma tab aberta ou do storage.
+    const result = await runImport(source, null, accountIds, { auto: true });
+    const changed = (result.imported || 0) + (result.updated || 0);
+    if (changed > 0) await flashBadge(String(changed), "#16a34a");
+  } catch (_) {
+    await flashBadge("!", "#dc2626");
+  } finally {
+    autoImportRunning = false;
+  }
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -475,7 +588,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         waiter.resolve();
       }
       betanoTokenWaiters.clear();
+      // Sessão Betano capturada -> tenta auto-import (se ligado e com histórico
+      // já aberto; caso contrário salta sem sequestrar o separador).
+      maybeAutoImport("betano");
     }
+    return false;
+  }
+  if (msg && msg.type === "AUTO_IMPORT_HINT") {
+    // Enviado pelos content scripts das casas quando capturam um token novo.
+    const source = msg.source === "betclic" || msg.source === "betano" ? msg.source : null;
+    if (source) maybeAutoImport(source);
     return false;
   }
   if (msg && msg.type === "BETANO_PAGE_RESULT") {
@@ -491,8 +613,26 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg && msg.type === "IMPORT") {
     const source = ["betclic", "betano", "all"].includes(msg.source) ? msg.source : "all";
-    runImport(source, msg.bettrackrSession)
+    runImport(source, msg.bettrackrSession, msg.accountIds)
       .then(sendResponse)
+      .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));
+    return true;
+  }
+  if (msg && msg.type === "LOGIN") {
+    bettrackrLogin(String(msg.email || ""), String(msg.password || ""), msg.base)
+      .then(sendResponse)
+      .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));
+    return true;
+  }
+  if (msg && msg.type === "LOGOUT") {
+    bettrackrLogout()
+      .then(sendResponse)
+      .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));
+    return true;
+  }
+  if (msg && msg.type === "SET_AUTO_IMPORT") {
+    chrome.storage.local.set({ autoImport: msg.enabled === true })
+      .then(() => sendResponse({ ok: true }))
       .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));
     return true;
   }

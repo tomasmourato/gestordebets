@@ -20,8 +20,8 @@ do browser guarda apenas o token JWT, o utilizador em cache e as preferências
 ```
 src/components/   componentes de UI
 src/hooks/        estado da aplicação (apostas, preferências, tema, auditoria)
-src/lib/          camada de API (authApi, betsApi) e mapeamento BD <-> frontend
-routes/           rotas Express (/api/auth, /api/bets)
+src/lib/          camada de API (authApi, betsApi, socialApi) e mapeamento BD <-> frontend
+routes/           rotas Express (/api/auth, /api/bets, /api/social)
 middleware/       verificação do JWT
 db/               pool de conexões, schema e migrações
 ```
@@ -50,6 +50,11 @@ db/               pool de conexões, schema e migrações
    node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
    ```
 
+   **Ambiente por branch (opcional):** um ficheiro `.env.<branch>.local`
+   sobrepõe-se ao `.env.local` quando essa branch está ativa. Ex.: cria um
+   `.env.test.local` com a `DATABASE_URL` da base de dados de dev e a branch
+   `test` passa a usá-la automaticamente, sem tocar no `.env.local`.
+
 3. Preparar a base de dados:
 
    - Instalações novas: executar [db/schema.sql](db/schema.sql).
@@ -63,6 +68,37 @@ db/               pool de conexões, schema e migrações
    ```
 
    A app fica disponível em `http://localhost:3000`.
+
+## App Android (Capacitor)
+
+A app nativa Android embute o build web (`dist/`) num WebView e fala com a
+API de produção (ver [src/lib/apiBase.ts](src/lib/apiBase.ts); o CORS para a
+origem nativa está em [server.ts](server.ts)).
+
+**Gerar o APK sem instalar nada:** GitHub → **Actions** → workflow
+**"Android APK"** → *Run workflow*. No fim, descarrega o ficheiro
+`bettrackr-debug-apk` dos artifacts e instala-o no telemóvel (é preciso
+permitir "instalar de fontes desconhecidas").
+
+**Desenvolvimento local (opcional):** requer Android Studio + JDK 17.
+
+```bash
+npm run android:sync   # build web + copia para android/
+npm run android:open   # abre o projeto no Android Studio
+```
+
+Notas: o APK é *debug* (não serve para a Play Store — isso exigiria assinatura
+com keystore própria); a importação por extensão de browser não existe na app
+nativa (o cartão é escondido) — usa a web para isso.
+
+**Live update:** a app nativa atualiza o frontend sozinha, sem novo APK.
+Cada deploy gera `dist/app-bundle.zip` + `dist/app-version.json`
+([scripts/bundle-app.mjs](scripts/bundle-app.mjs)); no arranque a app compara
+versões e, se houver nova, descarrega-a e aplica-a no arranque seguinte
+([src/lib/liveUpdate.ts](src/lib/liveUpdate.ts), plugin
+`@capgo/capacitor-updater` em modo self-hosted, com rollback automático se o
+bundle novo não arrancar). Só é preciso gerar novo APK quando mudar a parte
+nativa (plugins do Capacitor, ícones, configuração do Android).
 
 ## Scripts
 
@@ -90,3 +126,13 @@ e devolvem apenas as apostas do utilizador autenticado.
 | `PUT`    | `/api/bets/:id`      | Atualiza uma aposta             |
 | `DELETE` | `/api/bets/:id`      | Apaga uma aposta                |
 | `DELETE` | `/api/bets`          | Apaga todas as apostas          |
+| `POST`   | `/api/parse-screenshot` | Extrai boletins de um screenshot (Gemini) |
+| `GET`    | `/api/insights`      | Dicas de picks do dia (Gemini + Google Search, cache diária) |
+| `GET`    | `/api/social/search?q=` | Procura utilizadores por username |
+| `GET`    | `/api/social/friends`   | Lista de amigos aceites       |
+| `GET`    | `/api/social/requests`  | Pedidos pendentes (recebidos/enviados) |
+| `POST`   | `/api/social/requests`  | Envia um pedido de amizade    |
+| `POST`   | `/api/social/requests/:id/accept` | Aceita um pedido    |
+| `DELETE` | `/api/social/requests/:id` | Recusa/cancela um pedido   |
+| `DELETE` | `/api/social/friends/:userId` | Remove uma amizade      |
+| `GET`    | `/api/social/friends/:userId/bets` | Apostas de um amigo (só entre amigos) |

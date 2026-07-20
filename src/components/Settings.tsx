@@ -12,9 +12,11 @@ import {
   CheckCircle2,
   DollarSign
 } from "lucide-react";
-import { Preferences, AuditLog, Bet, BetStatus, Selection, BetType, ThemeMode, Language } from "../types";
+import { Preferences, AuditLog, Bet, BetStatus, BookieAccount, FreebetType, Selection, BetType, ThemeMode, Language } from "../types";
 import { calculateBetReturnAndProfit, safeNum } from "../utils";
+import { defaultFreebetTypeFor } from "../lib/bookmakers";
 import BetclicImport from "./BetclicImport";
+import BookieAccountsCard from "./BookieAccountsCard";
 import { useI18n } from "../lib/i18n";
 import { normalizeBetStatus } from "../lib/betStatus";
 import FilterDropdown from "./FilterDropdown";
@@ -28,6 +30,13 @@ interface SettingsProps {
   onClearData: () => void;
   onResetDemoData: () => void;
   onImportCSV: (bets: Bet[]) => void;
+  // Contas por casa (geridas ao nível do App para partilhar com filtros/extensão)
+  accounts: BookieAccount[];
+  accountsError: string | null;
+  clearAccountsError: () => void;
+  onAddAccount: (bookmaker: string, label: string) => Promise<BookieAccount | null>;
+  onRenameAccount: (id: string, label: string) => Promise<BookieAccount | null>;
+  onDeleteAccount: (id: string) => Promise<boolean>;
 }
 
 export default function Settings({
@@ -38,7 +47,13 @@ export default function Settings({
   onUpdatePreferences,
   onClearData,
   onResetDemoData,
-  onImportCSV
+  onImportCSV,
+  accounts,
+  accountsError,
+  clearAccountsError,
+  onAddAccount,
+  onRenameAccount,
+  onDeleteAccount
 }: SettingsProps) {
 
   const { t } = useI18n();
@@ -85,9 +100,16 @@ export default function Settings({
     onUpdatePreferences({ ...preferences, language });
   };
 
+  // Etiqueta de cada conta por id — usada no export (coluna ACCOUNT) e para
+  // resolver a coluna ACCOUNT na importação de volta para o accountId.
+  const accountLabelById = React.useMemo(
+    () => new Map(accounts.map(a => [a.id, a.label])),
+    [accounts]
+  );
+
   // Export Bets and Freebets to CSV
   const handleExportCSV = () => {
-    let csvContent = "DATE;TIME;GAME;BET;STAKE;ODDS;STATUS;RETURN;SPORT;BOOKIE;BETTYPE;COMMENT;TAGS\n";
+    let csvContent = "DATE;TIME;GAME;BET;STAKE;ODDS;STATUS;RETURN;SPORT;BOOKIE;BETTYPE;FREEBET;FREEBET_TYPE;RISK_FREE;ACCOUNT;COMMENT;TAGS\n";
 
     bets.forEach((b) => {
       // Split dateTime into DATE and TIME
@@ -158,6 +180,12 @@ export default function Settings({
         return `"${str.replace(/"/g, '""')}"`;
       };
 
+      // Campos de dinheiro e conta (antes perdidos no round-trip do CSV).
+      const freebetVal = b.isFreebet ? "SIM" : "NAO";
+      const freebetTypeVal = b.isFreebet ? (b.freebetType || "") : "";
+      const riskFreeVal = b.isRiskFree ? "SIM" : "NAO";
+      const accountVal = b.accountId ? (accountLabelById.get(b.accountId) || "") : "";
+
       const dateField = dateVal;
       const timeField = timeVal;
       const gameField = escapeField(gameVal);
@@ -168,10 +196,11 @@ export default function Settings({
       const sportField = sportVal;
       const bookieField = bookieVal;
       const betTypeField = betTypeVal;
+      const accountField = escapeField(accountVal);
       const commentField = escapeField(commentVal);
       const tagsField = escapeField(tagsVal);
 
-      csvContent += `${dateField};${timeField};${gameField};${betField};${stakeField};${oddsField};${statusField};${returnVal};${sportField};${bookieField};${betTypeField};${commentField};${tagsField}\n`;
+      csvContent += `${dateField};${timeField};${gameField};${betField};${stakeField};${oddsField};${statusField};${returnVal};${sportField};${bookieField};${betTypeField};${freebetVal};${freebetTypeVal};${riskFreeVal};${accountField};${commentField};${tagsField}\n`;
     });
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -224,13 +253,28 @@ export default function Settings({
         // Let's check if it's JSON backup first (recommended for complex objects) or basic parsing
         if (text.trim().startsWith("{") || text.trim().startsWith("[")) {
           const parsed = JSON.parse(text);
-          if (parsed.bets) {
-            onImportCSV(parsed.bets);
+          // Um accountId de um backup pode já não existir (conta apagada, ou
+          // backup de outro conjunto de contas). Sem isto, um único id inválido
+          // faz o servidor rejeitar TODO o lote (validateAccountOwnership -> 400).
+          // Mantemos o id só se a conta ainda existir; senão a aposta entra
+          // "sem conta".
+          const validAccountIds = new Set(accounts.map(a => a.id));
+          const sanitizeAccounts = (list: any[]): any[] =>
+            list.map(b => {
+              if (!b || typeof b !== "object") return b;
+              if (b.accountId && !validAccountIds.has(b.accountId)) {
+                return { ...b, accountId: undefined };
+              }
+              return b;
+            });
+
+          if (Array.isArray(parsed.bets)) {
+            onImportCSV(sanitizeAccounts(parsed.bets));
             setSuccessMsg("Backup importado com sucesso!");
             setTimeout(() => setSuccessMsg(null), 4000);
           } else if (Array.isArray(parsed)) {
             // Assume just bets list
-            onImportCSV(parsed);
+            onImportCSV(sanitizeAccounts(parsed));
             setSuccessMsg("Apostas importadas com sucesso!");
             setTimeout(() => setSuccessMsg(null), 4000);
           } else {
@@ -253,8 +297,15 @@ export default function Settings({
             const sportIdx = headerRow.findIndex(h => h.toUpperCase() === "SPORT");
             const bookieIdx = headerRow.findIndex(h => h.toUpperCase() === "BOOKIE");
             const betTypeIdx = headerRow.findIndex(h => h.toUpperCase() === "BETTYPE");
+            const freebetIdx = headerRow.findIndex(h => h.toUpperCase() === "FREEBET");
+            const freebetTypeIdx = headerRow.findIndex(h => h.toUpperCase() === "FREEBET_TYPE");
+            const riskFreeIdx = headerRow.findIndex(h => h.toUpperCase() === "RISK_FREE");
+            const accountIdx = headerRow.findIndex(h => h.toUpperCase() === "ACCOUNT");
             const commentIdx = headerRow.findIndex(h => h.toUpperCase() === "COMMENT");
             const tagsIdx = headerRow.findIndex(h => h.toUpperCase() === "TAGS");
+
+            // "SIM"/"YES"/"TRUE"/"1" -> true (tolerante a exports antigos/manuais).
+            const parseBool = (v: string) => ["SIM", "YES", "TRUE", "1"].includes(String(v || "").trim().toUpperCase());
 
             // Ensure basic columns exist
             if (dateIdx === -1 || gameIdx === -1 || stakeIdx === -1 || oddsIdx === -1) {
@@ -291,11 +342,40 @@ export default function Settings({
               // dedicado; nunca são convertidos em meio-ganha/meio-perdida.
               const status: BetStatus = normalizeBetStatus(statusRaw);
 
-              // Detect freebet
               const combinedNotes = [commentVal, tagsVal].filter(Boolean).join(" | ");
-              const isFreebet = combinedNotes.toLowerCase().includes("freebet") || 
-                                combinedNotes.toLowerCase().includes("grátis") ||
-                                combinedNotes.toLowerCase().includes("gratis");
+
+              // Aposta sem risco (coluna dedicada; ausente em exports antigos).
+              const isRiskFree = riskFreeIdx !== -1 ? parseBool(row[riskFreeIdx] || "") : false;
+
+              // Freebet: usa a coluna FREEBET quando existe; senão cai para a
+              // deteção antiga pelo texto das notas (compatibilidade). Sem risco
+              // e freebet são mutuamente exclusivos (o servidor dá prioridade a
+              // sem risco), por isso não marcamos freebet se for sem risco.
+              let isFreebet: boolean;
+              if (freebetIdx !== -1) {
+                isFreebet = parseBool(row[freebetIdx] || "");
+              } else {
+                isFreebet = combinedNotes.toLowerCase().includes("freebet") ||
+                            combinedNotes.toLowerCase().includes("grátis") ||
+                            combinedNotes.toLowerCase().includes("gratis");
+              }
+              if (isRiskFree) isFreebet = false;
+
+              // Tipo de freebet: coluna dedicada (SNR/SR) ou o default da casa.
+              let freebetType: FreebetType | undefined;
+              if (isFreebet) {
+                const raw = freebetTypeIdx !== -1 ? String(row[freebetTypeIdx] || "").trim().toUpperCase() : "";
+                freebetType = raw === "SNR" || raw === "SR" ? (raw as FreebetType) : defaultFreebetTypeFor(bookieVal);
+              }
+
+              // Conta: a coluna guarda a etiqueta; resolvemos para o accountId da
+              // conta com a mesma casa + etiqueta. Sem correspondência -> sem conta.
+              let accountId: string | undefined;
+              const accountLabel = accountIdx !== -1 ? String(row[accountIdx] || "").trim() : "";
+              if (accountLabel) {
+                const match = accounts.find(a => a.bookmaker === bookieVal && a.label === accountLabel);
+                accountId = match?.id;
+              }
 
               // Extract selections
               let games: string[] = [];
@@ -362,7 +442,9 @@ export default function Settings({
                 totalOdd,
                 status,
                 isFreebet,
-                status === "CASHOUT" && !isNaN(returnVal) ? returnVal : undefined
+                status === "CASHOUT" && !isNaN(returnVal) ? returnVal : undefined,
+                freebetType,
+                isRiskFree
               );
 
               parsedBets.push({
@@ -373,6 +455,9 @@ export default function Settings({
                 stake: stakeNumVal,
                 odd: totalOdd,
                 isFreebet: isFreebet,
+                freebetType: freebetType,
+                isRiskFree: isRiskFree,
+                accountId: accountId,
                 potentialReturn: potentialReturn,
                 finalReturn: finalReturn,
                 netProfit: netProfit,
@@ -433,9 +518,9 @@ export default function Settings({
         <div className="space-y-6 lg:col-span-2">
           
           {/* Preferences form */}
-          <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800">
-            <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-2 mb-4">
-              <SettingsIcon size={18} className="text-indigo-600 dark:text-indigo-400" /> Preferências Gerais
+          <div className="bg-white dark:bg-zinc-900 rounded-sm p-5 border border-zinc-200 dark:border-zinc-800">
+            <h4 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight font-display flex items-center gap-2 mb-4">
+              <SettingsIcon size={18} className="text-emerald-600 dark:text-emerald-400" /> Preferências Gerais
             </h4>
 
             <form onSubmit={handleSavePreferences} className="space-y-4 text-xs">
@@ -458,7 +543,7 @@ export default function Settings({
 
                 {/* Currency */}
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Moeda / Símbolo</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Moeda / Símbolo</label>
                   <FilterDropdown
                     value={localCurrency}
                     options={[
@@ -474,10 +559,10 @@ export default function Settings({
 
                 {/* Default bookmaker */}
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Casa de Apostas Padrão</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Casa de Apostas Padrão</label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100"
+                    className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-zinc-800 dark:text-zinc-100"
                     value={localBookmaker}
                     onChange={(e) => setLocalBookmaker(e.target.value)}
                   />
@@ -485,12 +570,12 @@ export default function Settings({
 
                 {/* Default stake */}
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Stake Padrão ({currency})</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Stake Padrão ({currency})</label>
                   <input
                     type="number"
                     step="0.1"
                     min="0"
-                    className="w-full px-3 py-2 rounded-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 text-slate-800 dark:text-slate-100 font-mono"
+                    className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 text-zinc-800 dark:text-zinc-100 font-mono"
                     value={localStake}
                     onChange={(e) => setLocalStake(e.target.value)}
                   />
@@ -498,7 +583,7 @@ export default function Settings({
 
                 {/* Theme — aplica-se de imediato */}
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Aspeto / Tema</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">Aspeto / Tema</label>
                   <FilterDropdown
                     value={preferences.theme}
                     options={[
@@ -513,7 +598,7 @@ export default function Settings({
 
                 {/* Idioma — aplica-se de imediato (i18n) */}
                 <div>
-                  <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">{t("settings.language.title")}</label>
+                  <label className="block text-zinc-500 dark:text-zinc-400 font-semibold mb-1">{t("settings.language.title")}</label>
                   <FilterDropdown
                     value={preferences.language}
                     options={[
@@ -530,7 +615,7 @@ export default function Settings({
               <div className="flex justify-end pt-2">
                 <button
                   type="submit"
-                  className="px-4 py-2.5 rounded-sm bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors cursor-pointer"
+                  className="px-4 py-2.5 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors cursor-pointer"
                 >
                   Guardar Preferências
                 </button>
@@ -539,37 +624,48 @@ export default function Settings({
             </form>
           </div>
 
+          {/* Contas por casa de apostas */}
+          <BookieAccountsCard
+            accounts={accounts}
+            bets={bets}
+            error={accountsError}
+            clearError={clearAccountsError}
+            onAdd={onAddAccount}
+            onRename={onRenameAccount}
+            onDelete={onDeleteAccount}
+          />
+
           {/* Importação do Betclic via extensão de browser */}
-          <BetclicImport />
+          <BetclicImport accounts={accounts} />
 
           {/* Backup, CSV and Data actions */}
-          <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 space-y-4">
-            <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-2">
-              <FileSpreadsheet size={18} className="text-indigo-600 dark:text-indigo-400" /> Cópia de Segurança, Importar e Exportar
+          <div className="bg-white dark:bg-zinc-900 rounded-sm p-5 border border-zinc-200 dark:border-zinc-800 space-y-4">
+            <h4 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight font-display flex items-center gap-2">
+              <FileSpreadsheet size={18} className="text-emerald-600 dark:text-emerald-400" /> Cópia de Segurança, Importar e Exportar
             </h4>
 
-            <p className="text-xs text-slate-400 dark:text-slate-500">
+            <p className="text-xs text-zinc-400 dark:text-zinc-500">
               Mantém os teus dados de apostas seguros. Descarrega backups completos em formato JSON ou exporta as tuas apostas para análise externa em folhas de cálculo Excel/CSV.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
 
               {/* Exports */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-3">
+              <div className="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-sm border border-zinc-200 dark:border-zinc-700 flex flex-col justify-between space-y-3">
                 <div>
-                  <h5 className="font-bold text-slate-700 dark:text-slate-200">Exportar Ficheiros</h5>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Exporta tabelas estruturadas compatíveis ou cópias completas.</p>
+                  <h5 className="font-bold text-zinc-700 dark:text-zinc-200">Exportar Ficheiros</h5>
+                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">Exporta tabelas estruturadas compatíveis ou cópias completas.</p>
                 </div>
                 <div className="flex flex-col gap-2">
                   <button
                     onClick={handleExportCSV}
-                    className="px-3.5 py-2 rounded-sm bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-sm bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Download size={14} /> Descarregar CSV (.csv)
                   </button>
                   <button
                     onClick={handleExportBackup}
-                    className="px-3.5 py-2 rounded-sm bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/55 dark:border-indigo-900 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-sm bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/55 dark:border-emerald-900 font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Download size={14} /> Descarregar Backup JSON
                   </button>
@@ -577,13 +673,13 @@ export default function Settings({
               </div>
 
               {/* Imports */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between space-y-3">
+              <div className="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-sm border border-zinc-200 dark:border-zinc-700 flex flex-col justify-between space-y-3">
                 <div>
-                  <h5 className="font-bold text-slate-700 dark:text-slate-200">Restaurar / Importar</h5>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Sincroniza e restaura backups antigos arrastando o teu ficheiro.</p>
+                  <h5 className="font-bold text-zinc-700 dark:text-zinc-200">Restaurar / Importar</h5>
+                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">Sincroniza e restaura backups antigos arrastando o teu ficheiro.</p>
                 </div>
                 <div>
-                  <label className="px-3.5 py-2.5 rounded-sm bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold flex items-center justify-center gap-1.5 cursor-pointer text-center transition-colors">
+                  <label className="px-3.5 py-2.5 rounded-sm bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 font-semibold flex items-center justify-center gap-1.5 cursor-pointer text-center transition-colors">
                     <Upload size={14} /> Escolher Ficheiro (.json, .csv)
                     <input
                       type="file"
@@ -603,7 +699,7 @@ export default function Settings({
             </div>
 
             {/* Dangerous Zone */}
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
               <h5 className="font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1 text-xs uppercase tracking-wider">
                 <AlertTriangle size={14} /> Zona de Risco
               </h5>
@@ -625,7 +721,7 @@ export default function Settings({
                     </button>
                     <button
                       onClick={() => setShowConfirmClear(false)}
-                      className="px-2.5 py-1 text-[10px] bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-sm cursor-pointer transition-colors"
+                      className="px-2.5 py-1 text-[10px] bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 font-medium rounded-sm cursor-pointer transition-colors"
                     >
                       Cancelar
                     </button>
@@ -640,8 +736,8 @@ export default function Settings({
                 )}
 
                 {showConfirmReset ? (
-                  <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-sm">
-                    <span className="text-[11px] text-slate-700 dark:text-slate-200 font-medium">Substituir dados atuais?</span>
+                  <div className="flex items-center gap-2 p-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-sm">
+                    <span className="text-[11px] text-zinc-700 dark:text-zinc-200 font-medium">Substituir dados atuais?</span>
                     <button
                       onClick={() => {
                         onResetDemoData();
@@ -649,13 +745,13 @@ export default function Settings({
                         setSuccessMsg("Dados de demonstração originais repostos com sucesso.");
                         setTimeout(() => setSuccessMsg(null), 4000);
                       }}
-                      className="px-2.5 py-1 text-[10px] bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-sm cursor-pointer transition-colors"
+                      className="px-2.5 py-1 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-sm cursor-pointer transition-colors"
                     >
                       Sim, Repor Demonstração
                     </button>
                     <button
                       onClick={() => setShowConfirmReset(false)}
-                      className="px-2.5 py-1 text-[10px] bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium rounded-sm cursor-pointer transition-colors"
+                      className="px-2.5 py-1 text-[10px] bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 font-medium rounded-sm cursor-pointer transition-colors"
                     >
                       Cancelar
                     </button>
@@ -663,7 +759,7 @@ export default function Settings({
                 ) : (
                   <button
                     onClick={() => setShowConfirmReset(true)}
-                    className="px-3.5 py-2 rounded-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 font-semibold flex items-center gap-1 text-xs transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-sm bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700 font-semibold flex items-center gap-1 text-xs transition-colors cursor-pointer"
                   >
                     <RefreshCw size={14} /> Carregar Dados de Demonstração
                   </button>
@@ -676,28 +772,28 @@ export default function Settings({
         </div>
 
         {/* Right column: Audit logs / Alterações */}
-        <div className="bg-white dark:bg-slate-900 rounded-sm p-5 border border-slate-200 dark:border-slate-800 flex flex-col h-[520px]">
+        <div className="bg-white dark:bg-zinc-900 rounded-sm p-5 border border-zinc-200 dark:border-zinc-800 flex flex-col h-[520px]">
           <div className="mb-4">
-            <h4 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-display flex items-center gap-2">
-              <History size={18} className="text-indigo-600 dark:text-indigo-400" /> Auditoria de Alterações
+            <h4 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight font-display flex items-center gap-2">
+              <History size={18} className="text-emerald-600 dark:text-emerald-400" /> Auditoria de Alterações
             </h4>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Registo detalhado de operações efetuadas nesta sessão</p>
+            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Registo detalhado de operações efetuadas nesta sessão</p>
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-3 pr-1">
             {auditLogs.map((log) => (
-              <div key={log.id} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-sm border border-slate-200 dark:border-slate-700 space-y-1 text-xs">
-                <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500">
-                  <span className="font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wide">{log.action}</span>
+              <div key={log.id} className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-sm border border-zinc-200 dark:border-zinc-700 space-y-1 text-xs">
+                <div className="flex justify-between text-[10px] text-zinc-400 dark:text-zinc-500">
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">{log.action}</span>
                   <span className="font-mono">{log.timestamp.split("T")[1].slice(0, 8)}</span>
                 </div>
-                <p className="text-slate-700 dark:text-slate-300 leading-normal">{log.details}</p>
+                <p className="text-zinc-700 dark:text-zinc-300 leading-normal">{log.details}</p>
               </div>
             ))}
 
             {auditLogs.length === 0 && (
-              <div className="h-full flex flex-col items-center justify-center text-center text-slate-400 dark:text-slate-500 py-12">
-                <Info className="text-slate-300 dark:text-slate-600 stroke-1 mb-1" size={28} />
+              <div className="h-full flex flex-col items-center justify-center text-center text-zinc-400 dark:text-zinc-500 py-12">
+                <Info className="text-zinc-300 dark:text-zinc-600 stroke-1 mb-1" size={28} />
                 <p className="text-[11px]">Nenhuma atividade registada ainda.</p>
               </div>
             )}

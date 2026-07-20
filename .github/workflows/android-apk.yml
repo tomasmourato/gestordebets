@@ -1,0 +1,47 @@
+# Compila o APK Android (debug) na nuvem — não precisas de Android Studio
+# nem do SDK localmente. Corre manualmente: GitHub -> Actions ->
+# "Android APK" -> Run workflow. O APK fica nos artifacts da execução.
+name: Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # O Capacitor CLI 8 exige Node 22+.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # O Capacitor 8 compila com Java 21; o SDK Android já vem no runner.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build do frontend
+        run: npx vite build
+
+      - name: Sincronizar assets para o projeto Android
+        run: npx cap sync android
+
+      # O bit de execução perde-se em commits feitos no Windows.
+      - name: Compilar APK (debug)
+        run: |
+          chmod +x android/gradlew
+          cd android && ./gradlew assembleDebug --no-daemon
+
+      - name: Publicar APK como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bettrackr-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30

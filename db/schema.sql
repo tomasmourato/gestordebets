@@ -18,6 +18,34 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- ------------------------------------------------------------
+-- AI Insights — cache diária das dicas geradas (Gemini + Google Search).
+-- Uma linha por dia, partilhada por todos os utilizadores. Ver migração 009.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS daily_insights (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  insight_date DATE NOT NULL UNIQUE,
+  content JSONB NOT NULL,
+  model TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+-- ------------------------------------------------------------
+-- Contas por casa de apostas — um utilizador pode ter várias contas na
+-- mesma casa (ex.: duas contas Betclic). Ver migração 007.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS bookie_accounts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  bookmaker TEXT NOT NULL,
+  label TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+  CONSTRAINT bookie_accounts_label_not_blank CHECK (LENGTH(TRIM(label)) > 0),
+  CONSTRAINT bookie_accounts_bookmaker_not_blank CHECK (LENGTH(TRIM(bookmaker)) > 0),
+  CONSTRAINT bookie_accounts_unique_label UNIQUE (user_id, bookmaker, label)
+);
+
+-- ------------------------------------------------------------
 -- Apostas (bets) — PostgreSQL é a única fonte de verdade.
 --
 -- Notas de modelação:
@@ -39,10 +67,14 @@ CREATE TABLE IF NOT EXISTS bets (
   is_freebet BOOLEAN DEFAULT FALSE,
   freebet_type TEXT
     CONSTRAINT bets_freebet_type_check CHECK (freebet_type IS NULL OR freebet_type IN ('SNR', 'SR')),
+  -- Aposta sem risco: stake real, mas derrota total devolve a stake (net 0).
+  is_risk_free BOOLEAN NOT NULL DEFAULT FALSE,
   potential_return DECIMAL,
   final_return DECIMAL,
   net_profit DECIMAL,
   bookmaker TEXT,
+  -- Conta da casa a que a aposta pertence (opcional; NULL = "sem conta").
+  account_id UUID REFERENCES bookie_accounts(id) ON DELETE SET NULL,
   date_time TIMESTAMP,
   notes TEXT,
   origin TEXT,
@@ -68,7 +100,28 @@ CREATE TABLE IF NOT EXISTS bets (
 );
 
 -- ------------------------------------------------------------
+-- Amizades (funcionalidade social) — pedidos e amizades aceites.
+-- Linha dirigida requester_id -> addressee_id com status pending/accepted.
+-- Ver db/migrations/005_social_friendships.sql para detalhes.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS friendships (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  addressee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CONSTRAINT friendships_status_check CHECK (status IN ('pending', 'accepted')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+  CONSTRAINT friendships_not_self CHECK (requester_id <> addressee_id),
+  CONSTRAINT friendships_unique_pair UNIQUE (requester_id, addressee_id)
+);
+
+-- ------------------------------------------------------------
 -- Índices
 -- ------------------------------------------------------------
 CREATE UNIQUE INDEX IF NOT EXISTS users_username_key ON users(username);
 CREATE INDEX IF NOT EXISTS idx_bets_user_id ON bets(user_id);
+CREATE INDEX IF NOT EXISTS idx_bets_account_id ON bets(account_id);
+CREATE INDEX IF NOT EXISTS bookie_accounts_user_idx ON bookie_accounts (user_id, bookmaker);
+CREATE INDEX IF NOT EXISTS friendships_addressee_idx ON friendships (addressee_id, status);
+CREATE INDEX IF NOT EXISTS friendships_requester_idx ON friendships (requester_id, status);

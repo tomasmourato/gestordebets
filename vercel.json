@@ -17,7 +17,8 @@
       "src": "server.ts",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["dist/**"]
+        "includeFiles": ["dist/**"],
+        "maxDuration": 60
       }
     }
   ],
@@ -44,6 +45,23 @@
       "headers": {
         "Content-Type": "application/zip",
         "Content-Disposition": "attachment; filename=bettrackr-extension.zip",
+        "Cache-Control": "public, max-age=0, must-revalidate"
+      },
+      "continue": true
+    },
+    {
+      "src": "/app-version\\.json",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "no-store"
+      },
+      "continue": true
+    },
+    {
+      "src": "/app-bundle\\.zip",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/zip",
         "Cache-Control": "public, max-age=0, must-revalidate"
       },
       "continue": true

@@ -16,7 +16,8 @@ export function calculateBetReturnAndProfit(
   status: BetStatus,
   isFreebet: boolean,
   cashoutReturn?: number,
-  freebetType?: FreebetType
+  freebetType?: FreebetType,
+  isRiskFree?: boolean
 ): { potentialReturn: number; finalReturn: number; netProfit: number } {
 
   // 1. Calculate Potential Return (For freebets, profit is stake * odd, so potential is stake * odd)
@@ -42,6 +43,42 @@ export function calculateBetReturnAndProfit(
       potentialReturn: Number(potentialReturn.toFixed(2)),
       finalReturn: Number(co.toFixed(2)),
       netProfit: Number((co - (isFreebet ? 0 : stake)).toFixed(2)),
+    };
+  }
+
+  // Aposta sem risco: stake é dinheiro real (conta para o stake total, tal
+  // como uma aposta normal) e uma vitória paga como uma aposta normal. A
+  // diferença está na derrota: a stake é devolvida (via freebet registada à
+  // parte), por isso o resultado desta aposta é neutro (net 0), como uma
+  // anulada. Tem prioridade sobre o ramo freebet.
+  if (isRiskFree) {
+    switch (status) {
+      case "GANHA":
+        finalReturn = stake * odd;
+        netProfit = finalReturn - stake;
+        break;
+      case "PERDIDA":
+        finalReturn = stake; // stake devolvida como freebet -> break-even aqui
+        netProfit = 0;
+        break;
+      case "ANULADA":
+        finalReturn = stake;
+        netProfit = 0;
+        break;
+      case "MEIO_GANHA":
+        finalReturn = (stake / 2) * odd + (stake / 2);
+        netProfit = finalReturn - stake;
+        break;
+      case "MEIO_PERDIDA":
+        // Metade push + metade perdida devolvida como freebet -> neutro.
+        finalReturn = stake;
+        netProfit = 0;
+        break;
+    }
+    return {
+      potentialReturn: Number(potentialReturn.toFixed(2)),
+      finalReturn: Number(finalReturn.toFixed(2)),
+      netProfit: Number(netProfit.toFixed(2)),
     };
   }
 

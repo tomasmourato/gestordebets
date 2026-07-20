@@ -10,3 +10,10 @@ coverage/
 graphify-out/cost.json
 .agents/
 .codex/
+# Android (Capacitor) — outputs de build; o projeto android/ em si é versionado
+android/.gradle/
+android/.idea/
+android/build/
+android/app/build/
+android/local.properties
+android/capacitor-cordova-android-plugins/build/

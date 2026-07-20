@@ -1,0 +1,5 @@
+# Scripts de shell têm de manter LF — com CRLF rebentam no Linux
+# (o gradlew corre no runner do GitHub Actions para compilar o APK).
+android/gradlew text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf

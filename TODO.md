@@ -1,22 +1,15 @@
-**Manual Import**
-- Create multiple freebets types (because each bookie has their own rules for freebets)
-  - For each bookie, learn how their freebets work and create the freebet type for them
-- Link each freebet type to its correspondent bookie
-- Add cashout option with return editable
+**Bet import .CSV and .JSON**
+- [x] Bets file import feature doesnt capture isFreebet, freebetType, isRiskFree, account and maybe others. Fix bug.
+      — CSV ganhou colunas FREEBET/FREEBET_TYPE/RISK_FREE/ACCOUNT (export+import, ACCOUNT por etiqueta);
+      JSON já levava os campos via mapBetToApi, agora sanitiza accountId obsoleto (evita 400 no lote).
 
-**Gemini Import Feature**
-- Let AI read multiple bets in one screenshot
-
-**Bet Import Extention**
-- Add multiple betting bookies to the Bettrackr Import Extention
-- Create an option on the Extention Manager to make it more automatized:
-  - Everytime the user with the extention installed in their browser logs into a bookie, the extention automaticly fetches for the bets and automaticly imports to the app.
-  - This would need a login option on the extention so the user doesnt need to have the bettrackr website open.
-- Add cashed out bets to import using the screenshot I sent in this message.
-
-**Dashboard**
-- Add filters (Filter by bookie, sport, bet type, etc) to show stats just from bets of the type the user filtered
-- Solve error on "Distribuição de Resultados" section where the count on bets is wrong
+**Bet Import Extension**
+- [x] Auto-import when the user logs into a bookie (needs extension login so the
+      BetTrackr site doesn't have to be open — see PLAN.md §E3; opt-in, off by default)
+      — Login BetTrackr no popup (guarda só o JWT); toggle "importar automaticamente"
+      disparado pela captura do token da casa, debounce 10 min/casa; Betano só auto-importa
+      se já houver histórico aberto (nunca sequestra o separador). Extensão v1.0.5.
 
 **Configurations**
-- Add different language options
+- [~] Add different language options — infraestrutura i18n + shell traduzidos
+      (`src/lib/i18n.tsx`); falta extrair as strings dos separadores (PLAN.md §C1)

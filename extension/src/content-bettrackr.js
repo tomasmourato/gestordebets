@@ -7,6 +7,11 @@
 //    ID da extensão nem de a publicar).
 
 (function () {
+  // Guarda contra dupla injeção (declaração no manifest + reinjeção do
+  // background após update): dois listeners duplicariam a importação.
+  if (window.__bettrackrBridgeLoaded) return;
+  window.__bettrackrBridgeLoaded = true;
+
   const KEY = "gestordebets_token";
   const USER_KEY = "gestordebets_user";
   const APP = "bettrackr-app"; // mensagens vindas da página
@@ -76,10 +81,13 @@
         return;
       }
       // The website action imports every bookmaker detected by the extension.
-      // The popup can still request a single source explicitly.
+      // The popup can still request a single source explicitly. accountIds
+      // maps each source ("betclic"/"betano") to the BetTrackr account the
+      // bets should be imported into (optional).
       chrome.runtime.sendMessage({
         type: "IMPORT",
         source: data.sourceBookmakers || "all",
+        accountIds: data.accountIds || null,
         bettrackrSession: session,
       }, (result) => {
         if (chrome.runtime.lastError) {
