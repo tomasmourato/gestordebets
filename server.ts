@@ -12,7 +12,9 @@ import betsRoutes from "./routes/betsRoutes.js";
 import socialRoutes from "./routes/socialRoutes.js";
 import accountsRoutes from "./routes/accountsRoutes.js";
 import insightsRoutes from "./routes/insightsRoutes.js";
+import settingsRoutes from "./routes/settingsRoutes.js";
 import pool from "./db/pool.js";
+import { BET_SELECT_COLUMNS } from "./db/betColumns.js";
 import {
   authenticateToken,
   authenticatedUserFromRequest,
@@ -51,17 +53,10 @@ const PORT = Number(process.env.PORT) || 3000;
 const execFileAsync = promisify(execFile);
 const extensionZipPath = path.join(process.cwd(), "dist", "bettrackr-extension.zip");
 const SSR_PATHS = ["/dashboard", "/bets"];
-const SSR_BET_COLUMNS = `
-  id, type, status,
-  stake::float8 AS stake, odd::float8 AS odd,
-  is_freebet, freebet_type,
-  potential_return::float8 AS potential_return,
-  final_return::float8 AS final_return,
-  net_profit::float8 AS net_profit,
-  bookmaker,
-  to_char(date_time, 'YYYY-MM-DD HH24:MI') AS date_time,
-  notes, origin, selections, comment, tags, metadata, created_at
-`;
+// Mesma lista de colunas da rota REST, para o payload do SSR não divergir do
+// /api/bets (omitir is_risk_free/account_id partia os filtros "Sem risco" e de
+// conta nas páginas renderizadas no servidor, porque useBets não refaz o fetch).
+const SSR_BET_COLUMNS = BET_SELECT_COLUMNS;
 
 // Atrás do proxy da Vercel, o IP real do cliente vem no X-Forwarded-For.
 // Sem isto o rate limiting veria o IP do proxy para todos os pedidos.
@@ -157,6 +152,7 @@ app.use("/api/bets", betsRoutes);
 app.use("/api/social", socialRoutes);
 app.use("/api/accounts", accountsRoutes);
 app.use("/api/insights", insightsRoutes);
+app.use("/api/settings", settingsRoutes);
 
 function clearServerSessionCookie(res: express.Response) {
   res.clearCookie(SESSION_COOKIE, {
@@ -504,7 +500,16 @@ async function start() {
       try {
         const source = await readFile(path.join(process.cwd(), "index.html"), "utf8");
         const template = await vite.transformIndexHtml(req.originalUrl, source);
-        await renderDocument(req, res, template);
+        // Em dev o Vite injeta o CSS por JS, o que só acontece depois do HTML do
+        // SSR pintar -> flash de conteúdo sem estilo (FOUC) ao recarregar. Um
+        // <link> render-blocking para o CSS de entrada faz o browser aplicar os
+        // estilos antes de pintar. Só em dev: em produção o index.html já traz o
+        // <link> do CSS com hash; este URL /src/index.css não existe no build.
+        const withCss = template.replace(
+          "</head>",
+          '<link rel="stylesheet" href="/src/index.css">\n</head>'
+        );
+        await renderDocument(req, res, withCss);
       } catch (error) {
         vite.ssrFixStacktrace(error as Error);
         next(error);

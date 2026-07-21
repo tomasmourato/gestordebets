@@ -16,6 +16,7 @@ import { Bet, Preferences } from "./types";
 import { INITIAL_BETS, safeNum } from "./utils";
 
 import type { DashboardBetsFilters } from "./components/Dashboard";
+import { serializeFilters } from "./lib/filterParams";
 import AuthPage from "./components/AuthPage";
 import AccountPanel from "./components/AccountPanel";
 
@@ -113,22 +114,43 @@ export default function App({ initialData }: AppProps) {
 
   const navigateToTab = (tab: AppTab) => {
     const nextPath = TAB_PATHS[tab];
+    const isSameTab = tab === activeTab;
+    const hadFilters = Boolean(window.location.search);
+
     if (`${window.location.pathname}${window.location.search}` !== nextPath) {
       window.history.pushState({ tab }, "", nextPath);
     }
     setActiveTab(tab);
     setLocationSearch("");
+
+    // Clicar no separador já ativo limpa os filtros. Como a página não é
+    // remontada, não chega mudar `initialSearch` (só é lido no arranque) — o
+    // popstate é o mesmo canal que o back/forward usa para reaplicar o URL.
+    if (isSameTab && hadFilters) {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }
   };
 
   const navigateToFilteredBets = (filters: DashboardBetsFilters) => {
-    const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) params.set(key, value);
+    // Serializado pelo mesmo helper que o histórico usa: o URL do drill-down
+    // fica igual ao que a página produziria sozinha, por isso ao montar não há
+    // divergência (nem uma entrada de histórico extra para a corrigir).
+    const search = serializeFilters({
+      status: filters.status,
+      bookmaker: filters.bookmaker ?? "ALL",
+      account: filters.account ?? "ALL",
+      sport: filters.sport ?? "ALL",
+      type: filters.type ?? "ALL",
+      money: filters.money ?? "ALL",
+      timeframe: {
+        timeframe: filters.timeframe ?? "ALL",
+        startDate: filters.dateFrom ?? "",
+        endDate: filters.dateTo ?? "",
+      },
     });
-    const nextPath = `/bets?${params.toString()}`;
-    window.history.pushState({ tab: "BETS" }, "", nextPath);
+    window.history.pushState({ tab: "BETS" }, "", `${TAB_PATHS.BETS}${search}`);
     setActiveTab("BETS");
-    setLocationSearch(`?${params.toString()}`);
+    setLocationSearch(search);
   };
 
   // Preferências (armazenamento local) e auditoria (em memória)
@@ -159,6 +181,7 @@ export default function App({ initialData }: AppProps) {
     addBet,
     importBets,
     editBet,
+    ignoreBet,
     removeBet,
     clearAllBets,
     replaceAllBets
@@ -225,9 +248,15 @@ export default function App({ initialData }: AppProps) {
     };
 
     // Normaliza a página inicial e URLs desconhecidos para a visão geral.
+    // A query string é preservada: agora descreve os filtros e um link
+    // partilhado tipo "/bets/?status=GANHA" não pode perdê-los ao normalizar.
     const currentTab = tabFromPath(window.location.pathname);
     if (window.location.pathname !== TAB_PATHS[currentTab]) {
-      window.history.replaceState({ tab: currentTab }, "", TAB_PATHS[currentTab]);
+      window.history.replaceState(
+        { tab: currentTab },
+        "",
+        `${TAB_PATHS[currentTab]}${window.location.search}`
+      );
     }
 
     window.addEventListener("popstate", syncTabWithUrl);
@@ -254,6 +283,16 @@ export default function App({ initialData }: AppProps) {
       addLog(
         "ATUALIZAR_APOSTA",
         `Aposta #${updated.id.substring(0, 8)} editada e recalculada (Lucro: ${updated.netProfit}${preferences.currency}).`
+      );
+    }
+  };
+
+  const handleIgnoreBet = async (id: string, ignored: boolean, comment?: string | null) => {
+    const updated = await ignoreBet(id, ignored, comment);
+    if (updated) {
+      addLog(
+        ignored ? "IGNORAR_APOSTA" : "REPOR_APOSTA",
+        `Aposta #${updated.id.substring(0, 8)} ${ignored ? "ignorada (excluída das estatísticas)" : "reposta nas estatísticas"}.`
       );
     }
   };
@@ -516,17 +555,18 @@ export default function App({ initialData }: AppProps) {
                     isDark={isDark}
                     onOpenBets={navigateToFilteredBets}
                     accounts={accounts}
+                    initialSearch={locationSearch}
                   />
                 )}
                 {activeTab === "BETS" && (
                   <BetsManager
-                    key={locationSearch}
                     bets={bets}
                     currency={preferences.currency}
                     initialSearch={locationSearch}
                     onAddBet={handleAddBet}
                     onAddBets={handleDuplicateBets}
                     onUpdateBet={handleUpdateBet}
+                    onIgnoreBet={handleIgnoreBet}
                     onDeleteBet={handleDeleteBet}
                     accounts={accounts}
                   />

@@ -80,6 +80,7 @@ export function mapBetFromApi(row: ApiBetRow): Bet {
       ? (row.freebet_type as FreebetType)
       : undefined,
     isRiskFree: row.is_risk_free === true,
+    isIgnored: row.is_ignored === true,
     potentialReturn: safeNum(row.potential_return),
     finalReturn: safeNum(row.final_return),
     netProfit: safeNum(row.net_profit),
@@ -168,6 +169,27 @@ export async function updateBet(bet: Bet): Promise<Bet> {
   });
   const data = await parseJsonResponse(res);
   if (!res.ok) throw new Error(data.error || "Erro ao atualizar a aposta.");
+  return mapBetFromApi(data.bet);
+}
+
+// ------------------------------------------------------------
+// PATCH /api/bets/:id/ignore -> marca/desmarca a aposta como ignorada
+// (excluída das estatísticas) com um comentário/motivo opcional. Endpoint
+// dedicado e leve — não passa pela substituição completa do PUT.
+// ------------------------------------------------------------
+export async function setBetIgnored(
+  id: string,
+  ignored: boolean,
+  comment?: string | null
+): Promise<Bet> {
+  const body: Record<string, unknown> = { ignored };
+  if (comment !== undefined) body.comment = comment;
+  const res = await authFetch(`/api/bets/${encodeURIComponent(id)}/ignore`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+  const data = await parseJsonResponse(res);
+  if (!res.ok) throw new Error(data.error || "Erro ao ignorar a aposta.");
   return mapBetFromApi(data.bet);
 }
 

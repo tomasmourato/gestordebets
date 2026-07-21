@@ -5,6 +5,8 @@ import { mapBetclicBets, betclicRef } from "./mapper.js";
 import { fetchBetclicHistory } from "./betclic-history.js";
 import { mapBetanoBets, betanoHistoryStart, betanoRef } from "./mapper-betano.js";
 import { fetchBetanoHistory } from "./betano-history.js";
+import { mapSolverdeBets, solverdeRef } from "./mapper-solverde.js";
+import { fetchSolverdeHistory } from "./solverde-history.js";
 import { runAfterBettrackrVerification } from "./bettrackr-identity.js";
 
 const PAGE_SIZE = 20;
@@ -98,6 +100,10 @@ async function configForImport(sessionSnapshot) {
   return getConfig();
 }
 
+// O /ended do Betclic limita o histórico a ~3 meses do lado do servidor e
+// ignora qualquer filtro de datas (confirmado: startDate/endDate ISO e
+// dateFrom/dateTo epoch-ms não têm efeito). Não há forma de ir mais atrás por
+// este endpoint, por isso ficamos pela paginação simples por offset.
 async function fetchBetclicBets(kind, cfg) {
   return fetchBetclicHistory(async ({ offset, limit }) => {
     const url = `${cfg.betclicApiBase}/api/v2/me/bets/${kind}` +
@@ -117,10 +123,7 @@ async function fetchBetclicBets(kind, cfg) {
     const totalHeader = res.headers.get("X-Total-Count");
     const data = await res.json().catch(() => ({}));
     const bets = Array.isArray(data.bets) ? data.bets : [];
-    return {
-      bets,
-      total: totalHeader === null ? undefined : Number(totalHeader),
-    };
+    return { bets, total: totalHeader === null ? undefined : Number(totalHeader) };
   }, {
     pageSize: PAGE_SIZE,
     onPage: ({ count, total }) => {
@@ -330,6 +333,7 @@ function needsUpdate(existing, incoming, accountId) {
     Number(existing.final_return) !== Number(incoming.finalReturn) ||
     Number(existing.net_profit) !== Number(incoming.netProfit) ||
     Boolean(existing.is_freebet) !== Boolean(incoming.isFreebet) ||
+    Boolean(existing.is_risk_free) !== Boolean(incoming.isRiskFree) ||
     String(existing.freebet_type || "") !== String(incoming.freebetType || "") ||
     selectionsSignature(existing.selections) !== selectionsSignature(incoming.selections);
 }
@@ -341,6 +345,7 @@ function betPayload(bet, accountId) {
     stake: bet.stake,
     odd: bet.odd,
     isFreebet: bet.isFreebet,
+    isRiskFree: bet.isRiskFree,
     freebetType: bet.freebetType,
     potentialReturn: bet.potentialReturn,
     finalReturn: bet.finalReturn,
@@ -416,6 +421,81 @@ async function runBetclicImport(cfg, accountId) {
   return persistMapped(mapped, 0, "Betclic", cfg, accountId);
 }
 
+// ============================================================
+// Solverde — ao contrário da Betclic/Betano, a API não usa um token de header;
+// a sessão é um cookie entre subdomínios (www.solverde.pt /
+// sportswidget.solverde.pt). Com host_permissions para ambos, o fetch do
+// service worker é feito com os cookies do utilizador anexados
+// automaticamente — não precisa de nenhuma bridge na página.
+// ============================================================
+const SOLVERDE_BETS_URL = "https://sportswidget.solverde.pt/bets";
+
+async function solverdeRequestPage({ from, to, page, itemsPerPage }) {
+  const res = await fetch(SOLVERDE_BETS_URL, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json", Accept: "*/*" },
+    body: JSON.stringify({
+      filterCriteria: { from, to },
+      oddsFormat: "decimal",
+      pagination: { itemsPerPage, page },
+    }),
+  });
+  if (res.status === 401 || res.status === 403) {
+    throw new Error("Sessão Solverde não detetada. Inicia sessão em solverde.pt e tenta novamente.");
+  }
+  if (!res.ok) throw new Error(`Solverde respondeu ${res.status} ao obter apostas.`);
+  const data = await res.json().catch(() => null);
+  if (!data || data.status !== "SUCCESS") {
+    throw new Error("Solverde não devolveu uma resposta válida. Inicia sessão em solverde.pt e tenta novamente.");
+  }
+  return data.data;
+}
+
+async function fetchSolverdeBets() {
+  return fetchSolverdeHistory(solverdeRequestPage, {
+    onPage: ({ count, window, page }) => {
+      progress(`A ler apostas da Solverde (janela ${window}, página ${page}): ${count}…`);
+    },
+  });
+}
+
+// Sonda leve para o estado do popup: um pedido de 1 dia chega para confirmar
+// se a sessão existe, sem paginar todo o histórico.
+async function solverdeStatus() {
+  try {
+    const now = new Date();
+    const from = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const res = await fetch(SOLVERDE_BETS_URL, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", Accept: "*/*" },
+      body: JSON.stringify({
+        filterCriteria: { from: from.toISOString(), to: now.toISOString() },
+        oddsFormat: "decimal",
+        pagination: { itemsPerPage: 1, page: 1 },
+      }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json().catch(() => null);
+    return Boolean(data && data.status === "SUCCESS");
+  } catch (_) {
+    return false;
+  }
+}
+
+async function runSolverdeImport(cfg, accountId) {
+  progress("A obter apostas da Solverde…");
+  const raw = await fetchSolverdeBets();
+  const byRef = new Map();
+  for (const bet of raw) {
+    const ref = solverdeRef(bet);
+    if (ref) byRef.set(ref, bet);
+  }
+  const { bets: mapped, unsupported } = mapSolverdeBets([...byRef.values()]);
+  return persistMapped(mapped, unsupported, "Solverde", cfg, accountId);
+}
+
 async function runBetanoImport(cfg, accountId, opts = {}) {
   const ensured = await ensureBetanoHistoryTab(opts);
   if (!ensured) return { skipped: true }; // auto-import sem histórico aberto
@@ -437,19 +517,241 @@ async function runBetanoImport(cfg, accountId, opts = {}) {
   }
 }
 
+// ============================================================
+// Deteção automática de conta pelo username da sessão da casa.
+// A extensão pergunta à casa quem é o utilizador com sessão iniciada e procura
+// uma bookie_account do BetTrackr com esse username (case-insensitive). Se
+// encontrar, encaminha as apostas para essa conta — sobrepondo-se à escolha
+// manual do dropdown. Sem username detetado (ou sem correspondência), mantém-se
+// a seleção manual.
+// ============================================================
+const SOURCE_BOOKMAKER = { betclic: "Betclic", betano: "Betano", solverde: "Solverde" };
+// Casas suportadas, em ordem canónica. Fonte única para os imports "all", a
+// deteção de username e o filtro de casas ativas.
+const SUPPORTED_SOURCES = ["betclic", "betano", "solverde"];
+
+// Casas ativas escolhidas pelo utilizador no site (/api/settings). NULL na BD
+// (não configurado) -> todas as suportadas. Em caso de falha de rede assumimos
+// todas, para não bloquear imports por causa de um hiccup do servidor.
+async function fetchEnabledBookmakers(cfg) {
+  if (!cfg.bettrackrToken) return [...SUPPORTED_SOURCES];
+  try {
+    const res = await fetch(`${cfg.bettrackrBase}/api/settings`, {
+      headers: { Authorization: `Bearer ${cfg.bettrackrToken}` },
+    });
+    if (!res.ok) return [...SUPPORTED_SOURCES];
+    const data = await res.json().catch(() => ({}));
+    const enabled = Array.isArray(data.enabledBookmakers) ? data.enabledBookmakers : null;
+    return enabled ? SUPPORTED_SOURCES.filter((s) => enabled.includes(s)) : [...SUPPORTED_SOURCES];
+  } catch (_) {
+    return [...SUPPORTED_SOURCES];
+  }
+}
+
+// Função executada DENTRO da página betclic.pt: lê o username do estado SSR
+// embebido no documento (<script id="ng-state" type="application/json"> com
+// ...,"username":"ronkzinho","identity":{...}). É a fonte mais fiável — sem
+// fetch, sem CORS, sem token. Corre no mundo ISOLATED (só precisa do DOM).
+function betclicReadStateFn() {
+  const specific = /"username"\s*:\s*"([^"\\]{1,64})"\s*,\s*"identity"/;
+  const generic = /"username"\s*:\s*"([^"\\]{1,64})"/;
+
+  // Sessão ativa? A betclic mostra um link para /login (botão "Aceder") no
+  // cabeçalho APENAS quando não há sessão. Nem o cookie BC-TOKEN (existe também
+  // para visitantes — é anónimo) nem o CacheServiceLogin (persiste após logout)
+  // servem. O link /login é o sinal fiável de "sem sessão" -> sem conta.
+  let loggedIn = true;
+  try { if (document.querySelector('a[href*="/login"]')) loggedIn = false; } catch (_) {}
+  if (!loggedIn) return { username: null, loggedIn: false };
+
+  // 1) CacheServiceLogin: o username da sessão ATUAL, escrito pela betclic no
+  //    login. É runtime, por isso atualiza ao trocar de conta SEM ser preciso
+  //    navegar (ao contrário do ng-state, que fica congelado no load).
+  let login = null;
+  try {
+    const raw = localStorage.getItem("CacheServiceLogin");
+    if (raw) {
+      const v = JSON.parse(raw);
+      if (v && typeof v.value === "string" && v.value.trim()) login = v.value.trim();
+    }
+  } catch (_) {}
+
+  // 2) Estado SSR embebido no documento (congelado no load) — fallback.
+  let ngState = null;
+  try {
+    const scripts = document.querySelectorAll('script[type="application/json"], script[id*="state"]');
+    for (const s of scripts) {
+      const m = (s.textContent || "").match(specific) || (s.textContent || "").match(generic);
+      if (m) { ngState = m[1]; break; }
+    }
+    if (!ngState) {
+      const html = document.documentElement ? document.documentElement.innerHTML : "";
+      const m = html.match(specific) || html.match(generic);
+      if (m) ngState = m[1];
+    }
+  } catch (_) {}
+
+  const username = login || ngState;
+  return { username, login, ngState, loggedIn: true, error: username ? null : "sem sessão betclic (inicia sessão em betclic.pt)" };
+}
+
+// Sonda a identidade da casa e devolve diagnóstico ({username, error}) para o
+// popup poder mostrar o motivo quando falha.
+async function probeBookmakerIdentity(source, _cfg) {
+  if (source !== "betclic") return { username: null };
+
+  // 1) Leitura live do estado SSR das tabs betclic.pt abertas. O estado é
+  //    "congelado" no load da página, por isso lemos primeiro a tab ATIVA / a
+  //    mais recente — a que reflete a sessão atual. Assim, mudar de conta
+  //    (logout + login noutra conta, que recarrega a página) passa a atualizar.
+  let liveError = null;
+  try {
+    const tabs = (await chrome.tabs.query({ url: ["https://www.betclic.pt/*"] }))
+      .filter((t) => t.id !== undefined)
+      .sort((a, b) =>
+        (Number(Boolean(b.active)) - Number(Boolean(a.active))) ||
+        ((b.lastAccessed || 0) - (a.lastAccessed || 0))
+      );
+    if (tabs.length === 0) {
+      liveError = "abre betclic.pt numa tab";
+    } else {
+      for (const tab of tabs) {
+        const results = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: betclicReadStateFn,
+        });
+        const out = (results && results[0] && results[0].result) || null;
+        if (out && out.username) {
+          chrome.storage.local.set({ betclicUsername: out.username });
+          return out;
+        }
+        // Sessão terminada numa tab betclic aberta: a verdade é "sem conta".
+        // Limpa o username em cache para não reaparecer stale e não recorras
+        // ao fallback (que devolveria o último login memorizado).
+        if (out && out.loggedIn === false) {
+          chrome.storage.local.remove("betclicUsername");
+          return { username: null, loggedIn: false };
+        }
+        liveError = (out && out.error) || "sem resposta da página";
+      }
+    }
+  } catch (e) {
+    liveError = String((e && e.message) || e);
+  }
+
+  // 2) Fallback: username guardado por content-betclic.js num load anterior
+  //    (para quando não há tab betclic aberta agora — ex.: auto-import).
+  const stored = await chrome.storage.local.get(["betclicUsername"]);
+  if (stored.betclicUsername) return { username: String(stored.betclicUsername) };
+  return { username: null, error: liveError };
+}
+
+async function fetchBookmakerUsername(source, cfg) {
+  const probe = await probeBookmakerIdentity(source, cfg);
+  return probe.username;
+}
+
+async function fetchBettrackrAccounts(cfg) {
+  try {
+    const res = await fetch(`${cfg.bettrackrBase}/api/accounts`, {
+      headers: { Authorization: `Bearer ${cfg.bettrackrToken}` },
+    });
+    if (!res.ok) return [];
+    const data = await res.json().catch(() => ({}));
+    return Array.isArray(data.accounts) ? data.accounts : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function accountsForBookmaker(accounts, source) {
+  const bookmaker = SOURCE_BOOKMAKER[source];
+  return accounts.filter((account) => account && (!bookmaker || String(account.bookmaker) === bookmaker));
+}
+
+// Decide a que conta vão as apostas de uma casa. A ordem é a mesma no import
+// manual e no automático — a deteção nunca depende do popup estar aberto:
+//   1) username da sessão da casa (ex.: Betclic /me) que bate certo com o
+//      username de uma conta -> desambigua várias contas na mesma casa;
+//   2) escolha manual no dropdown do popup, quando existe;
+//   3) uma única conta registada nessa casa -> associa-a automaticamente
+//      (o caso comum: quem só tem uma conta por casa nunca precisa de escolher);
+//   4) nada de fiável para decidir -> "sem conta".
+async function resolveAccountId(source, cfg, accounts, manualAccountId) {
+  const candidates = accountsForBookmaker(accounts, source);
+  const label = SOURCE_BOOKMAKER[source] || source;
+
+  try {
+    const username = await fetchBookmakerUsername(source, cfg);
+    if (username) {
+      const target = username.trim().toLowerCase();
+      // Primeiro pelo campo username da conta; depois pelo label como rede de
+      // segurança (mesma regra do popup) — para quem nomeou a conta como o
+      // username sem preencher o campo dedicado.
+      const match =
+        candidates.find((account) =>
+          typeof account.username === "string" && account.username.trim().toLowerCase() === target
+        ) ||
+        candidates.find((account) => String(account.label).trim().toLowerCase() === target);
+      if (match) {
+        progress(`${label}: conta @${username} detetada automaticamente.`);
+        return String(match.id);
+      }
+    }
+  } catch (_) {
+    // Falha a obter a identidade -> segue para o dropdown / conta única.
+  }
+
+  if (manualAccountId) return manualAccountId;
+
+  if (candidates.length === 1) {
+    progress(`${label}: conta "${candidates[0].label}" associada automaticamente.`);
+    return String(candidates[0].id);
+  }
+  return null;
+}
+
+// Deteta o username da sessão de cada casa (para o popup pré-selecionar a conta
+// certa). Só a Betclic tem endpoint de identidade conhecido; as outras devolvem
+// null e ficam pela conta única / seleção manual.
+async function detectBookmakerUsernames() {
+  const cfg = await getConfig();
+  const result = {};
+  await Promise.all(SUPPORTED_SOURCES.map(async (source) => {
+    try {
+      result[source] = await probeBookmakerIdentity(source, cfg);
+    } catch (e) {
+      result[source] = { username: null, error: String((e && e.message) || e) };
+    }
+  }));
+  return result;
+}
+
 async function runImportSources(source, cfg, accountIds, opts = {}) {
   if (!cfg.bettrackrToken) throw new Error("Sem sessão BetTrackr. Abre a app e inicia sessão.");
-  const sources = source === "all" ? ["betclic", "betano"] : [source];
+  // "all" importa só das casas ativas escolhidas no site (só aqui é preciso ir
+  // buscar a seleção); um pedido explícito a uma casa é respeitado tal como veio
+  // (o popup já só mostra casas ativas, e o auto-import filtra à parte).
+  const sources = source === "all" ? await fetchEnabledBookmakers(cfg) : [source];
+  if (sources.length === 0) throw new Error("Nenhuma casa de apostas ativa. Escolhe pelo menos uma nas definições.");
   const chosenAccounts = accountIds && typeof accountIds === "object" ? accountIds : {};
+  // Contas do utilizador uma única vez — servem a deteção por username e a
+  // regra de "conta única" para todas as casas deste import.
+  const accounts = await fetchBettrackrAccounts(cfg);
   const results = {};
   for (const current of sources) {
-    const accountId = typeof chosenAccounts[current] === "string" && chosenAccounts[current]
+    const manualAccountId = typeof chosenAccounts[current] === "string" && chosenAccounts[current]
       ? chosenAccounts[current]
       : null;
+    const accountId = await resolveAccountId(current, cfg, accounts, manualAccountId);
     try {
-      results[current] = current === "betano"
-        ? { ok: true, ...(await runBetanoImport(cfg, accountId, opts)) }
-        : { ok: true, ...(await runBetclicImport(cfg, accountId)) };
+      if (current === "betano") {
+        results[current] = { ok: true, ...(await runBetanoImport(cfg, accountId, opts)) };
+      } else if (current === "solverde") {
+        results[current] = { ok: true, ...(await runSolverdeImport(cfg, accountId)) };
+      } else {
+        results[current] = { ok: true, ...(await runBetclicImport(cfg, accountId)) };
+      }
     } catch (error) {
       results[current] = { ok: false, error: String(error && error.message || error) };
     }
@@ -480,19 +782,29 @@ async function runImport(source, sessionSnapshot, accountIds, opts = {}) {
 }
 
 async function extensionStatus() {
-  const [stored, tabs] = await Promise.all([
-    chrome.storage.local.get(["betclicToken", "bettrackrToken", "bettrackrBase", "bettrackrUser", "autoImport"]),
+  // O token/base vêm do storage; lê-o primeiro para que o fetch das casas ativas
+  // corra em paralelo com as sondas de sessão (Betano/Solverde), não em série.
+  const stored = await chrome.storage.local.get(["betclicToken", "bettrackrToken", "bettrackrBase", "bettrackrUser", "autoImport"]);
+  const bettrackrBase = stored.bettrackrBase || DEFAULT_BETTRACKR_BASE;
+  const [tabs, solverde, enabledBookmakers] = await Promise.all([
     chrome.tabs.query({ url: ["https://www.betano.pt/*", "https://betano.pt/*"] }),
+    solverdeStatus(),
+    // Casas ativas escolhidas no site, para o popup só mostrar essas. Sem sessão
+    // BetTrackr assume-se todas (o popup mostra na mesma o pedido de login).
+    fetchEnabledBookmakers({ bettrackrToken: stored.bettrackrToken || null, bettrackrBase }),
   ]);
   return {
     betclic: Boolean(stored.betclicToken),
     // A Betano tab enables the action. The page bridge reports a useful
     // authentication error if the user is not logged in or needs a reload.
     betano: tabs.length > 0,
+    // Solverde não precisa de tab aberta — sondamos a sessão diretamente.
+    solverde,
     bettrackr: Boolean(stored.bettrackrToken),
-    bettrackrBase: stored.bettrackrBase || DEFAULT_BETTRACKR_BASE,
+    bettrackrBase,
     bettrackrUser: stored.bettrackrUser || null,
     autoImport: stored.autoImport === true,
+    enabledBookmakers,
   };
 }
 
@@ -546,6 +858,10 @@ async function maybeAutoImport(source) {
     "autoImport", "bettrackrToken", "importAccountChoices", "autoImportLast",
   ]);
   if (stored.autoImport !== true || !stored.bettrackrToken) return;
+
+  // Só auto-importa de casas que o utilizador ativou no site.
+  const enabled = await fetchEnabledBookmakers(await getConfig());
+  if (!enabled.includes(source)) return;
 
   const now = Date.now();
   const last = stored.autoImportLast && typeof stored.autoImportLast === "object" ? stored.autoImportLast : {};
@@ -608,11 +924,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return false;
   }
   if (msg && msg.type === "GET_STATUS") {
-    extensionStatus().then(sendResponse).catch(() => sendResponse({ betclic: false, betano: false, bettrackr: false }));
+    extensionStatus().then(sendResponse).catch(() => sendResponse({ betclic: false, betano: false, solverde: false, bettrackr: false }));
+    return true;
+  }
+  if (msg && msg.type === "DETECT_USERNAMES") {
+    detectBookmakerUsernames()
+      .then(sendResponse)
+      .catch(() => sendResponse({}));
     return true;
   }
   if (msg && msg.type === "IMPORT") {
-    const source = ["betclic", "betano", "all"].includes(msg.source) ? msg.source : "all";
+    const source = ["betclic", "betano", "solverde", "all"].includes(msg.source) ? msg.source : "all";
     runImport(source, msg.bettrackrSession, msg.accountIds)
       .then(sendResponse)
       .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));

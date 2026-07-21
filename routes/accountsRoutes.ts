@@ -12,8 +12,9 @@ const router = Router();
 // Todas as rotas exigem autenticação.
 router.use(authenticateToken);
 
-const ACCOUNT_COLUMNS = "id, bookmaker, label, created_at";
+const ACCOUNT_COLUMNS = "id, bookmaker, label, username, created_at";
 const MAX_LABEL_LENGTH = 60;
+const MAX_USERNAME_LENGTH = 120;
 const MAX_ACCOUNTS = 100;
 
 function cleanLabel(raw: unknown): string | null {
@@ -21,6 +22,19 @@ function cleanLabel(raw: unknown): string | null {
   const label = raw.trim();
   if (label.length === 0 || label.length > MAX_LABEL_LENGTH) return null;
   return label;
+}
+
+// Username é opcional: string vazia / ausente -> null. Devolve um objeto de
+// erro quando excede o limite, para distinguir de "não enviado".
+function cleanUsername(raw: unknown): { value: string | null } | { error: string } {
+  if (raw === undefined || raw === null) return { value: null };
+  if (typeof raw !== "string") return { error: "username inválido." };
+  const username = raw.trim();
+  if (username.length === 0) return { value: null };
+  if (username.length > MAX_USERNAME_LENGTH) {
+    return { error: `O username é demasiado longo (máx. ${MAX_USERNAME_LENGTH} caracteres).` };
+  }
+  return { value: username };
 }
 
 function cleanBookmaker(raw: unknown): string | null {
@@ -55,12 +69,17 @@ router.get("/", async (req: AuthenticatedRequest, res) => {
 router.post("/", async (req: AuthenticatedRequest, res) => {
   const bookmaker = cleanBookmaker(req.body?.bookmaker);
   const label = cleanLabel(req.body?.label);
+  const username = cleanUsername(req.body?.username);
   if (!bookmaker) {
     res.status(400).json({ error: "Indica a casa de apostas." });
     return;
   }
   if (!label) {
     res.status(400).json({ error: `O nome da conta é obrigatório (máx. ${MAX_LABEL_LENGTH} caracteres).` });
+    return;
+  }
+  if ("error" in username) {
+    res.status(400).json({ error: username.error });
     return;
   }
 
@@ -75,15 +94,15 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO bookie_accounts (user_id, bookmaker, label)
-       VALUES ($1, $2, $3)
+      `INSERT INTO bookie_accounts (user_id, bookmaker, label, username)
+       VALUES ($1, $2, $3, $4)
        RETURNING ${ACCOUNT_COLUMNS}`,
-      [req.user!.id, bookmaker, label]
+      [req.user!.id, bookmaker, label, username.value]
     );
     res.status(201).json({ success: true, account: result.rows[0] });
   } catch (error: any) {
     if (error?.code === "23505") {
-      res.status(409).json({ error: "Já existe uma conta com esse nome nessa casa." });
+      res.status(409).json({ error: "Já existe uma conta com esse nome ou username nessa casa." });
       return;
     }
     console.error("Erro ao criar conta:", error);
@@ -98,18 +117,23 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
 // ============================================================
 router.put("/:id", async (req: AuthenticatedRequest, res) => {
   const label = cleanLabel(req.body?.label);
+  const username = cleanUsername(req.body?.username);
   if (!label) {
     res.status(400).json({ error: `O nome da conta é obrigatório (máx. ${MAX_LABEL_LENGTH} caracteres).` });
+    return;
+  }
+  if ("error" in username) {
+    res.status(400).json({ error: username.error });
     return;
   }
 
   try {
     const result = await pool.query(
       `UPDATE bookie_accounts
-       SET label = $1, updated_at = timezone('utc', now())
-       WHERE id = $2 AND user_id = $3
+       SET label = $1, username = $2, updated_at = timezone('utc', now())
+       WHERE id = $3 AND user_id = $4
        RETURNING ${ACCOUNT_COLUMNS}`,
-      [label, req.params.id, req.user!.id]
+      [label, username.value, req.params.id, req.user!.id]
     );
     if (result.rows.length === 0) {
       res.status(404).json({ error: "Conta não encontrada." });
@@ -118,7 +142,7 @@ router.put("/:id", async (req: AuthenticatedRequest, res) => {
     res.json({ success: true, account: result.rows[0] });
   } catch (error: any) {
     if (error?.code === "23505") {
-      res.status(409).json({ error: "Já existe uma conta com esse nome nessa casa." });
+      res.status(409).json({ error: "Já existe uma conta com esse nome ou username nessa casa." });
       return;
     }
     if (error?.code === "22P02") {

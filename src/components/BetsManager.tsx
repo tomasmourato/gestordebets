@@ -2,7 +2,6 @@ import React, { useEffect, useState, useMemo } from "react";
 import { 
   Plus, 
   Search, 
-  Filter, 
   Trash2, 
   Edit, 
   Copy, 
@@ -12,6 +11,7 @@ import {
   Check,
   HelpCircle,
   Eye,
+  EyeOff,
   Trash,
   Clock,
   AlertTriangle,
@@ -24,12 +24,14 @@ import { calculateBetReturnAndProfit, AVAILABLE_BOOKMAKERS, safeNum } from "../u
 import { defaultFreebetTypeFor } from "../lib/bookmakers";
 import { hasCashoutSignal } from "../lib/betStatus";
 import FilterDropdown from "./FilterDropdown";
+import FiltersBar from "./FiltersBar";
 import TimeframeFilter, {
   EMPTY_TIMEFRAME_FILTER,
-  isTimeframe,
   resolveTimeframeRange,
-  TimeframeFilterValue,
+  type TimeframeFilterValue,
 } from "./TimeframeFilter";
+import { readFilters, serializeFilters } from "../lib/filterParams";
+import { useUrlFilterSync } from "../hooks/useUrlFilterSync";
 
 interface BetsManagerProps {
   bets: Bet[];
@@ -38,6 +40,7 @@ interface BetsManagerProps {
   onAddBet: (bet: Bet) => void | Promise<void>;
   onAddBets: (bets: Bet[]) => void | Promise<void>;
   onUpdateBet: (bet: Bet) => void | Promise<void>;
+  onIgnoreBet: (id: string, ignored: boolean, comment?: string | null) => void | Promise<void>;
   onDeleteBet: (id: string) => void | Promise<void>;
   initialSearch?: string;
 }
@@ -51,36 +54,55 @@ export default function BetsManager({
   onAddBet,
   onAddBets,
   onUpdateBet,
+  onIgnoreBet,
   onDeleteBet,
   initialSearch,
   accounts = []
 }: BetsManagerProps) {
   const initialFilters = useMemo(
-    () => new URLSearchParams(initialSearch ?? window.location.search),
+    () => readFilters(new URLSearchParams(initialSearch ?? "")),
     [initialSearch]
   );
-  const initialFilter = (name: string) => initialFilters.get(name) || "ALL";
-  
+
   // Search & Filter state
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>(() => initialFilter("status"));
-  const [typeFilter, setTypeFilter] = useState<string>(() => initialFilter("type"));
-  const [freebetFilter, setFreebetFilter] = useState<string>(() => initialFilter("money"));
-  const [bookmakerFilter, setBookmakerFilter] = useState<string>(() => initialFilter("bookmaker"));
+  const [statusFilter, setStatusFilter] = useState<string>(initialFilters.status);
+  const [typeFilter, setTypeFilter] = useState<string>(initialFilters.type);
+  const [freebetFilter, setFreebetFilter] = useState<string>(initialFilters.money);
+  const [bookmakerFilter, setBookmakerFilter] = useState<string>(initialFilters.bookmaker);
   // "ALL" | "NONE" (sem conta) | id de uma conta — também chega via drill-down (?account=)
-  const [accountFilter, setAccountFilter] = useState<string>(() => initialFilter("account"));
-  const [sportFilter, setSportFilter] = useState<string>(() => initialFilter("sport"));
-  const [timeframeFilter, setTimeframeFilter] = useState<TimeframeFilterValue>(() => {
-    const startDate = initialFilters.get("dateFrom") || "";
-    const endDate = initialFilters.get("dateTo") || "";
-    const requestedTimeframe = initialFilters.get("timeframe");
-    return {
-      timeframe: isTimeframe(requestedTimeframe)
-        ? requestedTimeframe
-        : (startDate || endDate ? "CUSTOM" : "ALL"),
-      startDate,
-      endDate,
-    };
+  const [accountFilter, setAccountFilter] = useState<string>(initialFilters.account);
+  const [sportFilter, setSportFilter] = useState<string>(initialFilters.sport);
+  const [timeframeFilter, setTimeframeFilter] = useState<TimeframeFilterValue>(initialFilters.timeframe);
+
+  // Filtros <-> URL. A pesquisa por texto fica de fora de propósito: cada tecla
+  // criaria uma entrada no histórico do browser.
+  const filterSearch = useMemo(
+    () => serializeFilters({
+      status: statusFilter,
+      bookmaker: bookmakerFilter,
+      account: accountFilter,
+      sport: sportFilter,
+      type: typeFilter,
+      money: freebetFilter,
+      timeframe: timeframeFilter,
+    }),
+    [statusFilter, bookmakerFilter, accountFilter, sportFilter, typeFilter, freebetFilter, timeframeFilter]
+  );
+
+  useUrlFilterSync({
+    path: "/bets",
+    search: filterSearch,
+    onExternalChange: (params) => {
+      const next = readFilters(params);
+      setStatusFilter(next.status);
+      setBookmakerFilter(next.bookmaker);
+      setAccountFilter(next.account);
+      setSportFilter(next.sport);
+      setTypeFilter(next.type);
+      setFreebetFilter(next.money);
+      setTimeframeFilter(next.timeframe);
+    },
   });
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -94,6 +116,9 @@ export default function BetsManager({
   const [editingBet, setEditingBet] = useState<Bet | null>(null);
   const [detailBet, setDetailBet] = useState<Bet | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  // Aposta a ser ignorada (aguarda o motivo opcional no prompt inline).
+  const [ignoringId, setIgnoringId] = useState<string | null>(null);
+  const [ignoreComment, setIgnoreComment] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   // Form Fields
@@ -204,7 +229,9 @@ export default function BetsManager({
       ) || bet.bookmaker.toLowerCase().includes(search.toLowerCase()) || 
           (bet.notes && bet.notes.toLowerCase().includes(search.toLowerCase()));
 
-      const matchesStatus = statusFilter === "ALL" || bet.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "ALL" ||
+        (statusFilter === "RESOLVED" ? bet.status !== "POR_LIQUIDAR" : bet.status === statusFilter);
       const matchesType = typeFilter === "ALL" || bet.type === typeFilter;
       
       let matchesFreebet = true;
@@ -335,6 +362,23 @@ export default function BetsManager({
       await onDeleteBet(id);
     }
     finishBulkAction();
+  };
+
+  const startIgnore = (bet: Bet) => {
+    setDeletingId(null);
+    setIgnoringId(bet.id);
+    setIgnoreComment(bet.comment ?? "");
+  };
+
+  const confirmIgnore = async () => {
+    if (!ignoringId) return;
+    await onIgnoreBet(ignoringId, true, ignoreComment.trim() || null);
+    setIgnoringId(null);
+    setIgnoreComment("");
+  };
+
+  const handleUnignore = async (bet: Bet) => {
+    await onIgnoreBet(bet.id, false);
   };
 
   const sortButton = (label: string, field: SortField, extraClasses = "") => {
@@ -662,33 +706,45 @@ export default function BetsManager({
         </div>
 
         {/* Dynamic Filters */}
-        <div className="flex flex-col gap-3 border-t border-zinc-100 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-950/20 xl:flex-row xl:items-center">
-          <div className="flex min-w-fit items-center justify-between gap-3 xl:justify-start">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
-              <Filter size={13} /> Filtros
-              {activeFilterCount > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-100 px-1.5 text-[10px] text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                  {activeFilterCount}
-                </span>
-              )}
-            </span>
-            {activeFilterCount > 0 && (
+        <FiltersBar
+          bordered
+          activeFilterCount={activeFilterCount}
+          onClear={clearFilters}
+          trailing={
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {/* Multiple selection */}
               <button
                 type="button"
-                onClick={clearFilters}
-                className="text-[10px] font-semibold text-zinc-400 transition-colors hover:text-emerald-600 dark:text-zinc-500 dark:hover:text-emerald-300 cursor-pointer"
+                onClick={toggleSelectionMode}
+                className={`inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-sm border px-3 text-xs font-semibold transition-colors cursor-pointer ${
+                  isSelecting
+                    ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300"
+                    : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-emerald-300 hover:text-emerald-600 dark:hover:border-emerald-700 dark:hover:text-emerald-300"
+                }`}
               >
-                Limpar
+                <CheckSquare size={14} />
+                {isSelecting ? "Cancelar seleção" : "Selecionar várias"}
               </button>
-            )}
-          </div>
 
-          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
-          
+              {isSelecting && (
+                <button
+                  type="button"
+                  onClick={toggleAllFilteredBets}
+                  disabled={filteredBets.length === 0}
+                  className="h-9 rounded-sm border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-600 transition-colors hover:border-emerald-300 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:border-emerald-700 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                >
+                  {allFilteredBetsSelected ? "Desmarcar filtradas" : `Selecionar filtradas (${filteredBets.length})`}
+                </button>
+              )}
+            </div>
+          }
+        >
           <FilterDropdown
+            className="flex-1 min-w-40"
             value={statusFilter}
             options={[
               { value: "ALL", label: "Todos os Estados" },
+              { value: "RESOLVED", label: "Resolvidas" },
               { value: "POR_LIQUIDAR", label: "Por Liquidar" },
               { value: "GANHA", label: "Ganha" },
               { value: "PERDIDA", label: "Perdida" },
@@ -702,29 +758,7 @@ export default function BetsManager({
           />
 
           <FilterDropdown
-            value={typeFilter}
-            options={[
-              { value: "ALL", label: "Qualquer Tipo" },
-              { value: "SIMPLES", label: "Simples" },
-              { value: "MULTIPLA", label: "Múltipla" }
-            ]}
-            onChange={setTypeFilter}
-            ariaLabel="Filtrar por tipo de aposta"
-          />
-
-          <FilterDropdown
-            value={freebetFilter}
-            options={[
-              { value: "ALL", label: "Tipo de Dinheiro" },
-              { value: "NORMAL", label: "Dinheiro Real" },
-              { value: "FREEBET", label: "Freebet" },
-              { value: "RISK_FREE", label: "Sem risco" }
-            ]}
-            onChange={setFreebetFilter}
-            ariaLabel="Filtrar por tipo de dinheiro"
-          />
-
-          <FilterDropdown
+            className="flex-1 min-w-40"
             value={bookmakerFilter}
             options={[{ value: "ALL", label: "Todas as Casas" }, ...bookmakerOptions.map(bookmaker => ({ value: bookmaker, label: bookmaker }))]}
             onChange={setBookmakerFilter}
@@ -733,6 +767,7 @@ export default function BetsManager({
 
           {accounts.length > 0 && (
             <FilterDropdown
+              className="flex-1 min-w-40"
               value={accountFilter}
               options={[
                 { value: "ALL", label: "Todas as Contas" },
@@ -745,42 +780,44 @@ export default function BetsManager({
           )}
 
           <FilterDropdown
+            className="flex-1 min-w-40"
             value={sportFilter}
             options={[{ value: "ALL", label: "Todos os Desportos" }, ...sportOptions.map(sport => ({ value: sport, label: sport }))]}
             onChange={setSportFilter}
             ariaLabel="Filtrar por desporto"
           />
 
-          <TimeframeFilter value={timeframeFilter} onChange={setTimeframeFilter} />
+          <FilterDropdown
+            className="flex-1 min-w-40"
+            value={typeFilter}
+            options={[
+              { value: "ALL", label: "Qualquer Tipo" },
+              { value: "SIMPLES", label: "Simples" },
+              { value: "MULTIPLA", label: "Múltipla" }
+            ]}
+            onChange={setTypeFilter}
+            ariaLabel="Filtrar por tipo de aposta"
+          />
 
-          </div>
+          <FilterDropdown
+            className="flex-1 min-w-40"
+            value={freebetFilter}
+            options={[
+              { value: "ALL", label: "Dinheiro e Freebet" },
+              { value: "NORMAL", label: "Dinheiro Real" },
+              { value: "FREEBET", label: "Freebet" },
+              { value: "RISK_FREE", label: "Sem risco" }
+            ]}
+            onChange={setFreebetFilter}
+            ariaLabel="Filtrar por tipo de dinheiro"
+          />
 
-          {/* Multiple selection */}
-          <button
-            type="button"
-            onClick={toggleSelectionMode}
-            className={`inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-sm border px-3 text-xs font-semibold transition-colors cursor-pointer ${
-              isSelecting
-                ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300"
-                : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-emerald-300 hover:text-emerald-600 dark:hover:border-emerald-700 dark:hover:text-emerald-300"
-            }`}
-          >
-            <CheckSquare size={14} />
-            {isSelecting ? "Cancelar seleção" : "Selecionar várias"}
-          </button>
-
-          {isSelecting && (
-            <button
-              type="button"
-              onClick={toggleAllFilteredBets}
-              disabled={filteredBets.length === 0}
-              className="h-9 rounded-sm border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-600 transition-colors hover:border-emerald-300 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:border-emerald-700 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
-            >
-              {allFilteredBetsSelected ? "Desmarcar filtradas" : `Selecionar filtradas (${filteredBets.length})`}
-            </button>
-          )}
-
-        </div>
+          <TimeframeFilter
+            className="flex-1 min-w-40"
+            value={timeframeFilter}
+            onChange={setTimeframeFilter}
+          />
+        </FiltersBar>
       </div>
 
       {isSelecting && selectedBetIds.size > 0 && (
@@ -863,7 +900,7 @@ export default function BetsManager({
                 selectedBetIds.has(bet.id)
                   ? "border-emerald-300 dark:border-emerald-700 ring-1 ring-emerald-100 dark:ring-emerald-950"
                   : "border-zinc-200 dark:border-zinc-800"
-              }`}
+              } ${bet.isIgnored ? "opacity-60" : ""}`}
             >
 
               {isSelecting && (
@@ -902,13 +939,21 @@ export default function BetsManager({
                     </span>
                   )}
                   {bet.isFreebet && (
-                    <span className="text-[9px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-sm uppercase border border-amber-200 dark:border-amber-900">
+                    <span className="text-[9px] font-bold bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-sm uppercase border border-purple-200 dark:border-purple-900">
                       Freebet
                     </span>
                   )}
                   {bet.isRiskFree && (
                     <span className="text-[9px] font-bold bg-cyan-50 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300 px-2 py-0.5 rounded-sm uppercase border border-cyan-200 dark:border-cyan-900">
                       Sem risco
+                    </span>
+                  )}
+                  {bet.isIgnored && (
+                    <span
+                      className="inline-flex items-center gap-1 text-[9px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 px-2 py-0.5 rounded-sm uppercase border border-zinc-200 dark:border-zinc-700"
+                      title="Excluída das estatísticas"
+                    >
+                      <EyeOff size={10} /> Ignorada
                     </span>
                   )}
                   {getStatusBadge(bet.status)}
@@ -942,7 +987,10 @@ export default function BetsManager({
                 <div className="flex gap-4 text-right pr-2">
                   <div className="flex flex-col">
                     {sortButton("Stake", "stake", "self-end")}
-                    <span className="text-xs font-bold text-zinc-800 dark:text-zinc-100 font-mono mt-0.5">
+                    <span
+                      className="text-xs font-bold text-zinc-800 dark:text-zinc-100 font-mono mt-0.5"
+                      style={bet.isFreebet ? { color: "#a855f7" } : undefined}
+                    >
                       {safeNum(bet.stake).toFixed(2)}{currency}
                     </span>
                   </div>
@@ -997,6 +1045,37 @@ export default function BetsManager({
                         <X size={10} />
                       </button>
                     </div>
+                  ) : ignoringId === bet.id ? (
+                    <div className="flex items-center gap-1 bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 p-1 rounded-sm">
+                      <input
+                        type="text"
+                        value={ignoreComment}
+                        onChange={(e) => setIgnoreComment(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") { e.preventDefault(); confirmIgnore(); }
+                          if (e.key === "Escape") { setIgnoringId(null); setIgnoreComment(""); }
+                        }}
+                        placeholder="Motivo (opcional)"
+                        maxLength={200}
+                        autoFocus
+                        aria-label="Motivo para ignorar a aposta"
+                        className="w-40 border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 rounded-xs px-1.5 py-1 text-[11px] text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-emerald-600"
+                      />
+                      <button
+                        onClick={confirmIgnore}
+                        className="p-1 rounded-xs bg-zinc-600 hover:bg-zinc-700 text-white transition-colors cursor-pointer"
+                        title="Ignorar aposta (excluir das estatísticas)"
+                      >
+                        <Check size={10} />
+                      </button>
+                      <button
+                        onClick={() => { setIgnoringId(null); setIgnoreComment(""); }}
+                        className="p-1 rounded-xs bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 transition-colors cursor-pointer"
+                        title="Cancelar"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
                   ) : (
                     <>
                       <button
@@ -1013,6 +1092,23 @@ export default function BetsManager({
                       >
                         <Edit size={13} />
                       </button>
+                      {bet.isIgnored ? (
+                        <button
+                          onClick={() => handleUnignore(bet)}
+                          title="Repor aposta nas estatísticas"
+                          className="p-1.5 rounded-sm text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                        >
+                          <Eye size={13} />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => startIgnore(bet)}
+                          title="Ignorar aposta (excluir das estatísticas)"
+                          className="p-1.5 rounded-sm text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                        >
+                          <EyeOff size={13} />
+                        </button>
+                      )}
                       <button
                         onClick={() => setDeletingId(bet.id)}
                         title="Apagar Aposta"
@@ -1090,6 +1186,7 @@ export default function BetsManager({
                   ["Data e hora", detailBet.dateTime || "—"],
                   ["Origem", detailBet.origin || "—"],
                   ["Dinheiro", detailBet.isFreebet ? `Freebet ${detailBet.freebetType || ""}`.trim() : "Dinheiro real"],
+                  ...(detailBet.isIgnored ? [["Estatísticas", "Ignorada (excluída)"]] : []),
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/40">
                     <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{label}</p>
@@ -1105,7 +1202,7 @@ export default function BetsManager({
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                   <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
                     <p className="text-[9px] font-bold uppercase text-slate-400">Stake</p>
-                    <p className="mt-1 font-mono text-sm font-bold text-slate-800 dark:text-slate-100">{safeNum(detailBet.stake).toFixed(2)}{currency}</p>
+                    <p className="mt-1 font-mono text-sm font-bold text-slate-800 dark:text-slate-100" style={detailBet.isFreebet ? { color: "#a855f7" } : undefined}>{safeNum(detailBet.stake).toFixed(2)}{currency}</p>
                   </div>
                   <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
                     <p className="text-[9px] font-bold uppercase text-slate-400">Odd total</p>

@@ -38,7 +38,7 @@ export const toLocalDateKey = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-const fromLocalDateKey = (dateKey: string) => {
+export const fromLocalDateKey = (dateKey: string) => {
   const [year, month, day] = dateKey.split("-").map(Number);
   if (!year || !month || !day) return null;
   return new Date(year, month - 1, day);
@@ -85,9 +85,10 @@ export function rangeSpansAtLeastTwoMonths(start: Date, end: Date) {
 interface TimeframeFilterProps {
   value: TimeframeFilterValue;
   onChange: (value: TimeframeFilterValue) => void;
+  className?: string;
 }
 
-export default function TimeframeFilter({ value, onChange }: TimeframeFilterProps) {
+export default function TimeframeFilter({ value, onChange, className = "" }: TimeframeFilterProps) {
   const [isCustomRangeOpen, setIsCustomRangeOpen] = useState(false);
   const [isTimeframeMenuOpen, setIsTimeframeMenuOpen] = useState(false);
   const [activeRangeEndpoint, setActiveRangeEndpoint] = useState<RangeEndpoint>("start");
@@ -147,7 +148,7 @@ export default function TimeframeFilter({ value, onChange }: TimeframeFilterProp
   };
 
   return (
-    <div ref={containerRef} className="relative min-w-0">
+    <div ref={containerRef} className={`relative min-w-0 ${className}`}>
       <FilterDropdown
         value={value.timeframe}
         options={TIMEFRAME_OPTIONS}
@@ -183,17 +184,17 @@ export default function TimeframeFilter({ value, onChange }: TimeframeFilterProp
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.16, ease: "easeOut" }}
-            className="absolute right-0 top-[calc(100%+0.5rem)] z-[70] max-h-[calc(100vh-8rem)] w-[min(22rem,calc(100vw-3rem))] select-none overflow-y-auto rounded-lg border border-slate-200 bg-white p-3 shadow-xl shadow-slate-950/10 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/30"
+            className="absolute right-0 top-[calc(100%+0.5rem)] z-[70] max-h-[calc(100vh-8rem)] w-[min(22rem,calc(100vw-3rem))] select-none overflow-y-auto rounded-sm border border-zinc-200 bg-white p-3 shadow-xl shadow-zinc-950/10 dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-black/30"
             role="dialog"
             aria-label="Escolher período personalizado"
           >
             <div className="mb-3 flex items-center gap-2">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-300">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 dark:bg-emerald-950/70 dark:text-emerald-300">
                 <CalendarRange size={15} />
               </span>
               <div>
-                <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">Período personalizado</p>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500">As datas inicial e final são incluídas.</p>
+                <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">Período personalizado</p>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500">As datas inicial e final são incluídas.</p>
               </div>
             </div>
 
@@ -202,7 +203,7 @@ export default function TimeframeFilter({ value, onChange }: TimeframeFilterProp
                 const dateKey = endpoint === "start" ? value.startDate : value.endDate;
                 return (
                   <div key={endpoint} className="space-y-1.5">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                       {endpoint === "start" ? "Data inicial" : "Data final"}
                     </span>
                     <button
@@ -212,34 +213,34 @@ export default function TimeframeFilter({ value, onChange }: TimeframeFilterProp
                         const date = fromLocalDateKey(dateKey || value.startDate);
                         if (date) setCalendarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
                       }}
-                      className={`flex h-10 w-full items-center justify-between rounded-md border px-2.5 text-left text-xs font-semibold outline-none transition-all cursor-pointer ${
+                      className={`flex h-10 w-full items-center justify-between rounded-sm border px-2.5 text-left text-xs font-semibold outline-none transition-all cursor-pointer ${
                         activeRangeEndpoint === endpoint
-                          ? "border-indigo-500 bg-indigo-50/70 text-indigo-700 ring-2 ring-indigo-500/10 dark:bg-indigo-950/40 dark:text-indigo-200"
-                          : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-slate-600"
+                          ? "border-emerald-500 bg-emerald-50/70 text-emerald-700 ring-2 ring-emerald-500/10 dark:bg-emerald-950/40 dark:text-emerald-200"
+                          : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:border-zinc-600"
                       }`}
                     >
                       <span>{formatDateKey(dateKey)}</span>
-                      <CalendarRange size={13} className="text-slate-400" />
+                      <CalendarRange size={13} className="text-zinc-400" />
                     </button>
                   </div>
                 );
               })}
             </div>
 
-            <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50/70 p-2 dark:border-slate-800 dark:bg-slate-950/40">
+            <div className="mt-3 rounded-sm border border-zinc-100 bg-zinc-50/70 p-2 dark:border-zinc-800 dark:bg-zinc-950/40">
               <div className="mb-2 flex items-center justify-between px-1">
-                <button type="button" onClick={() => setCalendarMonth(current => new Date(current.getFullYear(), current.getMonth() - 1, 1))} className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-white hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-300 cursor-pointer" aria-label="Mês anterior">
+                <button type="button" onClick={() => setCalendarMonth(current => new Date(current.getFullYear(), current.getMonth() - 1, 1))} className="flex h-8 w-8 items-center justify-center rounded-sm text-zinc-400 transition-colors hover:bg-white hover:text-emerald-600 dark:hover:bg-zinc-800 dark:hover:text-emerald-300 cursor-pointer" aria-label="Mês anterior">
                   <ChevronLeft size={15} />
                 </button>
-                <span className="text-xs font-semibold capitalize text-slate-700 dark:text-slate-200">
+                <span className="text-xs font-semibold capitalize text-zinc-700 dark:text-zinc-200">
                   {calendarMonth.toLocaleDateString("pt-PT", { month: "long", year: "numeric" })}
                 </span>
-                <button type="button" onClick={() => setCalendarMonth(current => new Date(current.getFullYear(), current.getMonth() + 1, 1))} className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-white hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-300 cursor-pointer" aria-label="Mês seguinte">
+                <button type="button" onClick={() => setCalendarMonth(current => new Date(current.getFullYear(), current.getMonth() + 1, 1))} className="flex h-8 w-8 items-center justify-center rounded-sm text-zinc-400 transition-colors hover:bg-white hover:text-emerald-600 dark:hover:bg-zinc-800 dark:hover:text-emerald-300 cursor-pointer" aria-label="Mês seguinte">
                   <ChevronRight size={15} />
                 </button>
               </div>
               <div className="mb-1 grid grid-cols-7">
-                {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map(day => <span key={day} className="flex h-6 items-center justify-center text-[9px] font-bold uppercase text-slate-400 dark:text-slate-600">{day}</span>)}
+                {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map(day => <span key={day} className="flex h-6 items-center justify-center text-[9px] font-bold uppercase text-zinc-400 dark:text-zinc-600">{day}</span>)}
               </div>
               <motion.div key={`${calendarMonth.getFullYear()}-${calendarMonth.getMonth()}`} initial={{ opacity: 0.45, x: 3 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.12, ease: "easeOut" }} className="grid grid-cols-7 gap-0.5">
                 {calendarDays.map(date => {
@@ -255,20 +256,20 @@ export default function TimeframeFilter({ value, onChange }: TimeframeFilterProp
                       type="button"
                       key={dateKey}
                       onClick={() => selectCalendarDate(date)}
-                      className={`relative flex aspect-square items-center justify-center rounded-md text-[10px] font-semibold outline-none transition-colors cursor-pointer ${
+                      className={`relative flex aspect-square items-center justify-center rounded-sm text-[10px] font-semibold outline-none transition-colors cursor-pointer ${
                         isRangeEdge
-                          ? "bg-indigo-600 text-white shadow-sm shadow-indigo-950/20 hover:bg-indigo-500"
+                          ? "bg-emerald-600 text-white shadow-sm shadow-emerald-950/20 hover:bg-emerald-500"
                           : isInRange
-                            ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-950/70 dark:text-indigo-200 dark:hover:bg-indigo-900"
+                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-200 dark:hover:bg-emerald-900"
                             : isCurrentMonth
-                              ? "text-slate-700 hover:bg-white hover:text-indigo-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-indigo-300"
-                              : "text-slate-300 hover:bg-white hover:text-slate-500 dark:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-500"
+                              ? "text-zinc-700 hover:bg-white hover:text-emerald-600 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:hover:text-emerald-300"
+                              : "text-zinc-300 hover:bg-white hover:text-zinc-500 dark:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-500"
                       }`}
                       aria-label={date.toLocaleDateString("pt-PT", { day: "numeric", month: "long", year: "numeric" })}
                       aria-pressed={isRangeEdge}
                     >
                       {date.getDate()}
-                      {isToday && !isRangeEdge && <span className="absolute bottom-1 h-0.5 w-0.5 rounded-full bg-indigo-500" />}
+                      {isToday && !isRangeEdge && <span className="absolute bottom-1 h-0.5 w-0.5 rounded-full bg-emerald-500" />}
                     </button>
                   );
                 })}

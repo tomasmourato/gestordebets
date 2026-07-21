@@ -13,6 +13,7 @@ import {
   updateBet,
   deleteBet,
   deleteAllBets,
+  setBetIgnored,
 } from "../lib/betsApi";
 
 export function useBets(enabled: boolean, onSessionExpired: () => void, initialBets?: Bet[]) {
@@ -49,26 +50,34 @@ export function useBets(enabled: boolean, onSessionExpired: () => void, initialB
       return;
     }
 
-    // The SSR document already contains this user's bets. Keep them and avoid
-    // the duplicate post-hydration request that previously caused the loader.
-    if (canUseInitialBetsRef.current) {
-      setIsLoading(false);
-      return;
-    }
+    // O documento SSR já traz as apostas deste utilizador — pintamo-las de
+    // imediato, sem loader. Mas o payload do SSR pode estar desatualizado ou
+    // omitir campos; por isso refazemos o fetch em segundo plano para o cliente
+    // convergir para o /api/bets (fonte de verdade, sempre com is_risk_free/
+    // account_id). Sem este refetch, um campo em falta no SSR ficava invisível
+    // para sempre (ex.: filtros "Sem risco"/conta a não encontrar nada).
+    const silent = canUseInitialBetsRef.current;
+    canUseInitialBetsRef.current = false;
 
     let cancelled = false;
-    setIsLoading(true);
-    setError(null);
+    if (!silent) {
+      setIsLoading(true);
+      setError(null);
+    }
 
     fetchBets()
       .then((loaded) => {
         if (!cancelled) setBets(loaded);
       })
       .catch((err) => {
-        if (!cancelled) handleError(err);
+        if (cancelled) return;
+        // Uma sessão expirada é sempre tratada; outros erros do refetch
+        // silencioso não devem apagar a vista já pintada pelo SSR.
+        if (err instanceof SessionExpiredError) onSessionExpiredRef.current();
+        else if (!silent) handleError(err);
       })
       .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled && !silent) setIsLoading(false);
       });
 
     return () => {
@@ -109,6 +118,22 @@ export function useBets(enabled: boolean, onSessionExpired: () => void, initialB
     setError(null);
     try {
       const updated = await updateBet(bet);
+      setBets((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+      return updated;
+    } catch (err) {
+      handleError(err);
+      return null;
+    }
+  };
+
+  const ignoreBet = async (
+    id: string,
+    ignored: boolean,
+    comment?: string | null
+  ): Promise<Bet | null> => {
+    setError(null);
+    try {
+      const updated = await setBetIgnored(id, ignored, comment);
       setBets((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
       return updated;
     } catch (err) {
@@ -162,6 +187,7 @@ export function useBets(enabled: boolean, onSessionExpired: () => void, initialB
     addBet,
     importBets,
     editBet,
+    ignoreBet,
     removeBet,
     clearAllBets,
     replaceAllBets,

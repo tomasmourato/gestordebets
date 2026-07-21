@@ -2,28 +2,15 @@ import { Router } from "express";
 import pool from "../db/pool.js";
 import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddleware.js";
 import { normalizeBetStatus } from "../src/lib/betStatus.js";
+import { BET_SELECT_COLUMNS } from "../db/betColumns.js";
 
 const router = Router();
 
 // Todas as rotas de bets exigem autenticação
 router.use(authenticateToken);
 
-// ============================================================
-// Colunas devolvidas ao frontend. Convertemos DECIMAL -> float8
-// (senão o driver pg devolve strings) e formatamos a data para o
-// formato "YYYY-MM-DD HH:mm" que o modelo Bet do frontend espera.
-// ============================================================
-const BET_COLUMNS = `
-  id, type, status,
-  stake::float8 AS stake, odd::float8 AS odd,
-  is_freebet, freebet_type, is_risk_free,
-  potential_return::float8 AS potential_return,
-  final_return::float8 AS final_return,
-  net_profit::float8 AS net_profit,
-  bookmaker, account_id,
-  to_char(date_time, 'YYYY-MM-DD HH24:MI') AS date_time,
-  notes, origin, selections, comment, tags, metadata, created_at
-`;
+// Colunas devolvidas ao frontend — lista única partilhada com o SSR (server.ts).
+const BET_COLUMNS = BET_SELECT_COLUMNS;
 
 const VALID_FREEBET_TYPES = ["SNR", "SR"];
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -363,6 +350,46 @@ router.put("/:id", async (req: AuthenticatedRequest, res) => {
     }
     console.error("Erro ao atualizar bet:", error);
     res.status(500).json({ error: "Erro ao atualizar a bet." });
+  }
+});
+
+// ============================================================
+// PATCH /api/bets/:id/ignore  -> marca/desmarca a aposta como ignorada
+// (excluída das estatísticas), com um motivo opcional em `comment`.
+// Endpoint dedicado e leve: não revalida nem substitui a aposta toda como o
+// PUT — só alterna a flag e (opcionalmente) o comentário.
+// ============================================================
+router.patch("/:id/ignore", async (req: AuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const ignored = req.body?.ignored === true || req.body?.ignored === "true";
+    // Só mexemos no comentário quando o campo vem no corpo — assim desmarcar
+    // não apaga o motivo por acidente, mas o utilizador pode limpá-lo com "".
+    const hasComment = Object.prototype.hasOwnProperty.call(req.body ?? {}, "comment");
+    const comment = hasComment ? trimOrNull(req.body.comment) : null;
+
+    const result = await pool.query(
+      `UPDATE bets
+       SET is_ignored = $1,
+           comment = CASE WHEN $2::boolean THEN $3 ELSE comment END,
+           updated_at = timezone('utc', now())
+       WHERE id = $4 AND user_id = $5
+       RETURNING ${BET_COLUMNS}`,
+      [ignored, hasComment, comment, id, req.user!.id]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "Bet não encontrada." });
+      return;
+    }
+    res.json({ success: true, bet: result.rows[0] });
+  } catch (error: any) {
+    if (error?.code === "22P02") {
+      res.status(404).json({ error: "Bet não encontrada." });
+      return;
+    }
+    console.error("Erro ao ignorar bet:", error);
+    res.status(500).json({ error: "Erro ao ignorar a aposta." });
   }
 });
 

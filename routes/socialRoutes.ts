@@ -287,7 +287,7 @@ router.get("/friends/:userId/bets", async (req: AuthenticatedRequest, res) => {
     const bets = await pool.query(
       `SELECT ${BET_COLUMNS}
          FROM bets
-        WHERE user_id = $1
+        WHERE user_id = $1 AND is_ignored = FALSE
         ORDER BY date_time DESC NULLS LAST, created_at DESC`,
       [req.params.userId]
     );

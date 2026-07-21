@@ -12,8 +12,8 @@ interface BookieAccountsCardProps {
   bets: Bet[];
   error: string | null;
   clearError: () => void;
-  onAdd: (bookmaker: string, label: string) => Promise<BookieAccount | null>;
-  onRename: (id: string, label: string) => Promise<BookieAccount | null>;
+  onAdd: (bookmaker: string, label: string, username?: string | null) => Promise<BookieAccount | null>;
+  onRename: (id: string, label: string, username?: string | null) => Promise<BookieAccount | null>;
   onDelete: (id: string) => Promise<boolean>;
 }
 
@@ -28,9 +28,11 @@ export default function BookieAccountsCard({
 }: BookieAccountsCardProps) {
   const [newBookmaker, setNewBookmaker] = useState(AVAILABLE_BOOKMAKERS[0] ?? "Betclic");
   const [newLabel, setNewLabel] = useState("");
+  const [newUsername, setNewUsername] = useState("");
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
+  const [editingUsername, setEditingUsername] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   // Nº de apostas associadas a cada conta (para avisar antes de apagar).
@@ -59,9 +61,12 @@ export default function BookieAccountsCard({
     if (!label || saving) return;
     setSaving(true);
     clearError();
-    const created = await onAdd(newBookmaker, label);
+    const created = await onAdd(newBookmaker, label, newUsername.trim() || null);
     setSaving(false);
-    if (created) setNewLabel("");
+    if (created) {
+      setNewLabel("");
+      setNewUsername("");
+    }
   };
 
   const startRename = (account: BookieAccount) => {
@@ -69,12 +74,13 @@ export default function BookieAccountsCard({
     setConfirmDeleteId(null);
     setEditingId(account.id);
     setEditingLabel(account.label);
+    setEditingUsername(account.username ?? "");
   };
 
   const submitRename = async () => {
     const label = editingLabel.trim();
     if (!editingId || !label) return;
-    const updated = await onRename(editingId, label);
+    const updated = await onRename(editingId, label, editingUsername.trim() || null);
     if (updated) setEditingId(null);
   };
 
@@ -121,6 +127,18 @@ export default function BookieAccountsCard({
           maxLength={60}
           className="flex-1 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-sm px-2.5 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-emerald-600"
         />
+        <input
+          type="text"
+          value={newUsername}
+          onChange={(e) => setNewUsername(e.target.value)}
+          placeholder="Username na casa (opcional)"
+          maxLength={120}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          title="O username com que inicias sessão na casa. A extensão usa-o para encaminhar as apostas importadas para esta conta."
+          className="flex-1 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-sm px-2.5 py-2 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-emerald-600"
+        />
         <button
           type="submit"
           disabled={!newLabel.trim() || saving}
@@ -162,7 +180,24 @@ export default function BookieAccountsCard({
                             }}
                             maxLength={60}
                             autoFocus
+                            aria-label="Nome da conta"
                             className="flex-1 border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-zinc-800 rounded-sm px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-emerald-600"
+                          />
+                          <input
+                            type="text"
+                            value={editingUsername}
+                            onChange={(e) => setEditingUsername(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") { e.preventDefault(); submitRename(); }
+                              if (e.key === "Escape") setEditingId(null);
+                            }}
+                            maxLength={120}
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            placeholder="Username (opcional)"
+                            aria-label="Username na casa"
+                            className="flex-1 border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-zinc-800 rounded-sm px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-emerald-600"
                           />
                           <button
                             onClick={submitRename}
@@ -182,7 +217,12 @@ export default function BookieAccountsCard({
                       ) : (
                         <>
                           <div className="min-w-0 flex-1">
-                            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100 truncate">{account.label}</p>
+                            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100 truncate">
+                              {account.label}
+                              {account.username && (
+                                <span className="ml-1.5 font-normal text-emerald-600 dark:text-emerald-400">@{account.username}</span>
+                              )}
+                            </p>
                             <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
                               {betCount === 1 ? "1 aposta associada" : `${betCount} apostas associadas`}
                             </p>

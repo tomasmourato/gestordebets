@@ -77,6 +77,19 @@ function promotionInfo(bet) {
   const tokens = Array.isArray(bet.BonusTokens) ? bet.BonusTokens : [];
   const first = tokens[0] || {};
   const type = first.Type ? String(first.Type) : null;
+  const tokenTypes = tokens.map((token) => (token && token.Type ? String(token.Type) : "").toLowerCase());
+  const hasToken = (name) => tokenTypes.includes(name);
+
+  // BonusType (fallback quando os tokens não vêm): 1 = FullBet (freebet),
+  // 3 = RiskFree (aposta sem risco). Os tokens são o sinal primário.
+  // "Aposta sem risco": stake é dinheiro REAL, mas uma derrota é compensada
+  // (stake devolvida como freebet), por isso o resultado é neutro — é um
+  // conceito distinto da freebet e tem prioridade sobre ela.
+  const isRiskFree = hasToken("riskfree") || Number(bet.BonusType) === 3;
+  // FullBet é uma stake de bónus (freebet). RiskFree usa stake real, por isso
+  // não é freebet.
+  const isFreebet = !isRiskFree && (hasToken("fullbet") || Number(bet.BonusType) === 1);
+
   return {
     type,
     amount: first.Amount === undefined ? null : round2(parseBetanoMoney(first.Amount)),
@@ -84,9 +97,8 @@ function promotionInfo(bet) {
       type: token && token.Type ? String(token.Type) : null,
       amount: token && token.Amount !== undefined ? round2(parseBetanoMoney(token.Amount)) : null,
     })),
-    // FullBet is a bonus stake. RiskFree is retained as a cash stake because
-    // any loss compensation is handled separately by the bookmaker.
-    isFreebet: type === "FullBet",
+    isFreebet,
+    isRiskFree,
   };
 }
 
@@ -162,10 +174,23 @@ export function mapBetanoBet(bet) {
   const isCashout = status === "CASHOUT";
   const settledReturn = round2(parseBetanoMoney(bet.Return));
   const possibleReturn = round2(parseBetanoMoney(bet.PossibleWinnings) || stake * odd);
-  const finalReturn = status === "POR_LIQUIDAR" ? 0 : settledReturn;
-  const netProfit = status === "POR_LIQUIDAR"
-    ? 0
-    : promotion.isFreebet ? finalReturn : finalReturn - stake;
+  const isLoss = status === "PERDIDA" || status === "MEIO_PERDIDA";
+
+  let finalReturn;
+  let netProfit;
+  if (status === "POR_LIQUIDAR") {
+    finalReturn = 0;
+    netProfit = 0;
+  } else if (promotion.isRiskFree && !isCashout) {
+    // Aposta sem risco: uma vitória paga como uma aposta normal (retorno real
+    // menos a stake); numa derrota a stake é devolvida, por isso o resultado
+    // é neutro (net 0). Espelha o ramo isRiskFree de calculateBetReturnAndProfit.
+    finalReturn = isLoss ? stake : settledReturn;
+    netProfit = isLoss ? 0 : round2(settledReturn - stake);
+  } else {
+    finalReturn = settledReturn;
+    netProfit = promotion.isFreebet ? finalReturn : round2(finalReturn - stake);
+  }
 
   return {
     type: String(bet.Type || "").toLowerCase() === "single" ? "SIMPLES" : "MULTIPLA",
@@ -173,6 +198,7 @@ export function mapBetanoBet(bet) {
     stake,
     odd,
     isFreebet: promotion.isFreebet,
+    isRiskFree: promotion.isRiskFree,
     potentialReturn: status === "POR_LIQUIDAR" ? possibleReturn : round2(Math.max(possibleReturn, finalReturn)),
     finalReturn,
     netProfit: round2(netProfit),

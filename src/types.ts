@@ -47,6 +47,10 @@ export interface Bet {
   // stake (tipicamente como freebet, registada à parte) -> break-even nesta
   // aposta. Mutuamente exclusivo com isFreebet.
   isRiskFree?: boolean;
+  // Aposta ignorada: continua visível no histórico mas é excluída de todas as
+  // estatísticas (ex.: uma aposta feita para um amigo). O motivo, quando dado,
+  // fica no campo `comment`.
+  isIgnored?: boolean;
   potentialReturn: number;
   finalReturn: number;
   netProfit: number;
@@ -69,6 +73,9 @@ export interface BookieAccount {
   id: string;
   bookmaker: string;
   label: string;
+  // Username real na casa (ex.: "pedroocoragem" na Betclic); a extensão usa-o
+  // para encaminhar automaticamente as apostas importadas. undefined = sem username.
+  username?: string;
   createdAt?: string;
 }
 
