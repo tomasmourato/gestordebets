@@ -248,8 +248,8 @@
         "kind": "file"
       },
       "_origin": "ast",
-      "id": "home_ronk_projects_bettrackr_android_gradlew",
-      "community": 28,
+      "id": "android_gradlew",
+      "community": 93,
       "norm_label": "gradlew"
     },
     {
@@ -262,8 +262,8 @@
         "kind": "bash_entrypoint"
       },
       "_origin": "ast",
-      "id": "home_ronk_projects_bettrackr_android_gradlew__entry",
-      "community": 28,
+      "id": "android_gradlew__entry",
+      "community": 93,
       "norm_label": "gradlew script"
     },
     {
@@ -276,8 +276,8 @@
         "kind": "bash_function"
       },
       "_origin": "ast",
-      "id": "home_ronk_projects_bettrackr_android_gradlew_warn",
-      "community": 28,
+      "id": "android_gradlew_warn",
+      "community": 93,
       "norm_label": "warn()"
     },
     {
@@ -290,8 +290,8 @@
         "kind": "bash_function"
       },
       "_origin": "ast",
-      "id": "home_ronk_projects_bettrackr_android_gradlew_die",
-      "community": 28,
+      "id": "android_gradlew_die",
+      "community": 93,
       "norm_label": "die()"
     },
     {
@@ -353,6 +353,56 @@
       "id": "db_betcolumns",
       "community": 5,
       "norm_label": "betcolumns.ts"
+    },
+    {
+      "label": "001_sync_bets_schema.sql",
+      "file_type": "code",
+      "source_file": "db/migrations/001_sync_bets_schema.sql",
+      "source_location": null,
+      "_origin": "ast",
+      "id": "db_migrations_001_sync_bets_schema",
+      "community": 24,
+      "norm_label": "001_sync_bets_schema.sql"
+    },
+    {
+      "label": "bets",
+      "file_type": "code",
+      "source_file": "db/migrations/001_sync_bets_schema.sql",
+      "source_location": "L36",
+      "_origin": "ast",
+      "id": "db_migrations_001_sync_bets_schema_bets",
+      "community": 24,
+      "norm_label": "bets"
+    },
+    {
+      "label": "users",
+      "file_type": "code",
+      "source_file": "db/migrations/001_sync_bets_schema.sql",
+      "source_location": "L64",
+      "_origin": "ast",
+      "id": "db_migrations_001_sync_bets_schema_users",
+      "community": 24,
+      "norm_label": "users"
+    },
+    {
+      "label": "003_cashout_and_freebet_type.sql",
+      "file_type": "code",
+      "source_file": "db/migrations/003_cashout_and_freebet_type.sql",
+      "source_location": null,
+      "_origin": "ast",
+      "id": "db_migrations_003_cashout_and_freebet_type",
+      "community": 28,
+      "norm_label": "003_cashout_and_freebet_type.sql"
+    },
+    {
+      "label": "bets",
+      "file_type": "code",
+      "source_file": "db/migrations/003_cashout_and_freebet_type.sql",
+      "source_location": "L22",
+      "_origin": "ast",
+      "id": "db_migrations_003_cashout_and_freebet_type_bets",
+      "community": 28,
+      "norm_label": "bets"
     },
     {
       "label": "pool.ts",
@@ -1191,7 +1241,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "extension_src_background_progress",
-      "community": 34,
+      "community": 29,
       "norm_label": "progress()"
     },
     {
@@ -1241,7 +1291,7 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "extension_src_background_fetchbetclicbets",
-      "community": 37,
+      "community": 29,
       "norm_label": "fetchbetclicbets()"
     },
     {
@@ -1301,7 +1351,7 @@
       "source_location": "L176",
       "_origin": "ast",
       "id": "extension_src_background_waitforbetanotokens",
-      "community": 34,
+      "community": 29,
       "norm_label": "waitforbetanotokens()"
     },
     {
@@ -1351,7 +1401,7 @@
       "source_location": "L268",
       "_origin": "ast",
       "id": "extension_src_background_fetchbetclicbetsforimport",
-      "community": 34,
+      "community": 29,
       "norm_label": "fetchbetclicbetsforimport()"
     },
     {
@@ -1361,7 +1411,7 @@
       "source_location": "L280",
       "_origin": "ast",
       "id": "extension_src_background_fetchexistingbets",
-      "community": 34,
+      "community": 29,
       "norm_label": "fetchexistingbets()"
     },
     {
@@ -1371,7 +1421,7 @@
       "source_location": "L301",
       "_origin": "ast",
       "id": "extension_src_background_importkey",
-      "community": 34,
+      "community": 29,
       "norm_label": "importkey()"
     },
     {
@@ -1401,7 +1451,7 @@
       "source_location": "L341",
       "_origin": "ast",
       "id": "extension_src_background_betpayload",
-      "community": 34,
+      "community": 29,
       "norm_label": "betpayload()"
     },
     {
@@ -1411,7 +1461,7 @@
       "source_location": "L365",
       "_origin": "ast",
       "id": "extension_src_background_postbulk",
-      "community": 34,
+      "community": 29,
       "norm_label": "postbulk()"
     },
     {
@@ -1421,7 +1471,7 @@
       "source_location": "L376",
       "_origin": "ast",
       "id": "extension_src_background_updatebet",
-      "community": 34,
+      "community": 29,
       "norm_label": "updatebet()"
     },
     {
@@ -1431,7 +1481,7 @@
       "source_location": "L388",
       "_origin": "ast",
       "id": "extension_src_background_persistmapped",
-      "community": 34,
+      "community": 29,
       "norm_label": "persistmapped()"
     },
     {
@@ -1441,7 +1491,7 @@
       "source_location": "L427",
       "_origin": "ast",
       "id": "extension_src_background_runbetclicimport",
-      "community": 34,
+      "community": 29,
       "norm_label": "runbetclicimport()"
     },
     {
@@ -1451,7 +1501,7 @@
       "source_location": "L443",
       "_origin": "ast",
       "id": "extension_src_background_solverderequestpage",
-      "community": 34,
+      "community": 85,
       "norm_label": "solverderequestpage()"
     },
     {
@@ -1461,7 +1511,7 @@
       "source_location": "L465",
       "_origin": "ast",
       "id": "extension_src_background_fetchsolverdebets",
-      "community": 34,
+      "community": 85,
       "norm_label": "fetchsolverdebets()"
     },
     {
@@ -1481,7 +1531,7 @@
       "source_location": "L497",
       "_origin": "ast",
       "id": "extension_src_background_runsolverdeimport",
-      "community": 34,
+      "community": 29,
       "norm_label": "runsolverdeimport()"
     },
     {
@@ -1491,7 +1541,7 @@
       "source_location": "L509",
       "_origin": "ast",
       "id": "extension_src_background_runbetanoimport",
-      "community": 34,
+      "community": 29,
       "norm_label": "runbetanoimport()"
     },
     {
@@ -1741,7 +1791,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "extension_src_bettrackr_identity",
-      "community": 24,
+      "community": 84,
       "norm_label": "bettrackr-identity.js"
     },
     {
@@ -1751,7 +1801,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "extension_src_bettrackr_identity_cleanbaseurl",
-      "community": 24,
+      "community": 84,
       "norm_label": "cleanbaseurl()"
     },
     {
@@ -1761,7 +1811,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "extension_src_bettrackr_identity_cleanuserid",
-      "community": 24,
+      "community": 84,
       "norm_label": "cleanuserid()"
     },
     {
@@ -1771,7 +1821,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "extension_src_bettrackr_identity_responseerror",
-      "community": 24,
+      "community": 84,
       "norm_label": "responseerror()"
     },
     {
@@ -1781,7 +1831,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "extension_src_bettrackr_identity_verifybettrackridentity",
-      "community": 24,
+      "community": 84,
       "norm_label": "verifybettrackridentity()"
     },
     {
@@ -1791,7 +1841,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "extension_src_bettrackr_identity_runafterbettrackrverification",
-      "community": 24,
+      "community": 84,
       "norm_label": "runafterbettrackrverification()"
     },
     {
@@ -1901,7 +1951,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "extension_src_import_utils",
-      "community": 85,
+      "community": 34,
       "norm_label": "import-utils.js"
     },
     {
@@ -1911,7 +1961,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "extension_src_import_utils_metadataof",
-      "community": 85,
+      "community": 34,
       "norm_label": "metadataof()"
     },
     {
@@ -1921,7 +1971,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "extension_src_import_utils_importkeyof",
-      "community": 85,
+      "community": 34,
       "norm_label": "importkeyof()"
     },
     {
@@ -1931,7 +1981,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "extension_src_import_utils_indexexistingbets",
-      "community": 85,
+      "community": 34,
       "norm_label": "indexexistingbets()"
     },
     {
@@ -1941,7 +1991,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "extension_src_import_utils_comparableexisting",
-      "community": 85,
+      "community": 34,
       "norm_label": "comparableexisting()"
     },
     {
@@ -1951,7 +2001,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "extension_src_import_utils_stable",
-      "community": 85,
+      "community": 34,
       "norm_label": "stable()"
     },
     {
@@ -1961,7 +2011,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "extension_src_import_utils_importedbetchanged",
-      "community": 85,
+      "community": 34,
       "norm_label": "importedbetchanged()"
     },
     {
@@ -1971,7 +2021,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "extension_src_import_utils_reconcileimportedbets",
-      "community": 85,
+      "community": 34,
       "norm_label": "reconcileimportedbets()"
     },
     {
@@ -2258,17 +2308,17 @@
       "label": "mapBetanoBets()",
       "file_type": "code",
       "source_file": "extension/src/mapper-betano.js",
-      "source_location": "L225",
+      "source_location": "L221",
       "_origin": "ast",
       "id": "extension_src_mapper_betano_mapbetanobets",
-      "community": 34,
+      "community": 29,
       "norm_label": "mapbetanobets()"
     },
     {
       "label": "betanoHistoryStart()",
       "file_type": "code",
       "source_file": "extension/src/mapper-betano.js",
-      "source_location": "L236",
+      "source_location": "L232",
       "_origin": "ast",
       "id": "extension_src_mapper_betano_betanohistorystart",
       "community": 1,
@@ -2281,7 +2331,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "extension_src_mapper_solverde",
-      "community": 84,
+      "community": 27,
       "norm_label": "mapper-solverde.js"
     },
     {
@@ -2291,7 +2341,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "extension_src_mapper_solverde_round2",
-      "community": 84,
+      "community": 27,
       "norm_label": "round2()"
     },
     {
@@ -2301,7 +2351,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "extension_src_mapper_solverde_num",
-      "community": 84,
+      "community": 27,
       "norm_label": "num()"
     },
     {
@@ -2311,7 +2361,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "extension_src_mapper_solverde_status_map",
-      "community": 84,
+      "community": 27,
       "norm_label": "status_map"
     },
     {
@@ -2321,7 +2371,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "extension_src_mapper_solverde_normalize",
-      "community": 84,
+      "community": 27,
       "norm_label": "normalize()"
     },
     {
@@ -2331,7 +2381,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "extension_src_mapper_solverde_iscashoutstatus",
-      "community": 84,
+      "community": 27,
       "norm_label": "iscashoutstatus()"
     },
     {
@@ -2341,7 +2391,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "extension_src_mapper_solverde_mapstatus",
-      "community": 84,
+      "community": 27,
       "norm_label": "mapstatus()"
     },
     {
@@ -2351,7 +2401,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "extension_src_mapper_solverde_formatdatetime",
-      "community": 84,
+      "community": 27,
       "norm_label": "formatdatetime()"
     },
     {
@@ -2361,7 +2411,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "extension_src_mapper_solverde_solverderef",
-      "community": 84,
+      "community": 27,
       "norm_label": "solverderef()"
     },
     {
@@ -2371,7 +2421,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "extension_src_mapper_solverde_flattenselections",
-      "community": 84,
+      "community": 27,
       "norm_label": "flattenselections()"
     },
     {
@@ -2381,7 +2431,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "extension_src_mapper_solverde_mapsolverdebet",
-      "community": 84,
+      "community": 27,
       "norm_label": "mapsolverdebet()"
     },
     {
@@ -2391,7 +2441,7 @@
       "source_location": "L147",
       "_origin": "ast",
       "id": "extension_src_mapper_solverde_mapsolverdebets",
-      "community": 84,
+      "community": 29,
       "norm_label": "mapsolverdebets()"
     },
     {
@@ -2551,7 +2601,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "extension_src_solverde_history",
-      "community": 37,
+      "community": 85,
       "norm_label": "solverde-history.js"
     },
     {
@@ -2561,7 +2611,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "extension_src_solverde_history_solverdehistorystart",
-      "community": 37,
+      "community": 85,
       "norm_label": "solverdehistorystart()"
     },
     {
@@ -2571,7 +2621,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "extension_src_solverde_history_adddays",
-      "community": 37,
+      "community": 85,
       "norm_label": "adddays()"
     },
     {
@@ -2581,7 +2631,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "extension_src_solverde_history_fetchsolverdehistory",
-      "community": 37,
+      "community": 85,
       "norm_label": "fetchsolverdehistory()"
     },
     {
@@ -2601,7 +2651,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "extension_test_bettrackr_identity_test",
-      "community": 24,
+      "community": 84,
       "norm_label": "bettrackr-identity.test.js"
     },
     {
@@ -2611,7 +2661,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "extension_test_bettrackr_identity_test_response",
-      "community": 24,
+      "community": 0,
       "norm_label": "response()"
     },
     {
@@ -2631,7 +2681,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "extension_test_dashboard_stats_test_bet",
-      "community": 34,
+      "community": 29,
       "norm_label": "bet()"
     },
     {
@@ -4081,7 +4131,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_migrate",
-      "community": 27,
+      "community": 86,
       "norm_label": "migrate.mjs"
     },
     {
@@ -4091,7 +4141,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "scripts_migrate_dir",
-      "community": 27,
+      "community": 86,
       "norm_label": "dir"
     },
     {
@@ -4101,7 +4151,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "scripts_migrate_islocaldb",
-      "community": 27,
+      "community": 86,
       "norm_label": "islocaldb"
     },
     {
@@ -4111,7 +4161,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "scripts_migrate_pool",
-      "community": 27,
+      "community": 86,
       "norm_label": "pool"
     },
     {
@@ -4121,7 +4171,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "scripts_migrate_files",
-      "community": 27,
+      "community": 86,
       "norm_label": "files"
     },
     {
@@ -5221,7 +5271,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_entry_server",
-      "community": 25,
+      "community": 2,
       "norm_label": "entry-server.tsx"
     },
     {
@@ -5231,7 +5281,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_entry_server_renderapp",
-      "community": 25,
+      "community": 2,
       "norm_label": "renderapp()"
     },
     {
@@ -5551,7 +5601,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_apibase",
-      "community": 25,
+      "community": 15,
       "norm_label": "apibase.ts"
     },
     {
@@ -5561,7 +5611,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_lib_apibase_isnativeapp",
-      "community": 25,
+      "community": 15,
       "norm_label": "isnativeapp()"
     },
     {
@@ -5571,7 +5621,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_lib_apibase_configured",
-      "community": 25,
+      "community": 15,
       "norm_label": "configured"
     },
     {
@@ -5581,7 +5631,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_apibase_apiurl",
-      "community": 25,
+      "community": 2,
       "norm_label": "apiurl()"
     },
     {
@@ -5591,7 +5641,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_authapi",
-      "community": 25,
+      "community": 2,
       "norm_label": "authapi.ts"
     },
     {
@@ -5631,7 +5681,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_lib_authapi_errorfrom",
-      "community": 25,
+      "community": 2,
       "norm_label": "errorfrom()"
     },
     {
@@ -5641,7 +5691,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_lib_authapi_savetoken",
-      "community": 25,
+      "community": 2,
       "norm_label": "savetoken()"
     },
     {
@@ -5651,7 +5701,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_lib_authapi_gettoken",
-      "community": 25,
+      "community": 2,
       "norm_label": "gettoken()"
     },
     {
@@ -5661,7 +5711,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_lib_authapi_cleartoken",
-      "community": 25,
+      "community": 2,
       "norm_label": "cleartoken()"
     },
     {
@@ -5671,7 +5721,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_lib_authapi_saveuser",
-      "community": 25,
+      "community": 2,
       "norm_label": "saveuser()"
     },
     {
@@ -5691,7 +5741,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_lib_authapi_isauthenticated",
-      "community": 25,
+      "community": 2,
       "norm_label": "isauthenticated()"
     },
     {
@@ -5701,7 +5751,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_lib_authapi_restorebrowsersession",
-      "community": 25,
+      "community": 2,
       "norm_label": "restorebrowsersession()"
     },
     {
@@ -5711,7 +5761,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "src_lib_authapi_register",
-      "community": 25,
+      "community": 2,
       "norm_label": "register()"
     },
     {
@@ -5721,7 +5771,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "src_lib_authapi_login",
-      "community": 25,
+      "community": 2,
       "norm_label": "login()"
     },
     {
@@ -5731,7 +5781,7 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "src_lib_authapi_logout",
-      "community": 25,
+      "community": 2,
       "norm_label": "logout()"
     },
     {
@@ -5751,7 +5801,7 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "src_lib_authapi_fetchcurrentuser",
-      "community": 25,
+      "community": 2,
       "norm_label": "fetchcurrentuser()"
     },
     {
@@ -6221,7 +6271,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_liveupdate",
-      "community": 25,
+      "community": 15,
       "norm_label": "liveupdate.ts"
     },
     {
@@ -6231,7 +6281,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_lib_liveupdate_initliveupdate",
-      "community": 25,
+      "community": 15,
       "norm_label": "initliveupdate()"
     },
     {
@@ -6241,7 +6291,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_settingsapi",
-      "community": 2,
+      "community": 0,
       "norm_label": "settingsapi.ts"
     },
     {
@@ -6251,7 +6301,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_lib_settingsapi_supported_bookmakers",
-      "community": 2,
+      "community": 0,
       "norm_label": "supported_bookmakers"
     },
     {
@@ -6261,7 +6311,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_lib_settingsapi_usersettings",
-      "community": 2,
+      "community": 0,
       "norm_label": "usersettings"
     },
     {
@@ -6271,7 +6321,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_lib_settingsapi_normalizesettings",
-      "community": 2,
+      "community": 0,
       "norm_label": "normalizesettings()"
     },
     {
@@ -6281,7 +6331,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_lib_settingsapi_fetchsettings",
-      "community": 2,
+      "community": 0,
       "norm_label": "fetchsettings()"
     },
     {
@@ -6291,7 +6341,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_lib_settingsapi_updateenabledbookmakers",
-      "community": 2,
+      "community": 0,
       "norm_label": "updateenabledbookmakers()"
     },
     {
@@ -6391,7 +6441,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_main",
-      "community": 25,
+      "community": 15,
       "norm_label": "main.tsx"
     },
     {
@@ -6491,7 +6541,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "src_types_thememode",
-      "community": 0,
+      "community": 25,
       "norm_label": "thememode"
     },
     {
@@ -6608,7 +6658,7 @@
       "label": "calculateDashboardStats()",
       "file_type": "code",
       "source_file": "src/utils.ts",
-      "source_location": "L148",
+      "source_location": "L119",
       "_origin": "ast",
       "id": "src_utils_calculatedashboardstats",
       "community": 0,
@@ -6618,7 +6668,7 @@
       "label": "INITIAL_BETS",
       "file_type": "code",
       "source_file": "src/utils.ts",
-      "source_location": "L231",
+      "source_location": "L202",
       "_origin": "ast",
       "id": "src_utils_initial_bets",
       "community": 25,
@@ -6981,7 +7031,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "vite_config_ssr",
-      "community": 29,
+      "community": 87,
       "norm_label": "vite.config.ssr.ts"
     },
     {
@@ -7481,7 +7531,7 @@
       "source_location": "L246",
       "_origin": "ast",
       "id": "extension_src_mapper_mapbetclicbets",
-      "community": 34,
+      "community": 29,
       "norm_label": "mapbetclicbets"
     },
     {
@@ -8474,8 +8524,8 @@
       "source_file": "android/gradlew",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "home_ronk_projects_bettrackr_android_gradlew",
-      "target": "home_ronk_projects_bettrackr_android_gradlew__entry",
+      "source": "android_gradlew",
+      "target": "android_gradlew__entry",
       "confidence_score": 1.0
     },
     {
@@ -8484,8 +8534,8 @@
       "source_file": "android/gradlew",
       "source_location": "L98",
       "weight": 1.0,
-      "source": "home_ronk_projects_bettrackr_android_gradlew",
-      "target": "home_ronk_projects_bettrackr_android_gradlew_die",
+      "source": "android_gradlew",
+      "target": "android_gradlew_die",
       "confidence_score": 1.0
     },
     {
@@ -8494,8 +8544,8 @@
       "source_file": "android/gradlew",
       "source_location": "L94",
       "weight": 1.0,
-      "source": "home_ronk_projects_bettrackr_android_gradlew",
-      "target": "home_ronk_projects_bettrackr_android_gradlew_warn",
+      "source": "android_gradlew",
+      "target": "android_gradlew_warn",
       "confidence_score": 1.0
     },
     {
@@ -8505,8 +8555,8 @@
       "source_location": "L129",
       "weight": 1.0,
       "context": "call",
-      "source": "home_ronk_projects_bettrackr_android_gradlew__entry",
-      "target": "home_ronk_projects_bettrackr_android_gradlew_die",
+      "source": "android_gradlew__entry",
+      "target": "android_gradlew_die",
       "confidence_score": 1.0
     },
     {
@@ -8516,8 +8566,8 @@
       "source_location": "L152",
       "weight": 1.0,
       "context": "call",
-      "source": "home_ronk_projects_bettrackr_android_gradlew__entry",
-      "target": "home_ronk_projects_bettrackr_android_gradlew_warn",
+      "source": "android_gradlew__entry",
+      "target": "android_gradlew_warn",
       "confidence_score": 1.0
     },
     {
@@ -8550,6 +8600,36 @@
       "weight": 1.0,
       "source": "server",
       "target": "db_betcolumns",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "db/migrations/001_sync_bets_schema.sql",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "db_migrations_001_sync_bets_schema",
+      "target": "db_migrations_001_sync_bets_schema_bets",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "db/migrations/001_sync_bets_schema.sql",
+      "source_location": "L64",
+      "weight": 1.0,
+      "source": "db_migrations_001_sync_bets_schema",
+      "target": "db_migrations_001_sync_bets_schema_users",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "db/migrations/003_cashout_and_freebet_type.sql",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "db_migrations_003_cashout_and_freebet_type",
+      "target": "db_migrations_003_cashout_and_freebet_type_bets",
       "confidence_score": 1.0
     },
     {
@@ -11733,7 +11813,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/mapper-betano.js",
-      "source_location": "L236",
+      "source_location": "L232",
       "weight": 1.0,
       "source": "extension_src_mapper_betano",
       "target": "extension_src_mapper_betano_betanohistorystart",
@@ -11803,7 +11883,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/mapper-betano.js",
-      "source_location": "L225",
+      "source_location": "L221",
       "weight": 1.0,
       "source": "extension_src_mapper_betano",
       "target": "extension_src_mapper_betano_mapbetanobets",
@@ -12005,7 +12085,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/mapper-betano.js",
-      "source_location": "L206",
+      "source_location": "L202",
       "weight": 1.0,
       "source": "extension_src_mapper_betano_mapbetanobet",
       "target": "extension_src_mapper_betano_datetime",
@@ -12060,7 +12140,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/mapper-betano.js",
-      "source_location": "L208",
+      "source_location": "L204",
       "weight": 1.0,
       "source": "extension_src_mapper_betano_mapbetanobet",
       "target": "extension_src_mapper_betano_flattenselections",
@@ -12071,7 +12151,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/mapper-betano.js",
-      "source_location": "L229",
+      "source_location": "L225",
       "weight": 1.0,
       "source": "extension_src_mapper_betano_mapbetanobets",
       "target": "extension_src_mapper_betano_mapbetanobet",
@@ -12083,7 +12163,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "extension/src/mapper-betano.js",
-      "source_location": "L229",
+      "source_location": "L225",
       "weight": 1.0,
       "source": "extension_src_mapper_betano_mapbetanobets",
       "target": "extension_test_dashboard_stats_test_bet"
@@ -15906,6 +15986,17 @@
       "target": "src_app_nav_items"
     },
     {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/App.tsx",
+      "source_location": "L90",
+      "weight": 1.0,
+      "source": "src_app_appprops",
+      "target": "src_initialdata_initialappdata",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -16036,6 +16127,28 @@
       "weight": 1.0,
       "source": "src_app_app",
       "target": "src_utils_safenum"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/entry-server.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "src_entry_server",
+      "target": "src_app_app",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_main",
+      "target": "src_app_app",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -21775,7 +21888,7 @@
       "context": "export",
       "confidence": "EXTRACTED",
       "source_file": "src/utils.ts",
-      "source_location": "L436",
+      "source_location": "L407",
       "weight": 1.0,
       "source": "src_utils",
       "target": "src_lib_bookmakers",
@@ -21819,7 +21932,7 @@
       "context": "re-export",
       "confidence": "EXTRACTED",
       "source_file": "src/utils.ts",
-      "source_location": "L436",
+      "source_location": "L407",
       "weight": 1.0,
       "source": "src_utils",
       "target": "src_lib_bookmakers_available_bookmakers",
@@ -22479,7 +22592,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/utils.ts",
-      "source_location": "L148",
+      "source_location": "L119",
       "weight": 1.0,
       "source": "src_utils",
       "target": "src_utils_calculatedashboardstats",
@@ -22489,7 +22602,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/utils.ts",
-      "source_location": "L231",
+      "source_location": "L202",
       "weight": 1.0,
       "source": "src_utils",
       "target": "src_utils_initial_bets",
@@ -22510,7 +22623,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/utils.ts",
-      "source_location": "L170",
+      "source_location": "L141",
       "weight": 1.0,
       "source": "src_utils_calculatedashboardstats",
       "target": "src_utils_safenum",
@@ -23523,5 +23636,5 @@
       "source_file": "public/pwa-512x512.png"
     }
   ],
-  "built_at_commit": "ff9363c5899828ac36403d17469c2ec72d3a49c4"
+  "built_at_commit": "a455dcbbce659a8dbe90e1044507e1df214c2c82"
 }

@@ -174,20 +174,16 @@ export function mapBetanoBet(bet) {
   const isCashout = status === "CASHOUT";
   const settledReturn = round2(parseBetanoMoney(bet.Return));
   const possibleReturn = round2(parseBetanoMoney(bet.PossibleWinnings) || stake * odd);
-  const isLoss = status === "PERDIDA" || status === "MEIO_PERDIDA";
 
   let finalReturn;
   let netProfit;
   if (status === "POR_LIQUIDAR") {
     finalReturn = 0;
     netProfit = 0;
-  } else if (promotion.isRiskFree && !isCashout) {
-    // Aposta sem risco: uma vitória paga como uma aposta normal (retorno real
-    // menos a stake); numa derrota a stake é devolvida, por isso o resultado
-    // é neutro (net 0). Espelha o ramo isRiskFree de calculateBetReturnAndProfit.
-    finalReturn = isLoss ? stake : settledReturn;
-    netProfit = isLoss ? 0 : round2(settledReturn - stake);
   } else {
+    // Aposta sem risco: a stake é dinheiro real e conta para o lucro como uma
+    // aposta normal (net = retorno - stake); uma derrota perde a stake. A
+    // freebet de reembolso é registada à parte. Espelha calculateBetReturnAndProfit.
     finalReturn = settledReturn;
     netProfit = promotion.isFreebet ? finalReturn : round2(finalReturn - stake);
   }

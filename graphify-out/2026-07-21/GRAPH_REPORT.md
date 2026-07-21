@@ -1,16 +1,16 @@
-# Graph Report - gestordebets-hotfix  (2026-07-21)
+# Graph Report - bettrackr  (2026-07-21)
 
 ## Corpus Check
-- 115 files · ~145,620 words
+- 115 files · ~145,088 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 803 nodes · 1427 edges · 96 communities (41 shown, 55 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 38 edges (avg confidence: 0.71)
+- 804 nodes · 1429 edges · 102 communities (45 shown, 57 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 39 edges (avg confidence: 0.72)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a07b5596`
+- Built from commit: `18210c66`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -44,8 +44,11 @@
 - BetTrackr Token Bridge
 - Status Constraint Migration
 - Cashout Freebet Migration
+- persistMapped
 - Betclic Content Bridge
 - betStatus.ts
+- betStatus.ts
+- import-utils.js
 - BetTrackr — Extensão de importação de apostas
 - Extension Usage Instructions
 - Pre-Mount Theme Bootstrap
@@ -92,11 +95,15 @@
 - Language Options
 - Manual Import Improvements
 - BetTrackr Product Backlog
+- bettrackr-identity.js
+- fetchSolverdeHistory
+- migrate.mjs
 - bundle-app.mjs
 - gen-icons.mjs
 - ExampleInstrumentedTest.java
 - Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior
 - ExampleUnitTest.java
+- gradlew
 - MainActivity.java
 - capacitor.config.ts
 - CLAUDE.md
@@ -105,8 +112,8 @@
 1. `authFetch()` - 35 edges
 2. `parseJsonResponse()` - 34 edges
 3. `Bet` - 20 edges
-4. `App()` - 15 edges
-5. `mapBetFromApi()` - 15 edges
+4. `App()` - 17 edges
+5. `mapBetFromApi()` - 16 edges
 6. `safeNum()` - 15 edges
 7. `compilerOptions` - 14 edges
 8. `normalizeBetStatus()` - 13 edges
@@ -120,10 +127,10 @@
   src/components/BetsManager.tsx → extension/test/dashboard-stats.test.ts
 - `useBets()` --indirect_call--> `bet()`  [INFERRED]
   src/hooks/useBets.ts → extension/test/dashboard-stats.test.ts
+- `loadInitialAppData()` --indirect_call--> `mapBetFromApi()`  [INFERRED]
+  server.ts → src/lib/betsApi.ts
 - `React Application Mount Point` --implements--> `BetTrackr`  [INFERRED]
   index.html → README.md
-- `parse()` --calls--> `readFilters()`  [EXTRACTED]
-  extension/test/filter-params.test.ts → src/lib/filterParams.ts
 
 ## Import Cycles
 - None detected.
@@ -135,19 +142,19 @@
 - **Sports Betting Tracking Motif** — public_pwa_192x192_betting_slip, public_pwa_192x192_soccer_ball, public_pwa_192x192_performance_bar_chart [INFERRED 0.85]
 - **Sports Analytics Branding** — public_pwa_512x512_bettrackr_pwa_icon, public_pwa_512x512_football, public_pwa_512x512_performance_analytics, public_pwa_512x512_upward_trend, public_pwa_512x512_betting_ticket [INFERRED 0.95]
 
-## Communities (96 total, 55 thin omitted)
+## Communities (102 total, 57 thin omitted)
 
 ### Community 0 - "Bet Lifecycle UI"
 Cohesion: 0.06
-Nodes (72): parse(), now, react, react, BetsManager(), BetsManagerProps, SortDirection, SortField (+64 more)
+Nodes (63): parse(), now, react, react, BetsManager(), BetsManagerProps, SortDirection, SortField (+55 more)
 
 ### Community 1 - "Extension Import Orchestration"
-Cohesion: 0.05
-Nodes (80): accountsForBookmaker(), betanoRequestId(), betanoTokenWaiters, betclicReadStateFn(), betPayload(), BETTRACKR_APP_URLS, configForImport(), detectBookmakerUsernames() (+72 more)
+Cohesion: 0.10
+Nodes (35): accountsForBookmaker(), betanoRequestId(), betanoTokenWaiters, betclicReadStateFn(), BETTRACKR_APP_URLS, configForImport(), detectBookmakerUsernames(), ensureBetanoHistoryTab() (+27 more)
 
 ### Community 2 - "App Shell and State"
-Cohesion: 0.10
-Nodes (48): AIInsights(), AIInsightsProps, InsightsResponse, Pick, Social(), SocialProps, statusMeta(), useAccounts() (+40 more)
+Cohesion: 0.11
+Nodes (45): AIInsights(), AIInsightsProps, InsightsResponse, Pick, Social(), SocialProps, statusMeta(), useAccounts() (+37 more)
 
 ### Community 3 - "Runtime Dependencies"
 Cohesion: 0.05
@@ -159,7 +166,7 @@ Nodes (33): adm-zip, @capacitor/cli, esbuild, devDependencies, adm-zip, @capacit
 
 ### Community 5 - "API Security and Database"
 Cohesion: 0.05
-Nodes (44): connect(), getPool(), query(), extractJson(), getGeminiClient(), AuthenticatedRequest, authenticatedUserFromRequest(), authenticateToken() (+36 more)
+Nodes (42): connect(), getPool(), query(), extractJson(), getGeminiClient(), AuthenticatedRequest, authenticatedUserFromRequest(), authenticateToken() (+34 more)
 
 ### Community 6 - "History and Reconciliation"
 Cohesion: 0.28
@@ -182,8 +189,8 @@ Cohesion: 0.22
 Nodes (8): React Application Mount Point, API, App Android (Capacitor), Arquitetura, BetTrackr, Configuração, Scripts, Stack
 
 ### Community 15 - "Extension Import Settings"
-Cohesion: 0.14
-Nodes (15): BetclicImport(), BetclicImportProps, EXTENSION_BOOKIE_KEYS, EXTENSION_BOOKIES, importSummary(), loadAccountChoices(), EnabledBookmakersCard(), EnabledBookmakersCardProps (+7 more)
+Cohesion: 0.18
+Nodes (12): BetclicImport(), BetclicImportProps, EXTENSION_BOOKIE_KEYS, EXTENSION_BOOKIES, importSummary(), loadAccountChoices(), EnabledBookmakersCard(), EnabledBookmakersCardProps (+4 more)
 
 ### Community 16 - "Vercel Deployment"
 Cohesion: 0.29
@@ -213,33 +220,49 @@ Nodes (4): extDir, outDir, outFile, root
 Cohesion: 0.32
 Nodes (4): looksLikeBetsApi(), looksLikeIdentityApi(), report(), sniffIdentity()
 
-### Community 24 - "Schema Migration Bootstrap"
-Cohesion: 0.46
-Nodes (6): cleanBaseUrl(), cleanUserId(), responseError(), runAfterBettrackrVerification(), verifyBettrackrIdentity(), response()
-
 ### Community 25 - "Canonical Database Schema"
 Cohesion: 0.06
-Nodes (48): AIInsights, App(), AppProps, AppTab, BetsManager, BrandMark(), Dashboard, NAV_ITEMS (+40 more)
+Nodes (54): AIInsights, App(), AppProps, AppTab, BetsManager, BrandMark(), Dashboard, NAV_ITEMS (+46 more)
 
 ### Community 27 - "Status Constraint Migration"
-Cohesion: 0.40
-Nodes (4): dir, files, isLocalDb, pool
+Cohesion: 0.29
+Nodes (13): runSolverdeImport(), flattenSelections(), formatDateTime(), isCashoutStatus(), mapSolverdeBet(), mapSolverdeBets(), mapStatus(), normalize() (+5 more)
 
-### Community 28 - "Cashout Freebet Migration"
-Cohesion: 0.83
-Nodes (3): gradlew script, die(), warn()
+### Community 29 - "persistMapped"
+Cohesion: 0.19
+Nodes (13): betPayload(), fetchBetclicBets(), fetchBetclicBetsForImport(), fetchExistingBets(), importKey(), needsUpdate(), persistMapped(), postBulk() (+5 more)
 
 ### Community 32 - "Betclic Content Bridge"
 Cohesion: 0.70
 Nodes (4): betclicLoggedIn(), captureBetclicUsername(), extensionAlive(), extractBetclicUsername()
 
+### Community 34 - "betStatus.ts"
+Cohesion: 0.35
+Nodes (9): CASHOUT_TOKENS, compactStatusToken(), hasCashoutSignal(), isCashoutStatusValue(), normalizeBetStatus(), parseBetMetadata(), STATUS_ALIASES, statusToken() (+1 more)
+
 ### Community 36 - "betStatus.ts"
-Cohesion: 0.31
-Nodes (13): betanoRef(), CASHOUT_STATUS_TOKENS, dateTime(), flattenSelections(), isBetanoCashout(), mapBetanoBet(), mapBetanoSelectionResult(), mapBetanoStatus() (+5 more)
+Cohesion: 0.29
+Nodes (14): betanoRef(), CASHOUT_STATUS_TOKENS, dateTime(), flattenSelections(), isBetanoCashout(), mapBetanoBet(), mapBetanoBets(), mapBetanoSelectionResult() (+6 more)
+
+### Community 37 - "import-utils.js"
+Cohesion: 0.22
+Nodes (13): createSixMonthWindows(), EARLIEST_HISTORY, fetchBetanoHistory(), fetchPages(), fetchBetclicHistory(), comparableExisting(), importedBetChanged(), importKeyOf() (+5 more)
 
 ### Community 38 - "BetTrackr — Extensão de importação de apostas"
 Cohesion: 0.29
 Nodes (6): BetTrackr — Extensão de importação de apostas, Como funciona, Ficheiros, Instalação (modo programador), Limitações conhecidas, Utilização
+
+### Community 84 - "bettrackr-identity.js"
+Cohesion: 0.46
+Nodes (6): cleanBaseUrl(), cleanUserId(), responseError(), runAfterBettrackrVerification(), verifyBettrackrIdentity(), response()
+
+### Community 85 - "fetchSolverdeHistory"
+Cohesion: 0.47
+Nodes (5): fetchSolverdeBets(), solverdeRequestPage(), addDays(), fetchSolverdeHistory(), solverdeHistoryStart()
+
+### Community 86 - "migrate.mjs"
+Cohesion: 0.40
+Nodes (4): dir, files, isLocalDb, pool
 
 ### Community 88 - "bundle-app.mjs"
 Cohesion: 0.33
@@ -257,25 +280,29 @@ Nodes (3): ExampleInstrumentedTest, Test, RunWith
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior, Source Nodes
 
+### Community 93 - "gradlew"
+Cohesion: 0.83
+Nodes (3): gradlew script, die(), warn()
+
 ## Knowledge Gaps
-- **287 isolated node(s):** `config`, `manifest_version`, `name`, `version`, `description` (+282 more)
+- **289 isolated node(s):** `config`, `bets`, `users`, `bets`, `manifest_version` (+284 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **55 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **57 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `bet()` connect `Extension Import Orchestration` to `Bet Lifecycle UI`, `App Shell and State`?**
-  _High betweenness centrality (0.126) - this node is a cross-community bridge._
+- **Why does `bet()` connect `Status Constraint Migration` to `Bet Lifecycle UI`, `Extension Import Orchestration`, `App Shell and State`, `betStatus.ts`, `import-utils.js`, `fetchSolverdeHistory`, `persistMapped`?**
+  _High betweenness centrality (0.124) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `Runtime Dependencies` to `Bet Lifecycle UI`?**
-  _High betweenness centrality (0.107) - this node is a cross-community bridge._
+  _High betweenness centrality (0.106) - this node is a cross-community bridge._
 - **Why does `react` connect `Bet Lifecycle UI` to `Runtime Dependencies`?**
-  _High betweenness centrality (0.105) - this node is a cross-community bridge._
-- **What connects `config`, `manifest_version`, `name` to the rest of the system?**
-  _287 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _High betweenness centrality (0.104) - this node is a cross-community bridge._
+- **What connects `config`, `bets`, `users` to the rest of the system?**
+  _289 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Bet Lifecycle UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.05948295584534431 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06376726417866588 - nodes in this community are weakly interconnected._
 - **Should `Extension Import Orchestration` be split into smaller, more focused modules?**
-  _Cohesion score 0.05107252298263534 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09957325746799431 - nodes in this community are weakly interconnected._
 - **Should `App Shell and State` be split into smaller, more focused modules?**
-  _Cohesion score 0.102843315184513 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11250873515024458 - nodes in this community are weakly interconnected._

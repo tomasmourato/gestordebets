@@ -175,10 +175,11 @@ describe("Betano mapper", () => {
     expect(unsupported).toBe(0);
     expect(bets).toHaveLength(4);
 
-    // Aposta sem risco perdida: stake real, mas a derrota é compensada (stake
-    // devolvida) -> resultado neutro, não -5.
+    // Aposta sem risco perdida: a stake é dinheiro real, por isso a derrota
+    // perde a stake como uma aposta normal -> net -5 (a freebet devolvida é
+    // registada à parte).
     expect(bets[0]).toMatchObject({
-      status: "PERDIDA", isFreebet: false, isRiskFree: true, finalReturn: 5, netProfit: 0,
+      status: "PERDIDA", isFreebet: false, isRiskFree: true, finalReturn: 0, netProfit: -5,
     });
     // Aposta sem risco ganha: paga como uma aposta normal.
     expect(bets[1]).toMatchObject({
@@ -201,7 +202,7 @@ describe("Betano mapper", () => {
       BetId: "rf-bonustype", Type: "Single", Settled: true, Status: 3,
       Stake: "20,00 €", Return: "0,00 €", DecimalOdds: 2, BonusType: 3, BonusTokens: [],
     }]).bets;
-    expect(riskFreeLoss).toMatchObject({ isRiskFree: true, isFreebet: false, netProfit: 0, finalReturn: 20 });
+    expect(riskFreeLoss).toMatchObject({ isRiskFree: true, isFreebet: false, netProfit: -20, finalReturn: 0 });
 
     const [riskFreeWin] = mapBetanoBets([{
       BetId: "rf-win", Type: "Single", Settled: true, Status: 2,

@@ -46,41 +46,12 @@ export function calculateBetReturnAndProfit(
     };
   }
 
-  // Aposta sem risco: stake é dinheiro real (conta para o stake total, tal
-  // como uma aposta normal) e uma vitória paga como uma aposta normal. A
-  // diferença está na derrota: a stake é devolvida (via freebet registada à
-  // parte), por isso o resultado desta aposta é neutro (net 0), como uma
-  // anulada. Tem prioridade sobre o ramo freebet.
-  if (isRiskFree) {
-    switch (status) {
-      case "GANHA":
-        finalReturn = stake * odd;
-        netProfit = finalReturn - stake;
-        break;
-      case "PERDIDA":
-        finalReturn = stake; // stake devolvida como freebet -> break-even aqui
-        netProfit = 0;
-        break;
-      case "ANULADA":
-        finalReturn = stake;
-        netProfit = 0;
-        break;
-      case "MEIO_GANHA":
-        finalReturn = (stake / 2) * odd + (stake / 2);
-        netProfit = finalReturn - stake;
-        break;
-      case "MEIO_PERDIDA":
-        // Metade push + metade perdida devolvida como freebet -> neutro.
-        finalReturn = stake;
-        netProfit = 0;
-        break;
-    }
-    return {
-      potentialReturn: Number(potentialReturn.toFixed(2)),
-      finalReturn: Number(finalReturn.toFixed(2)),
-      netProfit: Number(netProfit.toFixed(2)),
-    };
-  }
+  // Aposta sem risco: a stake é dinheiro REAL e conta para o lucro exatamente
+  // como uma aposta normal — uma derrota perde a stake (net -stake). A freebet
+  // de reembolso, quando existe, é dinheiro promocional registado à parte e não
+  // entra aqui. Por isso não há ramo dedicado: como isRiskFree implica
+  // isFreebet=false, cai no cálculo de aposta normal (!isFreebet) abaixo.
+  void isRiskFree;
 
   if (!isFreebet) {
     switch (status) {

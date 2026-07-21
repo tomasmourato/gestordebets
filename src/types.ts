@@ -43,9 +43,9 @@ export interface Bet {
   odd: number; // Multiplied odds of all selections
   isFreebet: boolean;
   freebetType?: FreebetType; // só relevante quando isFreebet; default resolvido pela casa
-  // Aposta sem risco: stake é dinheiro REAL, mas uma derrota total devolve a
-  // stake (tipicamente como freebet, registada à parte) -> break-even nesta
-  // aposta. Mutuamente exclusivo com isFreebet.
+  // Aposta sem risco: stake é dinheiro REAL e conta para o lucro como uma
+  // aposta normal — uma derrota perde a stake. A freebet de reembolso, quando
+  // existe, é registada à parte. Mutuamente exclusivo com isFreebet.
   isRiskFree?: boolean;
   // Aposta ignorada: continua visível no histórico mas é excluída de todas as
   // estatísticas (ex.: uma aposta feita para um amigo). O motivo, quando dado,

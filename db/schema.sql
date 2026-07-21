@@ -78,7 +78,8 @@ CREATE TABLE IF NOT EXISTS bets (
   is_freebet BOOLEAN DEFAULT FALSE,
   freebet_type TEXT
     CONSTRAINT bets_freebet_type_check CHECK (freebet_type IS NULL OR freebet_type IN ('SNR', 'SR')),
-  -- Aposta sem risco: stake real, mas derrota total devolve a stake (net 0).
+  -- Aposta sem risco: stake real e conta para o lucro como aposta normal
+  -- (derrota perde a stake); a freebet de reembolso é registada à parte.
   is_risk_free BOOLEAN NOT NULL DEFAULT FALSE,
   -- Aposta ignorada: visível no histórico mas excluída das estatísticas.
   is_ignored BOOLEAN NOT NULL DEFAULT FALSE,

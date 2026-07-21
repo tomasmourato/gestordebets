@@ -1,16 +1,16 @@
-# Graph Report - gestordebets-hotfix  (2026-07-21)
+# Graph Report - bettrackr  (2026-07-21)
 
 ## Corpus Check
-- 115 files · ~145,832 words
+- 117 files · ~145,996 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 804 nodes · 1428 edges · 100 communities (45 shown, 55 thin omitted)
+- 809 nodes · 1434 edges · 103 communities (46 shown, 57 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 38 edges (avg confidence: 0.71)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ff9363c5`
+- Built from commit: `a455dcbb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -44,10 +44,11 @@
 - BetTrackr Token Bridge
 - Status Constraint Migration
 - Cashout Freebet Migration
+- persistMapped
 - Betclic Content Bridge
-- bet
 - betStatus.ts
-- importers.test.js
+- betStatus.ts
+- import-utils.js
 - BetTrackr — Extensão de importação de apostas
 - Extension Usage Instructions
 - Pre-Mount Theme Bootstrap
@@ -94,13 +95,15 @@
 - Language Options
 - Manual Import Improvements
 - BetTrackr Product Backlog
-- mapper-solverde.js
-- import-utils.js
+- bettrackr-identity.js
+- fetchSolverdeHistory
+- migrate.mjs
 - bundle-app.mjs
 - gen-icons.mjs
 - ExampleInstrumentedTest.java
 - Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior
 - ExampleUnitTest.java
+- gradlew
 - MainActivity.java
 - capacitor.config.ts
 - CLAUDE.md
@@ -109,7 +112,7 @@
 1. `authFetch()` - 35 edges
 2. `parseJsonResponse()` - 34 edges
 3. `Bet` - 20 edges
-4. `App()` - 15 edges
+4. `App()` - 17 edges
 5. `mapBetFromApi()` - 15 edges
 6. `safeNum()` - 15 edges
 7. `compilerOptions` - 14 edges
@@ -139,19 +142,19 @@
 - **Sports Betting Tracking Motif** — public_pwa_192x192_betting_slip, public_pwa_192x192_soccer_ball, public_pwa_192x192_performance_bar_chart [INFERRED 0.85]
 - **Sports Analytics Branding** — public_pwa_512x512_bettrackr_pwa_icon, public_pwa_512x512_football, public_pwa_512x512_performance_analytics, public_pwa_512x512_upward_trend, public_pwa_512x512_betting_ticket [INFERRED 0.95]
 
-## Communities (100 total, 55 thin omitted)
+## Communities (103 total, 57 thin omitted)
 
 ### Community 0 - "Bet Lifecycle UI"
-Cohesion: 0.06
-Nodes (72): parse(), now, react, react, BetsManager(), BetsManagerProps, SortDirection, SortField (+64 more)
+Cohesion: 0.05
+Nodes (77): response(), parse(), now, react, react, BetsManager(), BetsManagerProps, SortDirection (+69 more)
 
 ### Community 1 - "Extension Import Orchestration"
 Cohesion: 0.10
 Nodes (35): accountsForBookmaker(), betanoRequestId(), betanoTokenWaiters, betclicReadStateFn(), BETTRACKR_APP_URLS, configForImport(), detectBookmakerUsernames(), ensureBetanoHistoryTab() (+27 more)
 
 ### Community 2 - "App Shell and State"
-Cohesion: 0.10
-Nodes (48): AIInsights(), AIInsightsProps, InsightsResponse, Pick, Social(), SocialProps, statusMeta(), useAccounts() (+40 more)
+Cohesion: 0.09
+Nodes (55): AIInsights(), AIInsightsProps, InsightsResponse, Pick, Social(), SocialProps, statusMeta(), useAccounts() (+47 more)
 
 ### Community 3 - "Runtime Dependencies"
 Cohesion: 0.05
@@ -186,8 +189,8 @@ Cohesion: 0.22
 Nodes (8): React Application Mount Point, API, App Android (Capacitor), Arquitetura, BetTrackr, Configuração, Scripts, Stack
 
 ### Community 15 - "Extension Import Settings"
-Cohesion: 0.18
-Nodes (12): BetclicImport(), BetclicImportProps, EXTENSION_BOOKIE_KEYS, EXTENSION_BOOKIES, importSummary(), loadAccountChoices(), EnabledBookmakersCard(), EnabledBookmakersCardProps (+4 more)
+Cohesion: 0.14
+Nodes (15): BetclicImport(), BetclicImportProps, EXTENSION_BOOKIE_KEYS, EXTENSION_BOOKIES, importSummary(), loadAccountChoices(), EnabledBookmakersCard(), EnabledBookmakersCardProps (+7 more)
 
 ### Community 16 - "Vercel Deployment"
 Cohesion: 0.29
@@ -217,49 +220,49 @@ Nodes (4): extDir, outDir, outFile, root
 Cohesion: 0.32
 Nodes (4): looksLikeBetsApi(), looksLikeIdentityApi(), report(), sniffIdentity()
 
-### Community 24 - "Schema Migration Bootstrap"
-Cohesion: 0.46
-Nodes (6): cleanBaseUrl(), cleanUserId(), responseError(), runAfterBettrackrVerification(), verifyBettrackrIdentity(), response()
-
 ### Community 25 - "Canonical Database Schema"
 Cohesion: 0.06
-Nodes (51): AIInsights, App(), AppProps, AppTab, BetsManager, BrandMark(), Dashboard, NAV_ITEMS (+43 more)
+Nodes (37): AIInsights, App(), AppProps, AppTab, BetsManager, BrandMark(), Dashboard, NAV_ITEMS (+29 more)
 
 ### Community 27 - "Status Constraint Migration"
-Cohesion: 0.40
-Nodes (4): dir, files, isLocalDb, pool
+Cohesion: 0.36
+Nodes (10): flattenSelections(), formatDateTime(), isCashoutStatus(), mapSolverdeBet(), mapStatus(), normalize(), num(), round2() (+2 more)
 
-### Community 28 - "Cashout Freebet Migration"
-Cohesion: 0.83
-Nodes (3): gradlew script, die(), warn()
+### Community 29 - "persistMapped"
+Cohesion: 0.20
+Nodes (17): betPayload(), fetchBetclicBets(), fetchBetclicBetsForImport(), fetchExistingBets(), importKey(), persistMapped(), postBulk(), progress() (+9 more)
 
 ### Community 32 - "Betclic Content Bridge"
 Cohesion: 0.70
 Nodes (4): betclicLoggedIn(), captureBetclicUsername(), extensionAlive(), extractBetclicUsername()
 
-### Community 34 - "bet"
-Cohesion: 0.19
-Nodes (17): betPayload(), fetchBetclicBetsForImport(), fetchExistingBets(), fetchSolverdeBets(), importKey(), persistMapped(), postBulk(), progress() (+9 more)
+### Community 34 - "betStatus.ts"
+Cohesion: 0.50
+Nodes (7): comparableExisting(), importedBetChanged(), importKeyOf(), indexExistingBets(), metadataOf(), reconcileImportedBets(), stable()
 
 ### Community 36 - "betStatus.ts"
 Cohesion: 0.31
 Nodes (13): betanoRef(), CASHOUT_STATUS_TOKENS, dateTime(), flattenSelections(), isBetanoCashout(), mapBetanoBet(), mapBetanoSelectionResult(), mapBetanoStatus() (+5 more)
 
-### Community 37 - "importers.test.js"
-Cohesion: 0.23
-Nodes (10): fetchBetclicBets(), createSixMonthWindows(), EARLIEST_HISTORY, fetchBetanoHistory(), fetchPages(), fetchBetclicHistory(), mapBetclicBet, addDays() (+2 more)
+### Community 37 - "import-utils.js"
+Cohesion: 0.36
+Nodes (6): createSixMonthWindows(), EARLIEST_HISTORY, fetchBetanoHistory(), fetchPages(), fetchBetclicHistory(), mapBetclicBet
 
 ### Community 38 - "BetTrackr — Extensão de importação de apostas"
 Cohesion: 0.29
 Nodes (6): BetTrackr — Extensão de importação de apostas, Como funciona, Ficheiros, Instalação (modo programador), Limitações conhecidas, Utilização
 
-### Community 84 - "mapper-solverde.js"
-Cohesion: 0.33
-Nodes (11): flattenSelections(), formatDateTime(), isCashoutStatus(), mapSolverdeBet(), mapSolverdeBets(), mapStatus(), normalize(), num() (+3 more)
+### Community 84 - "bettrackr-identity.js"
+Cohesion: 0.57
+Nodes (5): cleanBaseUrl(), cleanUserId(), responseError(), runAfterBettrackrVerification(), verifyBettrackrIdentity()
 
-### Community 85 - "import-utils.js"
-Cohesion: 0.50
-Nodes (7): comparableExisting(), importedBetChanged(), importKeyOf(), indexExistingBets(), metadataOf(), reconcileImportedBets(), stable()
+### Community 85 - "fetchSolverdeHistory"
+Cohesion: 0.47
+Nodes (5): fetchSolverdeBets(), solverdeRequestPage(), addDays(), fetchSolverdeHistory(), solverdeHistoryStart()
+
+### Community 86 - "migrate.mjs"
+Cohesion: 0.40
+Nodes (4): dir, files, isLocalDb, pool
 
 ### Community 88 - "bundle-app.mjs"
 Cohesion: 0.33
@@ -277,25 +280,29 @@ Nodes (3): ExampleInstrumentedTest, Test, RunWith
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior, Source Nodes
 
+### Community 93 - "gradlew"
+Cohesion: 0.83
+Nodes (3): gradlew script, die(), warn()
+
 ## Knowledge Gaps
-- **288 isolated node(s):** `config`, `manifest_version`, `name`, `version`, `description` (+283 more)
+- **290 isolated node(s):** `config`, `bets`, `users`, `bets`, `manifest_version` (+285 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **55 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **57 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `bet()` connect `bet` to `Bet Lifecycle UI`, `App Shell and State`, `importers.test.js`, `mapper-solverde.js`, `import-utils.js`?**
-  _High betweenness centrality (0.126) - this node is a cross-community bridge._
+- **Why does `bet()` connect `persistMapped` to `Bet Lifecycle UI`, `betStatus.ts`, `App Shell and State`, `fetchSolverdeHistory`?**
+  _High betweenness centrality (0.124) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `Runtime Dependencies` to `Bet Lifecycle UI`?**
-  _High betweenness centrality (0.107) - this node is a cross-community bridge._
+  _High betweenness centrality (0.106) - this node is a cross-community bridge._
 - **Why does `react` connect `Bet Lifecycle UI` to `Runtime Dependencies`?**
-  _High betweenness centrality (0.104) - this node is a cross-community bridge._
-- **What connects `config`, `manifest_version`, `name` to the rest of the system?**
-  _288 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _High betweenness centrality (0.103) - this node is a cross-community bridge._
+- **What connects `config`, `bets`, `users` to the rest of the system?**
+  _290 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Bet Lifecycle UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.05948295584534431 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05494949494949495 - nodes in this community are weakly interconnected._
 - **Should `Extension Import Orchestration` be split into smaller, more focused modules?**
   _Cohesion score 0.0953058321479374 - nodes in this community are weakly interconnected._
 - **Should `App Shell and State` be split into smaller, more focused modules?**
-  _Cohesion score 0.102843315184513 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09271822704658525 - nodes in this community are weakly interconnected._
