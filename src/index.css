@@ -18,6 +18,48 @@ html {
   font-variant-numeric: tabular-nums;
 }
 
+/* Safe areas (notch, barra de gestos) — expostas como variáveis para que a
+   app nativa (edge-to-edge, viewport-fit=cover) não fique por baixo do
+   status bar nem da barra de navegação. Na web resolvem para 0px. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+/* Utilitários Tailwind 4 para aplicar as safe areas como padding. O sufixo
+   `-offset` soma um valor fixo à safe area (ex.: tab bar + inset inferior). */
+@utility pt-safe {
+  padding-top: var(--safe-top);
+}
+@utility pb-safe {
+  padding-bottom: var(--safe-bottom);
+}
+@utility pl-safe {
+  padding-left: var(--safe-left);
+}
+@utility pr-safe {
+  padding-right: var(--safe-right);
+}
+@utility min-h-safe-screen {
+  min-height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+}
+@utility h-safe-top {
+  height: var(--safe-top);
+}
+@utility h-safe-bottom {
+  height: var(--safe-bottom);
+}
+
+/* Esconde a scrollbar mantendo o scroll (filas de chips, carrosséis). */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Scrollbars finas a condizer com o tema terminal. */
 * {
   scrollbar-width: thin;

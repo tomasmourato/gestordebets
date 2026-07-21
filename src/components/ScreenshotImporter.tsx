@@ -15,42 +15,11 @@ import { Bet, Selection, BetStatus, BetType, FreebetType } from "../types";
 import { AVAILABLE_BOOKMAKERS, calculateBetReturnAndProfit } from "../utils";
 import { defaultFreebetTypeFor } from "../lib/bookmakers";
 import { authFetch, parseJsonResponse } from "../lib/authApi";
-import { normalizeBetStatus } from "../lib/betStatus";
+import { matchBookmaker, matchStatus } from "../lib/screenshotMatch";
 
 interface ScreenshotImporterProps {
   currency: string;
   onAddBet: (bet: Bet) => void;
-}
-
-/**
- * A IA devolve o nome da casa de apostas em texto livre ("Placard.pt",
- * "BETANO", …). Tentamos casá-lo com a lista conhecida para pré-selecionar
- * a opção certa no dropdown; se falhar, cai em "Outra".
- */
-function matchBookmaker(raw?: string): string {
-  if (!raw || !raw.trim()) return "Outra";
-  const normalized = raw.trim().toLowerCase();
-
-  const exact = AVAILABLE_BOOKMAKERS.find(b => b.toLowerCase() === normalized);
-  if (exact) return exact;
-
-  // Casamento parcial (ex.: "Placard.pt" -> "Placard"), evitando falsos
-  // positivos com nomes demasiado curtos.
-  if (normalized.length >= 3) {
-    const partial = AVAILABLE_BOOKMAKERS.find(
-      b =>
-        b !== "Outra" &&
-        (normalized.includes(b.toLowerCase()) || b.toLowerCase().includes(normalized))
-    );
-    if (partial) return partial;
-  }
-
-  return "Outra";
-}
-
-/** Valida o estado devolvido pela IA; na dúvida, a aposta fica por liquidar. */
-function matchStatus(raw?: string): BetStatus {
-  return normalizeBetStatus(raw);
 }
 
 /** Marca os campos que foram pré-preenchidos automaticamente pela IA. */

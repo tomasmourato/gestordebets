@@ -14,6 +14,18 @@ import { apiUrl, isNativeApp } from "./apiBase";
 // Evita re-descarregar um bundle que já ficou agendado para o próximo arranque.
 const STAGED_KEY = "gestordebets_staged_bundle";
 
+/** Versão do bundle instalado ("builtin" = o embutido no APK; null na web). */
+export async function getBundleVersion(): Promise<string | null> {
+  if (!isNativeApp()) return null;
+  try {
+    const { CapacitorUpdater } = await import("@capgo/capacitor-updater");
+    const current = await CapacitorUpdater.current();
+    return current?.bundle?.version || "builtin";
+  } catch {
+    return null;
+  }
+}
+
 export async function initLiveUpdate(): Promise<void> {
   if (!isNativeApp()) return;
 

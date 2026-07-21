@@ -27,6 +27,19 @@ const config: CapacitorConfig = {
     CapacitorUpdater: {
       autoUpdate: false,
     },
+    // Teclado: empurra o corpo (não sobrepõe) para os campos e as bottom
+    // sheets ficarem sempre visíveis; combina com adjustResize no manifesto.
+    Keyboard: {
+      resize: "body" as any,
+    },
+    // Splash com a marca em vez do flash de fundo; escondido pela app após o
+    // primeiro paint (src/mobile/lib/useNativeChrome.ts).
+    SplashScreen: {
+      launchAutoHide: false,
+      backgroundColor: "#09090b",
+      androidSplashResourceName: "splash",
+      showSpinner: false,
+    },
   },
 };
 
