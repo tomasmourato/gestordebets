@@ -3,13 +3,13 @@ import { Puzzle, Download, RefreshCw, CheckCircle2, AlertCircle, ArrowRight } fr
 import { useBetclicExtension } from "../hooks/useBetclicExtension";
 import { BookieAccount } from "../types";
 import { isNativeApp } from "../lib/apiBase";
+import { bookmakerLabel } from "../lib/bookmakers";
 
 // Casas suportadas pela extensão; a chave (minúsculas) é a usada pelo service
-// worker da extensão para identificar cada fonte.
-const EXTENSION_BOOKIES: Array<{ key: string; label: string }> = [
-  { key: "betclic", label: "Betclic" },
-  { key: "betano", label: "Betano" },
-];
+// worker da extensão para identificar cada fonte. O rótulo vem do registo
+// central (bookmakerLabel).
+const EXTENSION_BOOKIE_KEYS = ["betclic", "betano", "solverde"];
+const EXTENSION_BOOKIES = EXTENSION_BOOKIE_KEYS.map((key) => ({ key, label: bookmakerLabel(key) }));
 
 // Última conta escolhida por casa, para não ter de escolher sempre.
 const ACCOUNT_CHOICE_KEY = "gestordebets_import_accounts";
@@ -40,13 +40,12 @@ function importSummary(result: {
   unsupported?: number;
   sourceResults?: Record<string, { ok: boolean; imported?: number; updated?: number; skipped?: number; unsupported?: number; error?: string }>;
 }) {
-  const labels: Record<string, string> = { betclic: "Betclic", betano: "Betano" };
   const sources = Object.entries(result.sourceResults || {});
   if (sources.length === 0) {
     return `${result.imported || 0} importadas${result.updated ? ` · ${result.updated} atualizadas` : ""}${result.skipped ? ` · ${result.skipped} já existentes` : ""}.`;
   }
   return sources.map(([source, item]) => {
-    const label = labels[source] || source;
+    const label = bookmakerLabel(source);
     if (!item.ok) return `${label}: ${item.error || "indisponível"}`;
     return `${label}: ${item.imported || 0} importadas${item.updated ? ` · ${item.updated} atualizadas` : ""}${item.skipped ? ` · ${item.skipped} já existentes` : ""}${item.unsupported ? ` · ${item.unsupported} ignoradas` : ""}`;
   }).join(" · ");
@@ -105,9 +104,12 @@ function InstallSteps() {
 
 interface BetclicImportProps {
   accounts?: BookieAccount[];
+  // Casas ativas escolhidas nas definições; só estas aparecem/importam. Ausente
+  // (ainda a carregar) = mostra todas as suportadas.
+  enabledBookmakers?: string[];
 }
 
-export default function BetclicImport({ accounts = [] }: BetclicImportProps) {
+export default function BetclicImport({ accounts = [], enabledBookmakers }: BetclicImportProps) {
   const { installed, version, importing, progress, result, runImport, recheck } = useBetclicExtension();
 
   // Na app nativa (Android) não existem extensões de browser — o cartão
@@ -117,16 +119,22 @@ export default function BetclicImport({ accounts = [] }: BetclicImportProps) {
 
   const [accountChoices, setAccountChoices] = useState<Record<string, string>>(loadAccountChoices);
 
+  // Só as casas ativas (ou todas, enquanto a seleção não chega).
+  const bookies = useMemo(
+    () => (enabledBookmakers ? EXTENSION_BOOKIES.filter((b) => enabledBookmakers.includes(b.key)) : EXTENSION_BOOKIES),
+    [enabledBookmakers]
+  );
+
   // Contas disponíveis por casa da extensão (label da casa -> lista).
   const accountsByBookie = useMemo(() => {
     const map = new Map<string, BookieAccount[]>();
-    for (const { key, label } of EXTENSION_BOOKIES) {
+    for (const { key, label } of bookies) {
       map.set(key, accounts.filter((account) => account.bookmaker === label));
     }
     return map;
-  }, [accounts]);
+  }, [accounts, bookies]);
 
-  const hasAccountChoices = EXTENSION_BOOKIES.some(({ key }) => (accountsByBookie.get(key) || []).length > 0);
+  const hasAccountChoices = bookies.some(({ key }) => (accountsByBookie.get(key) || []).length > 0);
 
   const chooseAccount = (bookie: string, accountId: string) => {
     setAccountChoices((prev) => {
@@ -140,7 +148,7 @@ export default function BetclicImport({ accounts = [] }: BetclicImportProps) {
   const handleImport = () => {
     // Só envia escolhas válidas (conta ainda existente e da casa certa).
     const accountIds: Record<string, string> = {};
-    for (const { key } of EXTENSION_BOOKIES) {
+    for (const { key } of bookies) {
       const chosen = accountChoices[key];
       if (chosen && (accountsByBookie.get(key) || []).some((account) => account.id === chosen)) {
         accountIds[key] = chosen;
@@ -180,7 +188,7 @@ export default function BetclicImport({ accounts = [] }: BetclicImportProps) {
           {/* Escolha da conta de destino por casa (só se existirem contas) */}
           {hasAccountChoices && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {EXTENSION_BOOKIES.map(({ key, label }) => {
+              {bookies.map(({ key, label }) => {
                 const options = accountsByBookie.get(key) || [];
                 if (options.length === 0) return null;
                 const selected = accountChoices[key] && options.some((account) => account.id === accountChoices[key])

@@ -1,7 +1,7 @@
 // content-bettrackr.js — corre no site do BetTrackr. Faz duas coisas:
 //
-// 1. Lê o token JWT que o app guarda em localStorage ("gestordebets_token") e a
-//    origem atual, para o service worker poder chamar /api/bets/bulk.
+// 1. Lê a sessão atual que a app guarda em localStorage e a origem atual, para
+//    o service worker validar o utilizador antes de chamar /api/bets/bulk.
 // 2. Serve de ponte entre a página e a extensão: anuncia que a extensão está
 //    presente e deixa o app disparar a importação com um botão (sem precisar do
 //    ID da extensão nem de a publicar).
@@ -13,25 +13,42 @@
   window.__bettrackrBridgeLoaded = true;
 
   const KEY = "gestordebets_token";
+  const USER_KEY = "gestordebets_user";
   const APP = "bettrackr-app"; // mensagens vindas da página
   const EXT = "bettrackr-ext"; // mensagens enviadas pela extensão
   const version = (chrome.runtime.getManifest && chrome.runtime.getManifest().version) || "0";
 
-  // --- token sync ---
-  function syncToken() {
+  // --- session sync ---
+  function currentSession() {
     try {
       const token = localStorage.getItem(KEY);
-      if (token) {
-        chrome.storage.local.set({ bettrackrToken: token, bettrackrBase: location.origin });
-      } else {
-        chrome.storage.local.remove("bettrackrToken");
-      }
-    } catch (_) {}
+      const storedUser = localStorage.getItem(USER_KEY);
+      const user = storedUser ? JSON.parse(storedUser) : null;
+      const expectedUserId = typeof user?.id === "string" ? user.id.trim() : "";
+      if (!token) return null;
+      return { token, baseUrl: location.origin, expectedUserId };
+    } catch (_) {
+      return null;
+    }
   }
 
-  syncToken();
+  async function syncSession() {
+    const session = currentSession();
+    if (session) {
+      await chrome.storage.local.set({
+        bettrackrToken: session.token,
+        bettrackrBase: session.baseUrl,
+        bettrackrUserId: session.expectedUserId || null,
+      });
+    } else {
+      await chrome.storage.local.remove(["bettrackrToken", "bettrackrUserId"]);
+    }
+    return session;
+  }
+
+  syncSession().catch(() => {});
   window.addEventListener("storage", (e) => {
-    if (e.key === KEY || e.key === null) syncToken();
+    if (e.key === KEY || e.key === USER_KEY || e.key === null) syncSession().catch(() => {});
   });
 
   // --- ponte página <-> extensão ---
@@ -43,7 +60,7 @@
   // escuta) e responde a PING para quem carregar depois.
   toPage({ type: "PONG", version });
 
-  window.addEventListener("message", (event) => {
+  window.addEventListener("message", async (event) => {
     if (event.source !== window || event.origin !== location.origin) return;
     const data = event.data;
     if (!data || data.source !== APP) return;
@@ -54,6 +71,15 @@
     }
 
     if (data.type === "IMPORT") {
+      const session = await syncSession().catch(() => null);
+      if (!session?.token) {
+        toPage({ type: "RESULT", ok: false, error: "Sem sessão BetTrackr. Inicia sessão novamente na app." });
+        return;
+      }
+      if (!session.expectedUserId) {
+        toPage({ type: "RESULT", ok: false, error: "Não foi possível identificar o utilizador atual. Termina sessão e volta a entrar." });
+        return;
+      }
       // The website action imports every bookmaker detected by the extension.
       // The popup can still request a single source explicitly. accountIds
       // maps each source ("betclic"/"betano") to the BetTrackr account the
@@ -62,6 +88,7 @@
         type: "IMPORT",
         source: data.sourceBookmakers || "all",
         accountIds: data.accountIds || null,
+        bettrackrSession: session,
       }, (result) => {
         if (chrome.runtime.lastError) {
           toPage({ type: "RESULT", ok: false, error: chrome.runtime.lastError.message });
@@ -73,7 +100,14 @@
   });
 
   // Reencaminha o progresso emitido pelo service worker durante a importação.
-  chrome.runtime.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg && msg.type === "GET_BETTRACKR_SESSION") {
+      syncSession()
+        .then((session) => sendResponse({ session }))
+        .catch(() => sendResponse({ session: null }));
+      return true;
+    }
     if (msg && msg.type === "PROGRESS") toPage({ type: "PROGRESS", text: msg.text });
+    return false;
   });
 })();

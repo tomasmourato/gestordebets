@@ -79,6 +79,42 @@ const STATUS_MAP = {
   HalfLost: "MEIO_PERDIDA",
 };
 
+const SELECTION_STATUS_MAP = {
+  NOTSET: "POR_LIQUIDAR",
+  OPEN: "POR_LIQUIDAR",
+  PENDING: "POR_LIQUIDAR",
+  WIN: "GANHA",
+  WON: "GANHA",
+  LOSE: "PERDIDA",
+  LOSS: "PERDIDA",
+  LOST: "PERDIDA",
+  VOID: "ANULADA",
+  REFUNDED: "ANULADA",
+  CANCELED: "ANULADA",
+  CANCELLED: "ANULADA",
+  PUSH: "ANULADA",
+  HALFWIN: "MEIO_GANHA",
+  HALFWON: "MEIO_GANHA",
+  HALFLOSE: "MEIO_PERDIDA",
+  HALFLOST: "MEIO_PERDIDA",
+};
+
+export function mapBetclicSelectionResult(value) {
+  if (value === undefined || value === null || value === "") return undefined;
+  const token = String(value).toUpperCase().replace(/[^A-Z]/g, "");
+  return SELECTION_STATUS_MAP[token];
+}
+
+function betclicSelectionResult(selection) {
+  return mapBetclicSelectionResult(
+    selection?.result ??
+    selection?.selection_result ??
+    selection?.status ??
+    selection?.outcome ??
+    selection?.settlement_status
+  );
+}
+
 function mapStatus(result) {
   if (isCashoutResult(result)) return "CASHOUT";
   return STATUS_MAP[result] ?? "POR_LIQUIDAR";
@@ -153,15 +189,19 @@ export function mapBet(bet) {
     freebetType
   );
 
-  const selections = (bet.bet_selections || []).map((s, i) => ({
-    id: `betclic-${ref || "x"}-${i}`,
-    event: s.match_label ?? "",
-    market: s.market_label ?? "",
-    choice: s.selection_label ?? "",
-    odd: Number(s.odds) || 0,
-    sport: s.sport_label || undefined,
-    betType: s.market_label || undefined,
-  }));
+  const selections = (bet.bet_selections || []).map((s, i) => {
+    const result = betclicSelectionResult(s);
+    return {
+      id: `betclic-${ref || "x"}-${i}`,
+      event: s.match_label ?? "",
+      market: s.market_label ?? "",
+      choice: s.selection_label ?? "",
+      odd: Number(s.odds) || 0,
+      sport: s.sport_label || undefined,
+      betType: s.market_label || undefined,
+      ...(result ? { result } : {}),
+    };
+  });
 
   return {
     type: bet.bet_type === "multiple" ? "MULTIPLA" : "SIMPLES",

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Download, 
   Upload, 
@@ -17,6 +17,8 @@ import { calculateBetReturnAndProfit, safeNum } from "../utils";
 import { defaultFreebetTypeFor } from "../lib/bookmakers";
 import BetclicImport from "./BetclicImport";
 import BookieAccountsCard from "./BookieAccountsCard";
+import EnabledBookmakersCard from "./EnabledBookmakersCard";
+import { fetchSettings, updateEnabledBookmakers, SUPPORTED_BOOKMAKERS } from "../lib/settingsApi";
 import { useI18n } from "../lib/i18n";
 import { normalizeBetStatus } from "../lib/betStatus";
 import FilterDropdown from "./FilterDropdown";
@@ -34,8 +36,8 @@ interface SettingsProps {
   accounts: BookieAccount[];
   accountsError: string | null;
   clearAccountsError: () => void;
-  onAddAccount: (bookmaker: string, label: string) => Promise<BookieAccount | null>;
-  onRenameAccount: (id: string, label: string) => Promise<BookieAccount | null>;
+  onAddAccount: (bookmaker: string, label: string, username?: string | null) => Promise<BookieAccount | null>;
+  onRenameAccount: (id: string, label: string, username?: string | null) => Promise<BookieAccount | null>;
   onDeleteAccount: (id: string) => Promise<boolean>;
 }
 
@@ -67,6 +69,56 @@ export default function Settings({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+
+  // Casas de apostas ativas (partilhadas com a extensão via /api/settings).
+  // supported arranca com o fallback local para os checkboxes aparecerem já.
+  const [supportedBookmakers, setSupportedBookmakers] = useState<string[]>([...SUPPORTED_BOOKMAKERS]);
+  const [enabledBookmakers, setEnabledBookmakers] = useState<string[]>([]);
+  const [bookmakersLoading, setBookmakersLoading] = useState(true);
+  const [bookmakersSaving, setBookmakersSaving] = useState(false);
+  const [bookmakersError, setBookmakersError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetchSettings()
+      .then((s) => {
+        if (!alive) return;
+        // Só substitui o fallback se o servidor devolver uma lista real.
+        if (s.supportedBookmakers.length > 0) setSupportedBookmakers(s.supportedBookmakers);
+        setEnabledBookmakers(s.enabledBookmakers);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        setBookmakersError(err?.message || "Erro ao obter as definições.");
+      })
+      .finally(() => {
+        if (alive) setBookmakersLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const handleToggleBookmaker = async (key: string, next: boolean) => {
+    // A ordem não é observada (só se testa pertença), por isso não a canonizamos
+    // aqui — o servidor devolve já a lista normalizada.
+    const updated = next
+      ? [...enabledBookmakers, key]
+      : enabledBookmakers.filter((k) => k !== key);
+    const previous = enabledBookmakers;
+    setEnabledBookmakers(updated); // otimista
+    setBookmakersSaving(true);
+    setBookmakersError(null);
+    try {
+      const saved = await updateEnabledBookmakers(updated);
+      setEnabledBookmakers(saved.enabledBookmakers);
+    } catch (err) {
+      setEnabledBookmakers(previous); // reverte
+      setBookmakersError((err as Error)?.message || "Erro ao guardar as definições.");
+    } finally {
+      setBookmakersSaving(false);
+    }
+  };
 
   const handleSavePreferences = (e: React.FormEvent) => {
     e.preventDefault();
@@ -516,7 +568,17 @@ export default function Settings({
         
         {/* Left column: Preferences & App Tuning */}
         <div className="space-y-6 lg:col-span-2">
-          
+
+          {/* Escolha das casas de apostas ativas — primeiro, define o que aparece no resto */}
+          <EnabledBookmakersCard
+            supported={supportedBookmakers}
+            enabled={enabledBookmakers}
+            loading={bookmakersLoading}
+            saving={bookmakersSaving}
+            error={bookmakersError}
+            onToggle={handleToggleBookmaker}
+          />
+
           {/* Preferences form */}
           <div className="bg-white dark:bg-zinc-900 rounded-sm p-5 border border-zinc-200 dark:border-zinc-800">
             <h4 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight font-display flex items-center gap-2 mb-4">
@@ -635,8 +697,8 @@ export default function Settings({
             onDelete={onDeleteAccount}
           />
 
-          {/* Importação do Betclic via extensão de browser */}
-          <BetclicImport accounts={accounts} />
+          {/* Importação via extensão de browser */}
+          <BetclicImport accounts={accounts} enabledBookmakers={enabledBookmakers} />
 
           {/* Backup, CSV and Data actions */}
           <div className="bg-white dark:bg-zinc-900 rounded-sm p-5 border border-zinc-200 dark:border-zinc-800 space-y-4">

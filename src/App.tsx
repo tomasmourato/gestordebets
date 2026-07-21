@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import {
   LayoutDashboard,
   Layers,
@@ -16,6 +16,7 @@ import { Bet, Preferences } from "./types";
 import { INITIAL_BETS, safeNum } from "./utils";
 
 import type { DashboardBetsFilters } from "./components/Dashboard";
+import { serializeFilters } from "./lib/filterParams";
 import AuthPage from "./components/AuthPage";
 import AccountPanel from "./components/AccountPanel";
 
@@ -28,13 +29,15 @@ const ScreenshotImporter = lazy(() => import("./components/ScreenshotImporter"))
 const Settings = lazy(() => import("./components/Settings"));
 const Social = lazy(() => import("./components/Social"));
 const AIInsights = lazy(() => import("./components/AIInsights"));
-import { isAuthenticated, logout, getStoredUser } from "./lib/authApi";
+import { isAuthenticated, logout, getStoredUser, restoreBrowserSession } from "./lib/authApi";
 import { usePreferences } from "./hooks/usePreferences";
 import { useTheme } from "./hooks/useTheme";
 import { useAuditLog } from "./hooks/useAuditLog";
 import { useBets } from "./hooks/useBets";
 import { useAccounts } from "./hooks/useAccounts";
 import { I18nProvider, translate } from "./lib/i18n";
+import { DEFAULT_PREFERENCES } from "./hooks/usePreferences";
+import type { InitialAppData } from "./initialData";
 
 type AppTab = "DASHBOARD" | "BETS" | "IMPORT" | "INSIGHTS" | "SOCIAL" | "SETTINGS";
 
@@ -83,38 +86,77 @@ const NAV_ITEMS: Array<{ tab: AppTab; icon: React.ComponentType<{ size?: number 
   { tab: "SETTINGS", icon: SettingsIcon, navKey: "nav.settings", footerKey: "footer.settings" }
 ];
 
-export default function App() {
+interface AppProps {
+  initialData?: InitialAppData;
+}
+
+export default function App({ initialData }: AppProps) {
 
   // Autenticação: gate de login/registo antes de mostrar a app
-  const [authed, setAuthed] = useState<boolean>(isAuthenticated());
-  const [currentUser, setCurrentUser] = useState(getStoredUser());
+  const [authed, setAuthed] = useState<boolean>(() =>
+    initialData ? initialData.authenticated : isAuthenticated()
+  );
+  const [currentUser, setCurrentUser] = useState(() =>
+    initialData ? initialData.user : getStoredUser()
+  );
 
   // Cada área tem um URL próprio e continua a navegar como SPA.
-  const [activeTab, setActiveTab] = useState<AppTab>(() => tabFromPath(window.location.pathname));
+  const [activeTab, setActiveTab] = useState<AppTab>(() =>
+    tabFromPath(initialData?.pathname ?? window.location.pathname)
+  );
+  const [locationSearch, setLocationSearch] = useState(() =>
+    initialData?.search ?? window.location.search
+  );
+  const [routeAnimationsReady, setRouteAnimationsReady] = useState(false);
 
   // Painel lateral de conta (detalhes do utilizador + terminar sessão).
   const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   const navigateToTab = (tab: AppTab) => {
     const nextPath = TAB_PATHS[tab];
+    const isSameTab = tab === activeTab;
+    const hadFilters = Boolean(window.location.search);
+
     if (`${window.location.pathname}${window.location.search}` !== nextPath) {
       window.history.pushState({ tab }, "", nextPath);
     }
     setActiveTab(tab);
+    setLocationSearch("");
+
+    // Clicar no separador já ativo limpa os filtros. Como a página não é
+    // remontada, não chega mudar `initialSearch` (só é lido no arranque) — o
+    // popstate é o mesmo canal que o back/forward usa para reaplicar o URL.
+    if (isSameTab && hadFilters) {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }
   };
 
   const navigateToFilteredBets = (filters: DashboardBetsFilters) => {
-    const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) params.set(key, value);
+    // Serializado pelo mesmo helper que o histórico usa: o URL do drill-down
+    // fica igual ao que a página produziria sozinha, por isso ao montar não há
+    // divergência (nem uma entrada de histórico extra para a corrigir).
+    const search = serializeFilters({
+      status: filters.status,
+      bookmaker: filters.bookmaker ?? "ALL",
+      account: filters.account ?? "ALL",
+      sport: filters.sport ?? "ALL",
+      type: filters.type ?? "ALL",
+      money: filters.money ?? "ALL",
+      timeframe: {
+        timeframe: filters.timeframe ?? "ALL",
+        startDate: filters.dateFrom ?? "",
+        endDate: filters.dateTo ?? "",
+      },
     });
-    const nextPath = `/bets?${params.toString()}`;
-    window.history.pushState({ tab: "BETS" }, "", nextPath);
+    window.history.pushState({ tab: "BETS" }, "", `${TAB_PATHS.BETS}${search}`);
     setActiveTab("BETS");
+    setLocationSearch(search);
   };
 
   // Preferências (armazenamento local) e auditoria (em memória)
-  const { preferences, updatePreferences } = usePreferences();
+  const { preferences, updatePreferences } = usePreferences(
+    initialData ? DEFAULT_PREFERENCES : undefined
+  );
   const { auditLogs, addLog } = useAuditLog();
 
   // Tradução do shell (i18n). O resto da app usa <I18nProvider> + useI18n().
@@ -139,10 +181,15 @@ export default function App() {
     addBet,
     importBets,
     editBet,
+    ignoreBet,
     removeBet,
     clearAllBets,
     replaceAllBets
-  } = useBets(authed, handleSessionExpired);
+  } = useBets(
+    authed,
+    handleSessionExpired,
+    initialData?.authenticated ? initialData.bets : undefined
+  );
 
   // Contas por casa de apostas (partilhadas por Configurações, filtros e extensão)
   const {
@@ -155,7 +202,32 @@ export default function App() {
   } = useAccounts(authed, handleSessionExpired);
 
   // Online status
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator === "undefined" ? true : navigator.onLine
+  );
+
+  // One-time migration for sessions created before the SSR cookie existed.
+  // A valid local bearer token is verified by /me, which also sets the cookie
+  // used by the next document request.
+  useEffect(() => {
+    if (!initialData || initialData.authenticated || !isAuthenticated()) return;
+    let cancelled = false;
+    restoreBrowserSession()
+      .then((user) => {
+        if (!cancelled && user) {
+          setCurrentUser(user);
+          setAuthed(true);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [initialData]);
+
+  useEffect(() => {
+    setRouteAnimationsReady(true);
+  }, []);
 
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -170,12 +242,21 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const syncTabWithUrl = () => setActiveTab(tabFromPath(window.location.pathname));
+    const syncTabWithUrl = () => {
+      setActiveTab(tabFromPath(window.location.pathname));
+      setLocationSearch(window.location.search);
+    };
 
     // Normaliza a página inicial e URLs desconhecidos para a visão geral.
+    // A query string é preservada: agora descreve os filtros e um link
+    // partilhado tipo "/bets/?status=GANHA" não pode perdê-los ao normalizar.
     const currentTab = tabFromPath(window.location.pathname);
     if (window.location.pathname !== TAB_PATHS[currentTab]) {
-      window.history.replaceState({ tab: currentTab }, "", TAB_PATHS[currentTab]);
+      window.history.replaceState(
+        { tab: currentTab },
+        "",
+        `${TAB_PATHS[currentTab]}${window.location.search}`
+      );
     }
 
     window.addEventListener("popstate", syncTabWithUrl);
@@ -202,6 +283,16 @@ export default function App() {
       addLog(
         "ATUALIZAR_APOSTA",
         `Aposta #${updated.id.substring(0, 8)} editada e recalculada (Lucro: ${updated.netProfit}${preferences.currency}).`
+      );
+    }
+  };
+
+  const handleIgnoreBet = async (id: string, ignored: boolean, comment?: string | null) => {
+    const updated = await ignoreBet(id, ignored, comment);
+    if (updated) {
+      addLog(
+        ignored ? "IGNORAR_APOSTA" : "REPOR_APOSTA",
+        `Aposta #${updated.id.substring(0, 8)} ${ignored ? "ignorada (excluída das estatísticas)" : "reposta nas estatísticas"}.`
       );
     }
   };
@@ -319,14 +410,19 @@ export default function App() {
       {/* Sidebar (desktop) — navegação fixa à esquerda, estilo terminal */}
       <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-56 flex-col border-r border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-950">
 
-        {/* Marca */}
-        <div className="flex items-center gap-2.5 px-4 h-16 border-b border-zinc-200 dark:border-zinc-800/80">
+        {/* Marca — clicável, volta à visão geral */}
+        <button
+          type="button"
+          onClick={() => navigateToTab("DASHBOARD")}
+          aria-label="Ir para a página principal"
+          className="flex items-center gap-2.5 px-4 h-16 border-b border-zinc-200 dark:border-zinc-800/80 text-left outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-emerald-500/40 cursor-pointer"
+        >
           <BrandMark size={30} />
           <div className="min-w-0">
             <h1 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 tracking-tight leading-tight font-display">BetTrackr</h1>
             <p className="text-[9px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase tracking-widest truncate">{t("app.brandTagline")}</p>
           </div>
-        </div>
+        </button>
 
         {/* Navegação */}
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
@@ -433,15 +529,17 @@ export default function App() {
               {t("app.loadingBets")}
             </div>
           ) : (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.18 }}
-                className="h-full"
-              >
+            // Transição de separador: fade curto com um "assentar" quase
+            // impercetível. Sem AnimatePresence/exit — esperar pela saída
+            // atrasava o conteúdo novo. initial=false no primeiro render para
+            // o HTML vindo do SSR não piscar durante a hidratação.
+            <motion.div
+              key={activeTab}
+              initial={routeAnimationsReady ? { opacity: 0, y: 4, scale: 0.995 } : false}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="h-full"
+            >
                 <Suspense
                   fallback={
                     <div className="flex items-center justify-center py-24 text-xs text-zinc-400 dark:text-zinc-500 font-mono">
@@ -457,15 +555,18 @@ export default function App() {
                     isDark={isDark}
                     onOpenBets={navigateToFilteredBets}
                     accounts={accounts}
+                    initialSearch={locationSearch}
                   />
                 )}
                 {activeTab === "BETS" && (
                   <BetsManager
                     bets={bets}
                     currency={preferences.currency}
+                    initialSearch={locationSearch}
                     onAddBet={handleAddBet}
                     onAddBets={handleDuplicateBets}
                     onUpdateBet={handleUpdateBet}
+                    onIgnoreBet={handleIgnoreBet}
                     onDeleteBet={handleDeleteBet}
                     accounts={accounts}
                   />
@@ -503,8 +604,7 @@ export default function App() {
                   </I18nProvider>
                 )}
                 </Suspense>
-              </motion.div>
-            </AnimatePresence>
+            </motion.div>
           )}
         </main>
 

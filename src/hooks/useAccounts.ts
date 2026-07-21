@@ -58,10 +58,14 @@ export function useAccounts(enabled: boolean, onSessionExpired: () => void) {
       a.bookmaker.localeCompare(b.bookmaker) || a.label.localeCompare(b.label)
     );
 
-  const addAccount = async (bookmaker: string, label: string): Promise<BookieAccount | null> => {
+  const addAccount = async (
+    bookmaker: string,
+    label: string,
+    username?: string | null
+  ): Promise<BookieAccount | null> => {
     setError(null);
     try {
-      const created = await createAccount(bookmaker, label);
+      const created = await createAccount(bookmaker, label, username);
       setAccounts((prev) => sortAccounts([...prev, created]));
       return created;
     } catch (err) {
@@ -70,10 +74,14 @@ export function useAccounts(enabled: boolean, onSessionExpired: () => void) {
     }
   };
 
-  const editAccount = async (id: string, label: string): Promise<BookieAccount | null> => {
+  const editAccount = async (
+    id: string,
+    label: string,
+    username?: string | null
+  ): Promise<BookieAccount | null> => {
     setError(null);
     try {
-      const updated = await renameAccount(id, label);
+      const updated = await renameAccount(id, label, username);
       setAccounts((prev) => sortAccounts(prev.map((a) => (a.id === updated.id ? updated : a))));
       return updated;
     } catch (err) {

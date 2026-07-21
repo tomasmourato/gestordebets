@@ -1,27 +1,33 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Activity, 
-  DollarSign, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle, 
-  Clock, 
+import React, { useMemo, useState } from "react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  DollarSign,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Clock,
   HelpCircle,
   Award,
   Percent,
   Layers,
-  ArrowUpRight,
-  Filter,
-  CalendarRange,
-  ChevronLeft,
-  ChevronRight
+  ArrowUpRight
 } from "lucide-react";
 import { Bet, BetStatus, BookieAccount, DashboardStats } from "../types";
 import { calculateDashboardStats, safeNum } from "../utils";
 import FilterDropdown from "./FilterDropdown";
+import FiltersBar from "./FiltersBar";
+import TimeframeFilter, {
+  EMPTY_TIMEFRAME_FILTER,
+  fromLocalDateKey,
+  rangeSpansAtLeastTwoMonths,
+  resolveTimeframeRange,
+  type Timeframe,
+  type TimeframeFilterValue,
+} from "./TimeframeFilter";
+import { EMPTY_BET_FILTERS, readFilters, serializeFilters } from "../lib/filterParams";
+import { useUrlFilterSync } from "../hooks/useUrlFilterSync";
 import { 
   ResponsiveContainer, 
   AreaChart, 
@@ -50,108 +56,69 @@ interface DashboardProps {
   // Opcional: drill-down para a lista de apostas filtrada. Ausente na vista
   // read-only de um amigo (não há BetsManager próprio para onde navegar).
   onOpenBets?: (filters: DashboardBetsFilters) => void;
+  // Query string inicial ("?account=…"), vinda do SSR ou do URL no arranque.
+  initialSearch?: string;
 }
 
 export interface DashboardBetsFilters {
-  status: BetStatus;
+  // "RESOLVED" é um pseudo-estado (todas menos POR_LIQUIDAR) usado pelo
+  // drill-down do gráfico "Resolvidas"; o histórico trata-o em matchesStatus.
+  status: BetStatus | "RESOLVED";
   bookmaker?: string;
   sport?: string;
   type?: string;
   money?: string;
+  timeframe?: Timeframe;
   account?: string;
   dateFrom?: string;
   dateTo?: string;
 }
 
-type Timeframe = "ALL" | "7_DAYS" | "30_DAYS" | "90_DAYS" | "THIS_MONTH" | "THIS_YEAR" | "CUSTOM";
-type RangeEndpoint = "start" | "end";
-
-const TIMEFRAME_OPTIONS: Array<{ value: Timeframe; label: string }> = [
-  { value: "ALL", label: "Todo o Período" },
-  { value: "7_DAYS", label: "Últimos 7 dias" },
-  { value: "30_DAYS", label: "Últimos 30 dias" },
-  { value: "90_DAYS", label: "Últimos 90 dias" },
-  { value: "THIS_MONTH", label: "Este mês" },
-  { value: "THIS_YEAR", label: "Este ano" },
-  { value: "CUSTOM", label: "Período personalizado" }
-];
-
-const toLocalDateKey = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const fromLocalDateKey = (dateKey: string) => {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  if (!year || !month || !day) return null;
-  return new Date(year, month - 1, day);
-};
-
-const formatDateKey = (dateKey: string) => {
-  const date = fromLocalDateKey(dateKey);
-  return date ? new Intl.DateTimeFormat("pt-PT").format(date) : "dd/mm/aaaa";
-};
-
-const calendarDaysFor = (month: Date) => {
-  const firstOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
-  const mondayOffset = (firstOfMonth.getDay() + 6) % 7;
-  const firstVisibleDay = new Date(firstOfMonth);
-  firstVisibleDay.setDate(firstOfMonth.getDate() - mondayOffset);
-
-  return Array.from({ length: 42 }, (_, index) => {
-    const date = new Date(firstVisibleDay);
-    date.setDate(firstVisibleDay.getDate() + index);
-    return date;
-  });
-};
-
-export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets, accounts = [] }: DashboardProps) {
+export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets, accounts = [], initialSearch }: DashboardProps) {
   // Filtros do dashboard (D2): recalculam TODAS as estatísticas/gráficos para o
   // subconjunto escolhido. As opções vêm da lista completa; o cálculo usa a
   // lista filtrada `bets` (sombreada abaixo).
-  const [filterBookmaker, setFilterBookmaker] = useState("ALL");
+  const initialFilters = useMemo(
+    () => readFilters(new URLSearchParams(initialSearch ?? "")),
+    [initialSearch]
+  );
+
+  const [filterBookmaker, setFilterBookmaker] = useState(initialFilters.bookmaker);
   // "ALL" | "NONE" (apostas sem conta) | id de uma conta
-  const [filterAccount, setFilterAccount] = useState("ALL");
-  const [filterSport, setFilterSport] = useState("ALL");
-  const [filterType, setFilterType] = useState("ALL");
-  const [filterFreebet, setFilterFreebet] = useState("ALL");
-  const [filterTimeframe, setFilterTimeframe] = useState<Timeframe>("ALL");
-  const [customStartDate, setCustomStartDate] = useState("");
-  const [customEndDate, setCustomEndDate] = useState("");
-  const [isCustomRangeOpen, setIsCustomRangeOpen] = useState(false);
-  const [isTimeframeMenuOpen, setIsTimeframeMenuOpen] = useState(false);
-  const [activeRangeEndpoint, setActiveRangeEndpoint] = useState<RangeEndpoint>("start");
-  const customRangeContainerRef = useRef<HTMLDivElement>(null);
-  const [calendarMonth, setCalendarMonth] = useState(() => {
-    const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth(), 1);
+  const [filterAccount, setFilterAccount] = useState(initialFilters.account);
+  const [filterSport, setFilterSport] = useState(initialFilters.sport);
+  const [filterType, setFilterType] = useState(initialFilters.type);
+  const [filterFreebet, setFilterFreebet] = useState(initialFilters.money);
+  const [timeframeFilter, setTimeframeFilter] = useState<TimeframeFilterValue>(initialFilters.timeframe);
+
+  // Filtros <-> URL: cada alteração fica no histórico do browser e o
+  // back/forward volta a aplicá-la sem remontar o dashboard.
+  const filterSearch = useMemo(
+    () => serializeFilters({
+      ...EMPTY_BET_FILTERS,
+      bookmaker: filterBookmaker,
+      account: filterAccount,
+      sport: filterSport,
+      type: filterType,
+      money: filterFreebet,
+      timeframe: timeframeFilter,
+    }),
+    [filterBookmaker, filterAccount, filterSport, filterType, filterFreebet, timeframeFilter]
+  );
+
+  useUrlFilterSync({
+    path: "/dashboard",
+    search: filterSearch,
+    onExternalChange: (params) => {
+      const next = readFilters(params);
+      setFilterBookmaker(next.bookmaker);
+      setFilterAccount(next.account);
+      setFilterSport(next.sport);
+      setFilterType(next.type);
+      setFilterFreebet(next.money);
+      setTimeframeFilter(next.timeframe);
+    },
   });
-
-  useEffect(() => {
-    if (!isCustomRangeOpen && !isTimeframeMenuOpen) return;
-
-    const handleOutsidePointer = (event: PointerEvent) => {
-      if (!customRangeContainerRef.current?.contains(event.target as Node)) {
-        setIsCustomRangeOpen(false);
-        setIsTimeframeMenuOpen(false);
-      }
-    };
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsCustomRangeOpen(false);
-        setIsTimeframeMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", handleOutsidePointer);
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("pointerdown", handleOutsidePointer);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isCustomRangeOpen, isTimeframeMenuOpen]);
 
   const bookmakerOptions = useMemo(
     () => Array.from(new Set(allBets.map(b => b.bookmaker).filter((b): b is string => !!b))).sort(),
@@ -169,54 +136,14 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
     [allBets]
   );
 
-  const timeframeRange = useMemo(() => {
-    if (filterTimeframe === "ALL") return { start: "", end: "" };
-    if (filterTimeframe === "CUSTOM") return { start: customStartDate, end: customEndDate };
-
-    const today = new Date();
-    const start = new Date(today);
-
-    if (filterTimeframe === "7_DAYS") start.setDate(today.getDate() - 6);
-    if (filterTimeframe === "30_DAYS") start.setDate(today.getDate() - 29);
-    if (filterTimeframe === "90_DAYS") start.setDate(today.getDate() - 89);
-    if (filterTimeframe === "THIS_MONTH") start.setDate(1);
-    if (filterTimeframe === "THIS_YEAR") start.setMonth(0, 1);
-
-    return { start: toLocalDateKey(start), end: toLocalDateKey(today) };
-  }, [filterTimeframe, customStartDate, customEndDate]);
-
-  const calendarDays = useMemo(() => calendarDaysFor(calendarMonth), [calendarMonth]);
-
-  const openCustomRangePicker = () => {
-    const endpoint: RangeEndpoint = customStartDate && !customEndDate ? "end" : "start";
-    const preferredDate = fromLocalDateKey(endpoint === "end" ? customEndDate : customStartDate) || new Date();
-    setActiveRangeEndpoint(endpoint);
-    setCalendarMonth(new Date(preferredDate.getFullYear(), preferredDate.getMonth(), 1));
-    setIsCustomRangeOpen(true);
-  };
-
-  const selectCalendarDate = (date: Date) => {
-    const dateKey = toLocalDateKey(date);
-
-    if (activeRangeEndpoint === "start") {
-      setCustomStartDate(dateKey);
-      if (customEndDate && dateKey > customEndDate) setCustomEndDate("");
-      setActiveRangeEndpoint("end");
-      return;
-    }
-
-    if (customStartDate && dateKey < customStartDate) {
-      setCustomStartDate(dateKey);
-      setCustomEndDate(customStartDate);
-    } else {
-      setCustomEndDate(dateKey);
-    }
-  };
+  const timeframeRange = useMemo(() => resolveTimeframeRange(timeframeFilter), [timeframeFilter]);
 
   // `bets` sombreia a prop: é o subconjunto filtrado que todo o código abaixo usa.
   const bets = useMemo(
     () =>
       allBets.filter(b => {
+        // Apostas ignoradas nunca contam para estatísticas/gráficos.
+        if (b.isIgnored) return false;
         if (filterBookmaker !== "ALL" && b.bookmaker !== filterBookmaker) return false;
         if (filterAccount === "NONE" && b.accountId) return false;
         if (filterAccount !== "ALL" && filterAccount !== "NONE" && b.accountId !== filterAccount) return false;
@@ -238,10 +165,7 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
     [allBets, filterBookmaker, filterAccount, filterSport, filterType, filterFreebet, timeframeRange]
   );
 
-  const hasFilters =
-    filterBookmaker !== "ALL" || filterAccount !== "ALL" || filterSport !== "ALL" || filterType !== "ALL" || filterFreebet !== "ALL" || filterTimeframe !== "ALL";
-
-  const activeFilterCount = [filterBookmaker, filterAccount, filterSport, filterType, filterFreebet, filterTimeframe]
+  const activeFilterCount = [filterBookmaker, filterAccount, filterSport, filterType, filterFreebet, timeframeFilter.timeframe]
     .filter(value => value !== "ALL").length;
 
   const clearFilters = () => {
@@ -250,13 +174,13 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
     setFilterSport("ALL");
     setFilterType("ALL");
     setFilterFreebet("ALL");
-    setFilterTimeframe("ALL");
-    setCustomStartDate("");
-    setCustomEndDate("");
-    setIsCustomRangeOpen(false);
-    setIsTimeframeMenuOpen(false);
-    setActiveRangeEndpoint("start");
+    setTimeframeFilter({ ...EMPTY_TIMEFRAME_FILTER });
   };
+
+  // Só o dono do painel pode navegar para o histórico (drill-down). Na vista
+  // read-only do perfil de um amigo não há `onOpenBets`, por isso os gráficos
+  // não devem parecer nem comportar-se como clicáveis.
+  const canDrill = Boolean(onOpenBets);
 
   const openBetsForStatus = (status: BetStatus) => {
     onOpenBets?.({
@@ -266,6 +190,23 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
       sport: filterSport !== "ALL" ? filterSport : undefined,
       type: filterType !== "ALL" ? filterType : undefined,
       money: filterFreebet !== "ALL" ? filterFreebet : undefined,
+      timeframe: timeframeFilter.timeframe !== "ALL" ? timeframeFilter.timeframe : undefined,
+      dateFrom: timeframeRange.start || undefined,
+      dateTo: timeframeRange.end || undefined
+    });
+  };
+
+  // Drill-down do centro do donut: abre o histórico só com as apostas resolvidas
+  // (todas menos POR_LIQUIDAR), respeitando os filtros ativos do painel.
+  const openResolvedBets = () => {
+    onOpenBets?.({
+      status: "RESOLVED",
+      bookmaker: filterBookmaker !== "ALL" ? filterBookmaker : undefined,
+      account: filterAccount !== "ALL" ? filterAccount : undefined,
+      sport: filterSport !== "ALL" ? filterSport : undefined,
+      type: filterType !== "ALL" ? filterType : undefined,
+      money: filterFreebet !== "ALL" ? filterFreebet : undefined,
+      timeframe: timeframeFilter.timeframe !== "ALL" ? timeframeFilter.timeframe : undefined,
       dateFrom: timeframeRange.start || undefined,
       dateTo: timeframeRange.end || undefined
     });
@@ -323,17 +264,35 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
     return [{ index: 0, data: "Início", lucro: 0, lucroIndividual: 0, evento: "Início" }, ...data];
   }, [bets]);
 
-  // 1b. Prepare data for Monthly Performance (last 6 months)
+  const monthlyChartBounds = useMemo(() => {
+    const settledDates = bets
+      .filter(b => b.status !== "POR_LIQUIDAR")
+      .map(b => fromLocalDateKey(b.dateTime?.slice(0, 10) || ""))
+      .filter((date): date is Date => date !== null)
+      .sort((a, b) => a.getTime() - b.getTime());
+    const fallback = new Date();
+    const rangeStart = fromLocalDateKey(timeframeRange.start) || settledDates[0] || fallback;
+    const rangeEnd = fromLocalDateKey(timeframeRange.end) || settledDates.at(-1) || rangeStart;
+    const chronologicalStart = rangeStart <= rangeEnd ? rangeStart : rangeEnd;
+    const chronologicalEnd = rangeStart <= rangeEnd ? rangeEnd : rangeStart;
+    return { start: chronologicalStart, end: chronologicalEnd };
+  }, [bets, timeframeRange]);
+
+  const showMonthlyPerformance = useMemo(() => {
+    return rangeSpansAtLeastTwoMonths(monthlyChartBounds.start, monthlyChartBounds.end);
+  }, [monthlyChartBounds]);
+
+  // 1b. Prepare monthly buckets for the active timeframe. Empty months inside
+  // the selected range stay visible with zero values, but months outside it do not.
   const monthlyPerformanceData = useMemo(() => {
-    const now = new Date();
     const monthsData: { year: number; month: number; label: string; profit: number; volume: number; betsCount: number }[] = [];
-    
     const monthNamesPT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-    
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const y = d.getFullYear();
-      const m = d.getMonth();
+    const firstMonth = new Date(monthlyChartBounds.start.getFullYear(), monthlyChartBounds.start.getMonth(), 1);
+    const lastMonth = new Date(monthlyChartBounds.end.getFullYear(), monthlyChartBounds.end.getMonth(), 1);
+
+    for (let cursor = new Date(firstMonth); cursor <= lastMonth; cursor.setMonth(cursor.getMonth() + 1)) {
+      const y = cursor.getFullYear();
+      const m = cursor.getMonth();
       monthsData.push({
         year: y,
         month: m,
@@ -373,7 +332,7 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
       "Volume": Number(md.volume.toFixed(2)),
       "Apostas": md.betsCount
     }));
-  }, [bets]);
+  }, [bets, monthlyChartBounds]);
 
   // 2. Prepare data for Bookmaker distribution
   const bookmakerData = useMemo(() => {
@@ -474,256 +433,76 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
 
       {/* Filtros (D2) */}
       <div className="overflow-visible rounded-sm border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-900" id="dashboard-filters">
-        <div className="flex flex-col gap-3 bg-zinc-50/60 p-4 dark:bg-zinc-950/20 xl:flex-row xl:items-center">
-          <div className="flex min-w-fit items-center justify-between gap-3 xl:justify-start">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
-              <Filter size={13} /> Filtros
-              {activeFilterCount > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-100 px-1.5 text-[10px] text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                  {activeFilterCount}
-                </span>
-              )}
+        <FiltersBar
+          activeFilterCount={activeFilterCount}
+          onClear={clearFilters}
+          trailing={
+            <span className="shrink-0 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
+              {bets.length} de {allBets.length} apostas
             </span>
-            {hasFilters && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="text-[10px] font-semibold text-zinc-400 transition-colors hover:text-emerald-600 dark:text-zinc-500 dark:hover:text-emerald-300 cursor-pointer"
-              >
-                Limpar
-              </button>
-            )}
-          </div>
+          }
+        >
+          <FilterDropdown
+            className="flex-1 min-w-40"
+            value={filterBookmaker}
+            options={[{ value: "ALL", label: "Todas as Casas" }, ...bookmakerOptions.map(bookmaker => ({ value: bookmaker, label: bookmaker }))]}
+            onChange={setFilterBookmaker}
+            ariaLabel="Filtrar por casa de apostas"
+          />
 
-          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {accounts.length > 0 && (
             <FilterDropdown
-              value={filterBookmaker}
-              options={[{ value: "ALL", label: "Todas as Casas" }, ...bookmakerOptions.map(bookmaker => ({ value: bookmaker, label: bookmaker }))]}
-              onChange={setFilterBookmaker}
-              ariaLabel="Filtrar por casa de apostas"
-            />
-
-            {accounts.length > 0 && (
-              <FilterDropdown
-                value={filterAccount}
-                options={[
-                  { value: "ALL", label: "Todas as Contas" },
-                  ...accounts.map(account => ({ value: account.id, label: `${account.bookmaker} · ${account.label}` })),
-                  { value: "NONE", label: "Sem conta" }
-                ]}
-                onChange={setFilterAccount}
-                ariaLabel="Filtrar por conta"
-              />
-            )}
-
-            <FilterDropdown
-              value={filterSport}
-              options={[{ value: "ALL", label: "Todos os Desportos" }, ...sportOptions.map(sport => ({ value: sport, label: sport }))]}
-              onChange={setFilterSport}
-              ariaLabel="Filtrar por desporto"
-            />
-
-            <FilterDropdown
-              value={filterType}
+              className="flex-1 min-w-40"
+              value={filterAccount}
               options={[
-                { value: "ALL", label: "Qualquer Tipo" },
-                { value: "SIMPLES", label: "Simples" },
-                { value: "MULTIPLA", label: "Múltipla" }
+                { value: "ALL", label: "Todas as Contas" },
+                ...accounts.map(account => ({ value: account.id, label: `${account.bookmaker} · ${account.label}` })),
+                { value: "NONE", label: "Sem conta" }
               ]}
-              onChange={setFilterType}
-              ariaLabel="Filtrar por tipo de aposta"
+              onChange={setFilterAccount}
+              ariaLabel="Filtrar por conta"
             />
+          )}
 
-            <FilterDropdown
-              value={filterFreebet}
-              options={[
-                { value: "ALL", label: "Dinheiro e Freebet" },
-                { value: "NORMAL", label: "Dinheiro Real" },
-                { value: "FREEBET", label: "Freebet" },
-                { value: "RISK_FREE", label: "Sem risco" }
-              ]}
-              onChange={setFilterFreebet}
-              ariaLabel="Filtrar por tipo de dinheiro"
-            />
+          <FilterDropdown
+            className="flex-1 min-w-40"
+            value={filterSport}
+            options={[{ value: "ALL", label: "Todos os Desportos" }, ...sportOptions.map(sport => ({ value: sport, label: sport }))]}
+            onChange={setFilterSport}
+            ariaLabel="Filtrar por desporto"
+          />
 
-            <div ref={customRangeContainerRef} className="relative min-w-0">
-              <FilterDropdown
-                value={filterTimeframe}
-                options={TIMEFRAME_OPTIONS}
-                open={isTimeframeMenuOpen}
-                onOpenChange={setIsTimeframeMenuOpen}
-                onTriggerClick={() => {
-                  if (filterTimeframe === "CUSTOM") {
-                    if (isCustomRangeOpen) {
-                      setIsCustomRangeOpen(false);
-                      setIsTimeframeMenuOpen(true);
-                    } else if (isTimeframeMenuOpen) {
-                      setIsTimeframeMenuOpen(false);
-                    } else {
-                      openCustomRangePicker();
-                    }
-                    return;
-                  }
+          <FilterDropdown
+            className="flex-1 min-w-40"
+            value={filterType}
+            options={[
+              { value: "ALL", label: "Qualquer Tipo" },
+              { value: "SIMPLES", label: "Simples" },
+              { value: "MULTIPLA", label: "Múltipla" }
+            ]}
+            onChange={setFilterType}
+            ariaLabel="Filtrar por tipo de aposta"
+          />
 
-                  setIsCustomRangeOpen(false);
-                  setIsTimeframeMenuOpen(current => !current);
-                }}
-                onChange={(nextTimeframe) => {
-                  setFilterTimeframe(nextTimeframe);
-                  if (nextTimeframe === "CUSTOM") openCustomRangePicker();
-                  else setIsCustomRangeOpen(false);
-                }}
-                ariaLabel="Filtrar por período"
-              />
+          <FilterDropdown
+            className="flex-1 min-w-40"
+            value={filterFreebet}
+            options={[
+              { value: "ALL", label: "Dinheiro e Freebet" },
+              { value: "NORMAL", label: "Dinheiro Real" },
+              { value: "FREEBET", label: "Freebet" },
+              { value: "RISK_FREE", label: "Sem risco" }
+            ]}
+            onChange={setFilterFreebet}
+            ariaLabel="Filtrar por tipo de dinheiro"
+          />
 
-              <AnimatePresence>
-                {filterTimeframe === "CUSTOM" && isCustomRangeOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                    transition={{ duration: 0.16, ease: "easeOut" }}
-                    className="absolute right-0 top-[calc(100%+0.5rem)] z-50 max-h-[calc(100vh-8rem)] w-[min(22rem,calc(100vw-3rem))] select-none overflow-y-auto rounded-sm border border-zinc-200 bg-white p-3 shadow-xl shadow-zinc-950/10 dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-black/30"
-                    role="dialog"
-                    aria-label="Escolher período personalizado"
-                  >
-                    <div className="mb-3 flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 dark:bg-emerald-950/70 dark:text-emerald-300">
-                          <CalendarRange size={15} />
-                        </span>
-                        <div>
-                          <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">Período personalizado</p>
-                          <p className="text-[10px] text-zinc-400 dark:text-zinc-500">As datas inicial e final são incluídas.</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1.5">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Data inicial</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveRangeEndpoint("start");
-                            const date = fromLocalDateKey(customStartDate);
-                            if (date) setCalendarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
-                          }}
-                          className={`flex h-10 w-full items-center justify-between rounded-sm border px-2.5 text-left text-xs font-semibold outline-none transition-all cursor-pointer ${
-                            activeRangeEndpoint === "start"
-                              ? "border-emerald-500 bg-emerald-50/70 text-emerald-700 ring-2 ring-emerald-500/10 dark:bg-emerald-950/40 dark:text-emerald-200"
-                              : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:border-zinc-600"
-                          }`}
-                        >
-                          <span>{formatDateKey(customStartDate)}</span>
-                          <CalendarRange size={13} className="text-zinc-400" />
-                        </button>
-                      </div>
-                      <div className="space-y-1.5">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Data final</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveRangeEndpoint("end");
-                            const date = fromLocalDateKey(customEndDate || customStartDate);
-                            if (date) setCalendarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
-                          }}
-                          className={`flex h-10 w-full items-center justify-between rounded-sm border px-2.5 text-left text-xs font-semibold outline-none transition-all cursor-pointer ${
-                            activeRangeEndpoint === "end"
-                              ? "border-emerald-500 bg-emerald-50/70 text-emerald-700 ring-2 ring-emerald-500/10 dark:bg-emerald-950/40 dark:text-emerald-200"
-                              : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:border-zinc-600"
-                          }`}
-                        >
-                          <span>{formatDateKey(customEndDate)}</span>
-                          <CalendarRange size={13} className="text-zinc-400" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 rounded-sm border border-zinc-100 bg-zinc-50/70 p-2 dark:border-zinc-800 dark:bg-zinc-950/40">
-                      <div className="mb-2 flex items-center justify-between px-1">
-                        <button
-                          type="button"
-                          onClick={() => setCalendarMonth(current => new Date(current.getFullYear(), current.getMonth() - 1, 1))}
-                          className="flex h-8 w-8 items-center justify-center rounded-sm text-zinc-400 transition-colors hover:bg-white hover:text-emerald-600 dark:hover:bg-zinc-800 dark:hover:text-emerald-300 cursor-pointer"
-                          aria-label="Mês anterior"
-                        >
-                          <ChevronLeft size={15} />
-                        </button>
-                        <span className="text-xs font-semibold capitalize text-zinc-700 dark:text-zinc-200">
-                          {calendarMonth.toLocaleDateString("pt-PT", { month: "long", year: "numeric" })}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setCalendarMonth(current => new Date(current.getFullYear(), current.getMonth() + 1, 1))}
-                          className="flex h-8 w-8 items-center justify-center rounded-sm text-zinc-400 transition-colors hover:bg-white hover:text-emerald-600 dark:hover:bg-zinc-800 dark:hover:text-emerald-300 cursor-pointer"
-                          aria-label="Mês seguinte"
-                        >
-                          <ChevronRight size={15} />
-                        </button>
-                      </div>
-
-                      <div className="mb-1 grid grid-cols-7">
-                        {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map(day => (
-                          <span key={day} className="flex h-6 items-center justify-center text-[9px] font-bold uppercase text-zinc-400 dark:text-zinc-600">
-                            {day}
-                          </span>
-                        ))}
-                      </div>
-
-                      <motion.div
-                        key={`${calendarMonth.getFullYear()}-${calendarMonth.getMonth()}`}
-                        initial={{ opacity: 0.45, x: 3 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.12, ease: "easeOut" }}
-                        className="grid grid-cols-7 gap-0.5"
-                      >
-                        {calendarDays.map(date => {
-                          const dateKey = toLocalDateKey(date);
-                          const isCurrentMonth = date.getMonth() === calendarMonth.getMonth();
-                          const isStart = dateKey === customStartDate;
-                          const isEnd = dateKey === customEndDate;
-                          const isRangeEdge = isStart || isEnd;
-                          const isInRange = Boolean(customStartDate && customEndDate && dateKey > customStartDate && dateKey < customEndDate);
-                          const isToday = dateKey === toLocalDateKey(new Date());
-
-                          return (
-                            <button
-                              type="button"
-                              key={dateKey}
-                              onClick={() => selectCalendarDate(date)}
-                              className={`relative flex aspect-square items-center justify-center rounded-sm text-[10px] font-semibold outline-none transition-colors cursor-pointer ${
-                                isRangeEdge
-                                  ? "bg-emerald-600 text-white shadow-sm shadow-emerald-950/20 hover:bg-emerald-500"
-                                  : isInRange
-                                    ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-200 dark:hover:bg-emerald-900"
-                                    : isCurrentMonth
-                                      ? "text-zinc-700 hover:bg-white hover:text-emerald-600 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:hover:text-emerald-300"
-                                      : "text-zinc-300 hover:bg-white hover:text-zinc-500 dark:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-500"
-                              }`}
-                              aria-label={date.toLocaleDateString("pt-PT", { day: "numeric", month: "long", year: "numeric" })}
-                              aria-pressed={isRangeEdge}
-                            >
-                              {date.getDate()}
-                              {isToday && !isRangeEdge && (
-                                <span className="absolute bottom-1 h-0.5 w-0.5 rounded-full bg-emerald-500" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </motion.div>
-                    </div>
-
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          <span className="shrink-0 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
-            {bets.length} de {allBets.length} apostas
-          </span>
-        </div>
+          <TimeframeFilter
+            className="flex-1 min-w-40"
+            value={timeframeFilter}
+            onChange={setTimeframeFilter}
+          />
+        </FiltersBar>
       </div>
 
       {/* 4 Cards Grid */}
@@ -815,7 +594,7 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
       </div>
 
       {/* Main Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 gap-6 ${showMonthlyPerformance ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}>
         
         {/* Evolution Chart */}
         <div className="bg-white dark:bg-zinc-900 rounded-sm p-4 border border-zinc-200 dark:border-zinc-800 flex flex-col h-[380px]" id="chart-profit-evolution">
@@ -898,8 +677,8 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
                           <Cell
                             key={`cell-${index}`}
                             fill={entry.color}
-                            onClick={() => openBetsForStatus(entry.status)}
-                            className="cursor-pointer outline-none transition-opacity hover:opacity-80"
+                            onClick={canDrill ? () => openBetsForStatus(entry.status) : undefined}
+                            className={`outline-none transition-opacity ${canDrill ? "cursor-pointer hover:opacity-80" : "cursor-default"}`}
                           />
                         ))}
                       </Pie>
@@ -910,13 +689,19 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
                     </PieChart>
                   </ResponsiveContainer>
                   
-                  {/* Central Text */}
-                  <div className="absolute text-center">
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest">Resolvidas</p>
-                    <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 font-mono mt-0.5">
+                  {/* Central Text — clicável: leva ao histórico das resolvidas */}
+                  <button
+                    type="button"
+                    onClick={openResolvedBets}
+                    disabled={!onOpenBets}
+                    title={onOpenBets ? "Ver apostas resolvidas no histórico" : undefined}
+                    className={`group absolute flex flex-col items-center text-center bg-transparent border-0 outline-none rounded-sm ${onOpenBets ? "cursor-pointer" : "cursor-default"}`}
+                  >
+                    <span className={`text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-widest transition-colors ${canDrill ? "group-hover:text-emerald-600 dark:group-hover:text-emerald-400" : ""}`}>Resolvidas</span>
+                    <span className={`text-2xl font-bold text-zinc-800 dark:text-zinc-100 font-mono mt-0.5 ${canDrill ? "group-hover:underline" : ""}`}>
                       {bets.filter(b => b.status !== "POR_LIQUIDAR").length}
-                    </p>
-                  </div>
+                    </span>
+                  </button>
                 </div>
 
                 {/* Custom Legend */}
@@ -925,12 +710,13 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
                     <button
                       type="button"
                       key={idx}
-                      onClick={() => openBetsForStatus(item.status)}
-                      className="group flex items-center gap-1.5 rounded-sm px-1 py-0.5 text-left text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-emerald-600 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:hover:text-white cursor-pointer"
-                      title={`Ver apostas: ${item.name}`}
+                      onClick={canDrill ? () => openBetsForStatus(item.status) : undefined}
+                      disabled={!canDrill}
+                      className={`group flex items-center gap-1.5 rounded-sm px-1 py-0.5 text-left text-zinc-600 transition-colors dark:text-zinc-200 ${canDrill ? "hover:bg-zinc-50 hover:text-emerald-600 dark:hover:bg-zinc-800 dark:hover:text-white cursor-pointer" : "cursor-default"}`}
+                      title={canDrill ? `Ver apostas: ${item.name}` : undefined}
                     >
                       <span className="w-2.5 h-2.5 rounded-xs shrink-0" style={{ backgroundColor: item.color }} />
-                      <span className="truncate group-hover:underline">{item.name} ({item.value})</span>
+                      <span className={`truncate ${canDrill ? "group-hover:underline" : ""}`}>{item.name} ({item.value})</span>
                     </button>
                   ))}
                 </div>
@@ -945,11 +731,12 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
         </div>
 
         {/* Monthly Performance Chart */}
+        {showMonthlyPerformance && (
         <div className="bg-white dark:bg-zinc-900 rounded-sm p-4 border border-zinc-200 dark:border-zinc-800 flex flex-col h-[380px]" id="chart-monthly-performance">
           <div className="flex justify-between items-center mb-4">
             <div>
               <h4 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight font-display">Desempenho Mensal</h4>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Evolução do lucro líquido nos últimos 6 meses</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Lucro líquido dentro do período selecionado</p>
             </div>
           </div>
           <div className="flex-1 w-full min-h-0">
@@ -994,6 +781,7 @@ export default function Dashboard({ bets: allBets, currency, isDark, onOpenBets,
             </ResponsiveContainer>
           </div>
         </div>
+        )}
 
       </div>
 

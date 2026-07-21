@@ -14,6 +14,9 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT UNIQUE,
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
+  -- Casas suportadas que o utilizador ativou (betclic/betano/solverde). NULL =
+  -- não configurado -> tratado como "todas". A extensão lê isto via /api/settings.
+  enabled_bookmakers TEXT[],
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
 
@@ -38,12 +41,20 @@ CREATE TABLE IF NOT EXISTS bookie_accounts (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   bookmaker TEXT NOT NULL,
   label TEXT NOT NULL,
+  -- Username real na casa (ex.: "pedroocoragem" na Betclic); NULL = sem username.
+  -- A extensão usa-o para encaminhar automaticamente as apostas importadas.
+  username TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
   CONSTRAINT bookie_accounts_label_not_blank CHECK (LENGTH(TRIM(label)) > 0),
   CONSTRAINT bookie_accounts_bookmaker_not_blank CHECK (LENGTH(TRIM(bookmaker)) > 0),
   CONSTRAINT bookie_accounts_unique_label UNIQUE (user_id, bookmaker, label)
 );
+
+-- Um username não se repete dentro da mesma casa para o mesmo utilizador.
+CREATE UNIQUE INDEX IF NOT EXISTS bookie_accounts_username_key
+  ON bookie_accounts (user_id, LOWER(bookmaker), LOWER(username))
+  WHERE username IS NOT NULL;
 
 -- ------------------------------------------------------------
 -- Apostas (bets) — PostgreSQL é a única fonte de verdade.
@@ -69,6 +80,8 @@ CREATE TABLE IF NOT EXISTS bets (
     CONSTRAINT bets_freebet_type_check CHECK (freebet_type IS NULL OR freebet_type IN ('SNR', 'SR')),
   -- Aposta sem risco: stake real, mas derrota total devolve a stake (net 0).
   is_risk_free BOOLEAN NOT NULL DEFAULT FALSE,
+  -- Aposta ignorada: visível no histórico mas excluída das estatísticas.
+  is_ignored BOOLEAN NOT NULL DEFAULT FALSE,
   potential_return DECIMAL,
   final_return DECIMAL,
   net_profit DECIMAL,

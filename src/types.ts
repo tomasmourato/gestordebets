@@ -1,5 +1,6 @@
 export type BetStatus = 'POR_LIQUIDAR' | 'GANHA' | 'PERDIDA' | 'ANULADA' | 'MEIO_GANHA' | 'MEIO_PERDIDA' | 'CASHOUT';
 export type BetType = 'SIMPLES' | 'MULTIPLA';
+export type SelectionResult = Exclude<BetStatus, 'CASHOUT'>;
 
 // Regra de pagamento de uma freebet:
 //  SNR = Stake Not Returned (ganho = (odd-1) * stake) — padrão da indústria
@@ -14,6 +15,7 @@ export interface Selection {
   odd: number;
   sport?: string;
   betType?: string;
+  result?: SelectionResult;
 }
 
 export interface BetMetadata {
@@ -45,6 +47,10 @@ export interface Bet {
   // stake (tipicamente como freebet, registada à parte) -> break-even nesta
   // aposta. Mutuamente exclusivo com isFreebet.
   isRiskFree?: boolean;
+  // Aposta ignorada: continua visível no histórico mas é excluída de todas as
+  // estatísticas (ex.: uma aposta feita para um amigo). O motivo, quando dado,
+  // fica no campo `comment`.
+  isIgnored?: boolean;
   potentialReturn: number;
   finalReturn: number;
   netProfit: number;
@@ -67,6 +73,9 @@ export interface BookieAccount {
   id: string;
   bookmaker: string;
   label: string;
+  // Username real na casa (ex.: "pedroocoragem" na Betclic); a extensão usa-o
+  // para encaminhar automaticamente as apostas importadas. undefined = sem username.
+  username?: string;
   createdAt?: string;
 }
 

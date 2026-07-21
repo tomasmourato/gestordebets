@@ -17,6 +17,7 @@
       "src": "server.ts",
       "use": "@vercel/node",
       "config": {
+        "includeFiles": ["dist/**"],
         "maxDuration": 60
       }
     }
@@ -33,6 +34,10 @@
     },
     {
       "src": "/api/(.*)",
+      "dest": "server.ts"
+    },
+    {
+      "src": "/(dashboard|bets)",
       "dest": "server.ts"
     },
     {

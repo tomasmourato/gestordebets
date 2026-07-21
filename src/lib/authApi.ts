@@ -5,7 +5,7 @@ import { apiUrl } from "./apiBase";
 const TOKEN_KEY = "gestordebets_token";
 const USER_KEY = "gestordebets_user";
 
-interface StoredUser {
+export interface StoredUser {
   id: string;
   username: string;
   email: string;
@@ -67,6 +67,15 @@ export function isAuthenticated(): boolean {
   return !!getToken();
 }
 
+export async function restoreBrowserSession(): Promise<StoredUser | null> {
+  if (!getToken()) return null;
+  const res = await authFetch("/api/auth/me");
+  const data = await parseJsonResponse(res);
+  if (!res.ok || !data?.user) return null;
+  saveUser(data.user);
+  return data.user;
+}
+
 // ------------------------------------------------------------
 // Registo
 // ------------------------------------------------------------
@@ -102,6 +111,7 @@ export async function login(email: string, password: string) {
 export function logout() {
   clearToken();
   localStorage.removeItem(USER_KEY);
+  void fetch(apiUrl("/api/auth/logout"), { method: "POST", credentials: "same-origin" }).catch(() => undefined);
 }
 
 // ------------------------------------------------------------
@@ -136,7 +146,9 @@ export async function authFetch(url: string, options: RequestInit = {}) {
   // Caminhos relativos ("/api/...") são prefixados com a base da plataforma
   // (na app nativa a API vive noutra origem; na web fica relativo).
   const target = url.startsWith("/") ? apiUrl(url) : url;
-  const res = await fetch(target, { ...options, headers });
+  // credentials same-origin: na web o cookie de sessão do SSR tem de seguir no
+  // pedido para o servidor conseguir render o documento já autenticado.
+  const res = await fetch(target, { ...options, headers, credentials: "same-origin" });
 
   if (res.status === 401) {
     // Token inválido ou expirado -> força novo login
