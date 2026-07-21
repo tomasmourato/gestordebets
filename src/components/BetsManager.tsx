@@ -1510,9 +1510,9 @@ export default function BetsManager({
 
                 {formIsRiskFree && (
                   <p className="text-[11px] text-emerald-700/70 dark:text-emerald-300/70">
-                    Aposta sem risco: a stake é dinheiro real. Se <strong>ganhar</strong>, o lucro é
-                    normal; se <strong>perder</strong>, a stake é devolvida (resultado neutro).
-                    Regista a freebet devolvida como uma aposta à parte quando a usares.
+                    Aposta sem risco: a stake é dinheiro real e conta para o lucro como uma aposta
+                    normal. Se <strong>ganhar</strong>, o lucro é normal; se <strong>perder</strong>,
+                    perde a stake. Regista a freebet devolvida como uma aposta à parte quando a usares.
                   </p>
                 )}
               </div>

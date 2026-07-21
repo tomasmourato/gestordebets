@@ -1,11 +1,11 @@
 # Graph Report - bettrackr  (2026-07-21)
 
 ## Corpus Check
-- 113 files · ~144,954 words
+- 113 files · ~145,034 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 800 nodes · 1424 edges · 97 communities (39 shown, 58 thin omitted)
+- 801 nodes · 1426 edges · 97 communities (39 shown, 58 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 39 edges (avg confidence: 0.72)
 - Token cost: 0 input · 0 output
 
@@ -148,7 +148,7 @@ Cohesion: 0.05
 Nodes (79): accountsForBookmaker(), betanoRequestId(), betanoTokenWaiters, betclicReadStateFn(), betPayload(), BETTRACKR_APP_URLS, configForImport(), detectBookmakerUsernames() (+71 more)
 
 ### Community 2 - "App Shell and State"
-Cohesion: 0.11
+Cohesion: 0.10
 Nodes (47): AIInsights(), AIInsightsProps, InsightsResponse, Pick, Social(), SocialProps, statusMeta(), useAccounts() (+39 more)
 
 ### Community 3 - "Runtime Dependencies"
@@ -217,7 +217,7 @@ Nodes (4): looksLikeBetsApi(), looksLikeIdentityApi(), report(), sniffIdentity()
 
 ### Community 25 - "Canonical Database Schema"
 Cohesion: 0.06
-Nodes (52): AIInsights, App(), AppProps, AppTab, BetsManager, BrandMark(), Dashboard, NAV_ITEMS (+44 more)
+Nodes (53): AIInsights, App(), AppProps, AppTab, BetsManager, BrandMark(), Dashboard, NAV_ITEMS (+45 more)
 
 ### Community 32 - "Betclic Content Bridge"
 Cohesion: 0.70
@@ -276,4 +276,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Extension Import Orchestration` be split into smaller, more focused modules?**
   _Cohesion score 0.05056179775280899 - nodes in this community are weakly interconnected._
 - **Should `App Shell and State` be split into smaller, more focused modules?**
-  _Cohesion score 0.10588972431077694 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10463659147869674 - nodes in this community are weakly interconnected._
