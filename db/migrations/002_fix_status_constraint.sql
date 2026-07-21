@@ -12,9 +12,10 @@
 
 -- 1. Migra estados legados para o vocabulário atual.
 UPDATE bets SET status = 'POR_LIQUIDAR' WHERE status = 'PENDENTE';
--- CASHOUT era um estado liquidado da versão antiga; ANULADA é o mais próximo
--- (retorno registado nas colunas final_return/net_profit, sem perda de dados).
-UPDATE bets SET status = 'ANULADA' WHERE status = 'CASHOUT';
+-- NOTA: originalmente esta migração convertia CASHOUT -> ANULADA, porque na
+-- altura CASHOUT não era um estado válido. A migração 006 reintroduziu CASHOUT
+-- como estado próprio, por isso a conversão foi removida: reexecutar o 002 numa
+-- BD já com o 006 aplicado violaria bets_cashout_metadata_status_check.
 
 -- 2. `status`/`type` eram VARCHAR com limite; TEXT remove o risco de
 --    truncar valores mais longos como MEIO_PERDIDA.
@@ -24,7 +25,7 @@ ALTER TABLE bets ALTER COLUMN type TYPE TEXT;
 -- 3. Substitui a constraint antiga pela lista atual de estados.
 ALTER TABLE bets DROP CONSTRAINT IF EXISTS bets_status_check;
 ALTER TABLE bets ADD CONSTRAINT bets_status_check CHECK (
-  status IN ('POR_LIQUIDAR', 'GANHA', 'PERDIDA', 'ANULADA', 'MEIO_GANHA', 'MEIO_PERDIDA')
+  status IN ('POR_LIQUIDAR', 'GANHA', 'PERDIDA', 'ANULADA', 'MEIO_GANHA', 'MEIO_PERDIDA', 'CASHOUT')
 );
 
 -- 4. O default antigo ('PENDENTE') violaria a nova constraint.
