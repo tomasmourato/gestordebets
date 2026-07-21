@@ -5,6 +5,46 @@ const STATUS_LOSS = 3;
 const MIN_HISTORY_YEAR = 2012;
 const CASHOUT_STATUS_TOKENS = new Set(["CASHOUT", "CASHEDOUT", "FULLCASHOUT", "PARTIALCASHOUT"]);
 
+const SELECTION_STATUS_MAP = new Map([
+  ["1", "POR_LIQUIDAR"],
+  ["2", "GANHA"],
+  ["3", "PERDIDA"],
+  ["OPEN", "POR_LIQUIDAR"],
+  ["PENDING", "POR_LIQUIDAR"],
+  ["NOTSET", "POR_LIQUIDAR"],
+  ["WIN", "GANHA"],
+  ["WON", "GANHA"],
+  ["GANHA", "GANHA"],
+  ["LOSE", "PERDIDA"],
+  ["LOSS", "PERDIDA"],
+  ["LOST", "PERDIDA"],
+  ["PERDIDA", "PERDIDA"],
+  ["VOID", "ANULADA"],
+  ["REFUNDED", "ANULADA"],
+  ["CANCELED", "ANULADA"],
+  ["CANCELLED", "ANULADA"],
+  ["ANULADA", "ANULADA"],
+  ["HALFWIN", "MEIO_GANHA"],
+  ["HALFWON", "MEIO_GANHA"],
+  ["HALFLOSE", "MEIO_PERDIDA"],
+  ["HALFLOST", "MEIO_PERDIDA"],
+]);
+
+export function mapBetanoSelectionResult(value) {
+  if (value === undefined || value === null || value === "") return undefined;
+  const token = String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+  return SELECTION_STATUS_MAP.get(token);
+}
+
+function resultValue(value) {
+  if (!value || typeof value !== "object") return undefined;
+  return value.Result ?? value.Status ?? value.State ?? value.Outcome ?? value.SettlementStatus;
+}
+
 export function parseBetanoMoney(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
   if (value === undefined || value === null) return 0;
@@ -37,6 +77,19 @@ function promotionInfo(bet) {
   const tokens = Array.isArray(bet.BonusTokens) ? bet.BonusTokens : [];
   const first = tokens[0] || {};
   const type = first.Type ? String(first.Type) : null;
+  const tokenTypes = tokens.map((token) => (token && token.Type ? String(token.Type) : "").toLowerCase());
+  const hasToken = (name) => tokenTypes.includes(name);
+
+  // BonusType (fallback quando os tokens não vêm): 1 = FullBet (freebet),
+  // 3 = RiskFree (aposta sem risco). Os tokens são o sinal primário.
+  // "Aposta sem risco": stake é dinheiro REAL, mas uma derrota é compensada
+  // (stake devolvida como freebet), por isso o resultado é neutro — é um
+  // conceito distinto da freebet e tem prioridade sobre ela.
+  const isRiskFree = hasToken("riskfree") || Number(bet.BonusType) === 3;
+  // FullBet é uma stake de bónus (freebet). RiskFree usa stake real, por isso
+  // não é freebet.
+  const isFreebet = !isRiskFree && (hasToken("fullbet") || Number(bet.BonusType) === 1);
+
   return {
     type,
     amount: first.Amount === undefined ? null : round2(parseBetanoMoney(first.Amount)),
@@ -44,9 +97,8 @@ function promotionInfo(bet) {
       type: token && token.Type ? String(token.Type) : null,
       amount: token && token.Amount !== undefined ? round2(parseBetanoMoney(token.Amount)) : null,
     })),
-    // FullBet is a bonus stake. RiskFree is retained as a cash stake because
-    // any loss compensation is handled separately by the bookmaker.
-    isFreebet: type === "FullBet",
+    isFreebet,
+    isRiskFree,
   };
 }
 
@@ -81,8 +133,19 @@ export function mapBetanoStatus(bet) {
 function flattenSelections(bet, ref) {
   const selections = [];
   for (const leg of Array.isArray(bet.Legs) ? bet.Legs : []) {
-    for (const item of Array.isArray(leg && leg.LegItems) ? leg.LegItems : []) {
-      for (const selection of Array.isArray(item && item.Selections) ? item.Selections : []) {
+    const legItems = Array.isArray(leg && leg.LegItems) ? leg.LegItems : [];
+    const legSelectionCount = legItems.reduce(
+      (count, item) => count + (Array.isArray(item && item.Selections) ? item.Selections.length : 0),
+      0
+    );
+    for (const item of legItems) {
+      const itemSelections = Array.isArray(item && item.Selections) ? item.Selections : [];
+      for (const selection of itemSelections) {
+        const result = mapBetanoSelectionResult(
+          resultValue(selection) ??
+          (itemSelections.length === 1 ? resultValue(item) : undefined) ??
+          (legSelectionCount === 1 ? resultValue(leg) : undefined)
+        );
         selections.push({
           id: `betano-${ref || "x"}-${selections.length}`,
           event: selection.Game || "",
@@ -91,6 +154,7 @@ function flattenSelections(bet, ref) {
           odd: parseBetanoMoney(selection.Odd),
           sport: selection.Sport || undefined,
           betType: selection.Market || undefined,
+          ...(result ? { result } : {}),
         });
       }
     }
@@ -110,10 +174,23 @@ export function mapBetanoBet(bet) {
   const isCashout = status === "CASHOUT";
   const settledReturn = round2(parseBetanoMoney(bet.Return));
   const possibleReturn = round2(parseBetanoMoney(bet.PossibleWinnings) || stake * odd);
-  const finalReturn = status === "POR_LIQUIDAR" ? 0 : settledReturn;
-  const netProfit = status === "POR_LIQUIDAR"
-    ? 0
-    : promotion.isFreebet ? finalReturn : finalReturn - stake;
+  const isLoss = status === "PERDIDA" || status === "MEIO_PERDIDA";
+
+  let finalReturn;
+  let netProfit;
+  if (status === "POR_LIQUIDAR") {
+    finalReturn = 0;
+    netProfit = 0;
+  } else if (promotion.isRiskFree && !isCashout) {
+    // Aposta sem risco: uma vitória paga como uma aposta normal (retorno real
+    // menos a stake); numa derrota a stake é devolvida, por isso o resultado
+    // é neutro (net 0). Espelha o ramo isRiskFree de calculateBetReturnAndProfit.
+    finalReturn = isLoss ? stake : settledReturn;
+    netProfit = isLoss ? 0 : round2(settledReturn - stake);
+  } else {
+    finalReturn = settledReturn;
+    netProfit = promotion.isFreebet ? finalReturn : round2(finalReturn - stake);
+  }
 
   return {
     type: String(bet.Type || "").toLowerCase() === "single" ? "SIMPLES" : "MULTIPLA",
@@ -121,6 +198,7 @@ export function mapBetanoBet(bet) {
     stake,
     odd,
     isFreebet: promotion.isFreebet,
+    isRiskFree: promotion.isRiskFree,
     potentialReturn: status === "POR_LIQUIDAR" ? possibleReturn : round2(Math.max(possibleReturn, finalReturn)),
     finalReturn,
     netProfit: round2(netProfit),

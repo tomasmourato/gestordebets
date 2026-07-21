@@ -69,6 +69,12 @@ export type StoredUser = ReturnType<typeof getStoredUser>;
 export interface ShellProps {
   // Navegação
   activeTab: AppTab;
+  // Query string atual (filtros no URL) — passada como initialSearch ao
+  // Dashboard/BetsManager para links partilhados e drill-downs do dashboard.
+  locationSearch: string;
+  // False durante o primeiro render (hidratação do SSR): os shells devem
+  // suprimir animações de entrada para o HTML do servidor não piscar.
+  routeAnimationsReady: boolean;
   navigateToTab: (tab: AppTab) => void;
   navigateToFilteredBets: (filters: DashboardBetsFilters) => void;
 
@@ -97,6 +103,7 @@ export interface ShellProps {
   onRefresh: () => Promise<void>;
   onAddBet: (bet: Bet) => Promise<void>;
   onUpdateBet: (bet: Bet) => Promise<void>;
+  onIgnoreBet: (id: string, ignored: boolean, comment?: string | null) => Promise<void>;
   onDeleteBet: (id: string) => Promise<void>;
   onDuplicateBets: (bets: Bet[]) => Promise<void>;
   onImportCSV: (bets: Bet[]) => Promise<void>;

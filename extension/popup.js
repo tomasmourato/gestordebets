@@ -4,22 +4,48 @@
 const BOOKIES = [
   { key: "betclic", label: "Betclic" },
   { key: "betano", label: "Betano" },
+  { key: "solverde", label: "Solverde" },
 ];
 const accountsBox = document.getElementById("accounts");
 const accountChoices = {}; // key -> accountId escolhido ("" = sem conta)
+const accountSelects = {}; // key -> <select> (para pré-selecionar por username)
+const accountOptionsByKey = {}; // key -> contas dessa casa
+const accountHints = {}; // key -> <div> de dica (username detetado)
 
 const dotBetclic = document.getElementById("dot-betclic");
 const txtBetclic = document.getElementById("txt-betclic");
 const dotBetano = document.getElementById("dot-betano");
 const txtBetano = document.getElementById("txt-betano");
+const dotSolverde = document.getElementById("dot-solverde");
+const txtSolverde = document.getElementById("txt-solverde");
 const dotBettrackr = document.getElementById("dot-bettrackr");
 const txtBettrackr = document.getElementById("txt-bettrackr");
 const buttons = {
   betclic: document.getElementById("import-betclic"),
   betano: document.getElementById("import-betano"),
+  solverde: document.getElementById("import-solverde"),
   all: document.getElementById("import-all"),
 };
 const msg = document.getElementById("msg");
+
+// Casas ativas escolhidas no site (via GET_STATUS). Por defeito, todas — só é
+// restringido quando o servidor devolve uma seleção. Partilhado entre o estado
+// (linhas/botões) e a construção dos dropdowns de conta.
+let enabledBookies = BOOKIES.map((b) => b.key);
+const statusRows = {
+  betclic: dotBetclic.parentElement,
+  betano: dotBetano.parentElement,
+  solverde: dotSolverde.parentElement,
+};
+
+// Esconde as linhas de estado e os botões das casas que o utilizador não ativou.
+function applyEnabledVisibility() {
+  for (const { key } of BOOKIES) {
+    const on = enabledBookies.includes(key);
+    if (statusRows[key]) statusRows[key].hidden = !on;
+    if (buttons[key]) buttons[key].hidden = !on;
+  }
+}
 
 // Login / conta BetTrackr
 const loginForm = document.getElementById("login");
@@ -30,6 +56,7 @@ const accountBox = document.getElementById("account-box");
 const accountUser = document.getElementById("account-user");
 const logoutBtn = document.getElementById("logout-btn");
 const autoImportToggle = document.getElementById("auto-import");
+const updateOnlyToggle = document.getElementById("update-only");
 
 function setMsg(text, kind) {
   msg.textContent = text || "";
@@ -43,12 +70,20 @@ function setStatus(dot, text, ready, readyText, waitingText) {
 
 async function refreshStatus() {
   const status = await chrome.runtime.sendMessage({ type: "GET_STATUS" });
+  if (Array.isArray(status.enabledBookmakers)) {
+    enabledBookies = BOOKIES.map((b) => b.key).filter((k) => status.enabledBookmakers.includes(k));
+  }
+  applyEnabledVisibility();
   setStatus(dotBetclic, txtBetclic, status.betclic, "Betclic: sessão detetada", "Betclic: abre 'As minhas apostas'");
   setStatus(dotBetano, txtBetano, status.betano, "Betano: página detetada", "Betano: abre betano.pt");
+  setStatus(dotSolverde, txtSolverde, status.solverde, "Solverde: sessão detetada", "Solverde: inicia sessão em solverde.pt");
   setStatus(dotBettrackr, txtBettrackr, status.bettrackr, "BetTrackr: sessão detetada", "BetTrackr: inicia sessão aqui");
   buttons.betclic.disabled = !(status.betclic && status.bettrackr);
   buttons.betano.disabled = !(status.betano && status.bettrackr);
-  buttons.all.disabled = !(status.bettrackr && (status.betclic || status.betano));
+  buttons.solverde.disabled = !(status.solverde && status.bettrackr);
+  // "Importar tudo" só conta as casas ativas com sessão detetada.
+  const anyEnabledReady = enabledBookies.some((key) => status[key]);
+  buttons.all.disabled = !(status.bettrackr && anyEnabledReady);
 
   // Login vs. sessão iniciada.
   loginForm.hidden = status.bettrackr === true;
@@ -56,6 +91,7 @@ async function refreshStatus() {
   if (status.bettrackr) {
     accountUser.textContent = status.bettrackrUser ? `Sessão: ${status.bettrackrUser}` : "Sessão iniciada";
     autoImportToggle.checked = status.autoImport === true;
+    updateOnlyToggle.checked = status.updateOnly === true;
   }
   return status;
 }
@@ -81,6 +117,7 @@ async function loadAccounts() {
     accountsBox.innerHTML = "";
     let anyShown = false;
     for (const { key, label } of BOOKIES) {
+      if (!enabledBookies.includes(key)) continue; // casa desativada no site
       const options = accounts.filter((account) => account.bookmaker === label);
       if (options.length === 0) continue;
       anyShown = true;
@@ -98,7 +135,11 @@ async function loadAccounts() {
       for (const account of options) {
         const option = document.createElement("option");
         option.value = String(account.id);
-        option.textContent = String(account.label);
+        // Mostra o username (quando definido) para deixar claro para que conta
+        // real vão as apostas — a mesma associação que a deteção automática usa.
+        option.textContent = account.username
+          ? `${account.label} · @${account.username}`
+          : String(account.label);
         select.appendChild(option);
       }
 
@@ -115,12 +156,106 @@ async function loadAccounts() {
         saved[key] = select.value;
       });
 
+      // Dica com o username detetado na sessão da casa (preenchida depois).
+      const hint = document.createElement("div");
+      hint.id = `hint-${key}`;
+      hint.style.cssText = "font-size:10px;margin:-2px 0 6px;min-height:12px;color:#9aa4b2;";
+      hint.hidden = true;
+
       accountsBox.appendChild(caption);
       accountsBox.appendChild(select);
+      accountsBox.appendChild(hint);
+
+      accountSelects[key] = select;
+      accountOptionsByKey[key] = options;
+      accountHints[key] = hint;
     }
     accountsBox.hidden = !anyShown;
+    if (anyShown) applyDetectedUsernames(saved);
   } catch (_) {
     // API indisponível -> importa sem conta, como antes.
+  }
+}
+
+// Encontra a conta correspondente a um username detetado: primeiro pelo campo
+// username da conta (case-insensitive), depois pelo label como rede de segurança.
+function matchAccountByUsername(options, username) {
+  if (!username) return null;
+  const target = String(username).trim().toLowerCase();
+  if (!target) return null;
+  return (
+    options.find((a) => a.username && String(a.username).trim().toLowerCase() === target) ||
+    options.find((a) => String(a.label).trim().toLowerCase() === target) ||
+    null
+  );
+}
+
+// Pergunta ao service worker qual o username com sessão iniciada em cada casa e,
+// quando bate certo com uma conta, pré-seleciona-a no dropdown (o import segue
+// a seleção). Também mostra o username detetado para o utilizador o poder
+// registar na conta quando ainda não há correspondência.
+async function applyDetectedUsernames(saved) {
+  let detected;
+  try {
+    detected = await chrome.runtime.sendMessage({ type: "DETECT_USERNAMES" });
+    console.log("[BetTrackr] build=update-only-1 DETECT_USERNAMES ->", JSON.stringify(detected));
+  } catch (e) {
+    console.log("[BetTrackr] build=update-only-1 DETECT_USERNAMES falhou:", String((e && e.message) || e));
+    return;
+  }
+  if (!detected || typeof detected !== "object") return;
+
+  for (const { key } of BOOKIES) {
+    const info = detected[key];
+    // Compat.: aceita tanto o formato novo ({username,error}) como string simples.
+    const username = info && typeof info === "object" ? info.username : info;
+    const error = info && typeof info === "object" ? info.error : null;
+    const loggedIn = info && typeof info === "object" ? info.loggedIn : undefined;
+    const select = accountSelects[key];
+    const hint = accountHints[key];
+    const options = accountOptionsByKey[key] || [];
+    if (!select || !hint) continue;
+
+    if (!username) {
+      if (loggedIn === false) {
+        // Sessão terminada -> força "sem conta" (não deixa a escolha memorizada).
+        select.value = "";
+        accountChoices[key] = "";
+        const next = { ...(saved || {}), [key]: "" };
+        chrome.storage.local.set({ importAccountChoices: next });
+        if (saved) saved[key] = "";
+        hint.hidden = false;
+        hint.style.color = "#9aa4b2";
+        hint.textContent = "Sem sessão iniciada — sem conta";
+      } else if (error) {
+        // Não conseguimos detetar (ex.: sem tab betclic aberta) — mostra o motivo,
+        // mas NÃO mexe na seleção (não sabemos se está com ou sem sessão).
+        hint.hidden = false;
+        hint.style.color = "#9aa4b2";
+        hint.textContent = `Deteção de conta indisponível (${error})`;
+      } else {
+        hint.hidden = true;
+        hint.textContent = "";
+      }
+      continue;
+    }
+
+    const match = matchAccountByUsername(options, username);
+    hint.hidden = false;
+    if (match) {
+      // Pré-seleciona e persiste — o import vai para a conta certa mesmo que o
+      // utilizador não toque em nada.
+      select.value = String(match.id);
+      accountChoices[key] = String(match.id);
+      const next = { ...(saved || {}), [key]: String(match.id) };
+      chrome.storage.local.set({ importAccountChoices: next });
+      if (saved) saved[key] = String(match.id);
+      hint.style.color = "#34d399";
+      hint.textContent = `✓ Sessão @${username} → conta associada automaticamente`;
+    } else {
+      hint.style.color = "#f59e0b";
+      hint.textContent = `Sessão @${username} detetada — define este username na conta para associar automaticamente`;
+    }
   }
 }
 
@@ -136,6 +271,7 @@ function formatSource(name, result) {
   if (!result || !result.ok) return `${name}: ${result?.error || "indisponível"}`;
   return `${name}: ${result.imported || 0} importadas, ${result.updated || 0} atualizadas` +
     (result.skipped ? `, ${result.skipped} já existentes` : "") +
+    (result.ignoredNew ? `, ${result.ignoredNew} novas ignoradas` : "") +
     (result.cashouts ? `, ${result.cashouts} cashout detetado${result.cashouts === 1 ? "" : "s"}` : "") +
     (result.unsupported ? `, ${result.unsupported} ignoradas` : "");
 }
@@ -201,9 +337,31 @@ autoImportToggle.addEventListener("change", async () => {
   setMsg(autoImportToggle.checked ? "Importação automática ligada." : "Importação automática desligada.", null);
 });
 
+updateOnlyToggle.addEventListener("change", async () => {
+  await chrome.runtime.sendMessage({ type: "SET_UPDATE_ONLY", enabled: updateOnlyToggle.checked });
+  setMsg(
+    updateOnlyToggle.checked
+      ? "Só atualizar existentes: as próximas importações não criam apostas novas."
+      : "Modo normal: as importações voltam a criar apostas novas.",
+    null
+  );
+});
+
 chrome.runtime.onMessage.addListener((message) => {
   if (message && message.type === "PROGRESS") setMsg(message.text, null);
 });
 
-refreshStatus().catch((error) => setMsg(String(error && error.message || error), "error"));
-loadAccounts();
+// Estado primeiro (define as casas ativas), depois as contas — assim os
+// dropdowns já respeitam a seleção do site.
+refreshStatus()
+  .then(() => loadAccounts())
+  .catch((error) => setMsg(String(error && error.message || error), "error"));
+
+// Marcador de build visível — confirma que o Chrome carregou o código novo
+// (o load de extensões unpacked em WSL fica muitas vezes com o worker antigo).
+try {
+  const mark = document.createElement("div");
+  mark.textContent = "build: update-only-1";
+  mark.style.cssText = "font-size:9px;color:#667085;text-align:center;padding:3px 0;opacity:.65;";
+  document.body.appendChild(mark);
+} catch (_) {}

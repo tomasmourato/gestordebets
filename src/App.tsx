@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy } from "react";
+﻿import { useState, useEffect, Suspense, lazy } from "react";
 
 import { Bet, Preferences } from "./types";
 import { INITIAL_BETS, safeNum } from "./utils";
@@ -6,15 +6,17 @@ import { INITIAL_BETS, safeNum } from "./utils";
 import type { DashboardBetsFilters } from "./components/Dashboard";
 import type { AppTab, ShellProps } from "./navigation";
 import { TAB_PATHS, tabFromPath } from "./navigation";
+import { serializeFilters } from "./lib/filterParams";
 import AuthPage from "./components/AuthPage";
-import { isAuthenticated, logout, getStoredUser } from "./lib/authApi";
-import { usePreferences } from "./hooks/usePreferences";
+import { isAuthenticated, logout, getStoredUser, restoreBrowserSession } from "./lib/authApi";
+import { usePreferences, DEFAULT_PREFERENCES } from "./hooks/usePreferences";
 import { useTheme } from "./hooks/useTheme";
 import { useAuditLog } from "./hooks/useAuditLog";
 import { useBets } from "./hooks/useBets";
 import { useAccounts } from "./hooks/useAccounts";
 import { translate } from "./lib/i18n";
 import { useMobileUI } from "./lib/platform";
+import type { InitialAppData } from "./initialData";
 
 // Os dois shells carregam sob demanda: cada plataforma só descarrega o seu
 // próprio código de UI. A lógica (estado + handlers) vive toda aqui.
@@ -23,7 +25,11 @@ const MobileApp = lazy(() => import("./mobile/MobileApp"));
 // Dev-only: galeria de primitivos mobile (?gallery=1). Removida na Fase 5.
 const Gallery = lazy(() => import("./mobile/ui/Gallery"));
 
-export default function App() {
+interface AppProps {
+  initialData?: InitialAppData;
+}
+
+export default function App({ initialData }: AppProps) {
 
   // Galeria de desenvolvimento dos primitivos, fora do gate de autenticação.
   if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("gallery") === "1") {
@@ -36,38 +42,73 @@ export default function App() {
 
 
   // Autenticação: gate de login/registo antes de mostrar a app
-  const [authed, setAuthed] = useState<boolean>(isAuthenticated());
-  const [currentUser, setCurrentUser] = useState(getStoredUser());
+  const [authed, setAuthed] = useState<boolean>(() =>
+    initialData ? initialData.authenticated : isAuthenticated()
+  );
+  const [currentUser, setCurrentUser] = useState(() =>
+    initialData ? initialData.user : getStoredUser()
+  );
 
   // Escolhe o shell (desktop vs mobile nativa-feel).
-  const isMobileUI = useMobileUI();
+  const isMobileUIRaw = useMobileUI();
 
   // Cada área tem um URL próprio e continua a navegar como SPA.
-  const [activeTab, setActiveTab] = useState<AppTab>(() => tabFromPath(window.location.pathname));
+  const [activeTab, setActiveTab] = useState<AppTab>(() =>
+    tabFromPath(initialData?.pathname ?? window.location.pathname)
+  );
+  const [locationSearch, setLocationSearch] = useState(() =>
+    initialData?.search ?? window.location.search
+  );
+  const [routeAnimationsReady, setRouteAnimationsReady] = useState(false);
 
   // Painel lateral de conta (detalhes do utilizador + terminar sessão).
   const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   const navigateToTab = (tab: AppTab) => {
     const nextPath = TAB_PATHS[tab];
+    const isSameTab = tab === activeTab;
+    const hadFilters = Boolean(window.location.search);
+
     if (`${window.location.pathname}${window.location.search}` !== nextPath) {
       window.history.pushState({ tab }, "", nextPath);
     }
     setActiveTab(tab);
+    setLocationSearch("");
+
+    // Clicar no separador já ativo limpa os filtros. Como a página não é
+    // remontada, não chega mudar `initialSearch` (só é lido no arranque) — o
+    // popstate é o mesmo canal que o back/forward usa para reaplicar o URL.
+    if (isSameTab && hadFilters) {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }
   };
 
   const navigateToFilteredBets = (filters: DashboardBetsFilters) => {
-    const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) params.set(key, value);
+    // Serializado pelo mesmo helper que o histórico usa: o URL do drill-down
+    // fica igual ao que a página produziria sozinha, por isso ao montar não há
+    // divergência (nem uma entrada de histórico extra para a corrigir).
+    const search = serializeFilters({
+      status: filters.status,
+      bookmaker: filters.bookmaker ?? "ALL",
+      account: filters.account ?? "ALL",
+      sport: filters.sport ?? "ALL",
+      type: filters.type ?? "ALL",
+      money: filters.money ?? "ALL",
+      timeframe: {
+        timeframe: filters.timeframe ?? "ALL",
+        startDate: filters.dateFrom ?? "",
+        endDate: filters.dateTo ?? "",
+      },
     });
-    const nextPath = `/bets?${params.toString()}`;
-    window.history.pushState({ tab: "BETS" }, "", nextPath);
+    window.history.pushState({ tab: "BETS" }, "", `${TAB_PATHS.BETS}${search}`);
     setActiveTab("BETS");
+    setLocationSearch(search);
   };
 
   // Preferências (armazenamento local) e auditoria (em memória)
-  const { preferences, updatePreferences } = usePreferences();
+  const { preferences, updatePreferences } = usePreferences(
+    initialData ? DEFAULT_PREFERENCES : undefined
+  );
   const { auditLogs, addLog } = useAuditLog();
 
   // Tradução do shell (i18n). O resto da app usa <I18nProvider> + useI18n().
@@ -93,10 +134,15 @@ export default function App() {
     addBet,
     importBets,
     editBet,
+    ignoreBet,
     removeBet,
     clearAllBets,
     replaceAllBets
-  } = useBets(authed, handleSessionExpired);
+  } = useBets(
+    authed,
+    handleSessionExpired,
+    initialData?.authenticated ? initialData.bets : undefined
+  );
 
   // Contas por casa de apostas (partilhadas por Configurações, filtros e extensão)
   const {
@@ -109,7 +155,32 @@ export default function App() {
   } = useAccounts(authed, handleSessionExpired);
 
   // Online status
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator === "undefined" ? true : navigator.onLine
+  );
+
+  // One-time migration for sessions created before the SSR cookie existed.
+  // A valid local bearer token is verified by /me, which also sets the cookie
+  // used by the next document request.
+  useEffect(() => {
+    if (!initialData || initialData.authenticated || !isAuthenticated()) return;
+    let cancelled = false;
+    restoreBrowserSession()
+      .then((user) => {
+        if (!cancelled && user) {
+          setCurrentUser(user);
+          setAuthed(true);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [initialData]);
+
+  useEffect(() => {
+    setRouteAnimationsReady(true);
+  }, []);
 
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -124,12 +195,21 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const syncTabWithUrl = () => setActiveTab(tabFromPath(window.location.pathname));
+    const syncTabWithUrl = () => {
+      setActiveTab(tabFromPath(window.location.pathname));
+      setLocationSearch(window.location.search);
+    };
 
     // Normaliza a página inicial e URLs desconhecidos para a visão geral.
+    // A query string é preservada: agora descreve os filtros e um link
+    // partilhado tipo "/bets/?status=GANHA" não pode perdê-los ao normalizar.
     const currentTab = tabFromPath(window.location.pathname);
     if (window.location.pathname !== TAB_PATHS[currentTab]) {
-      window.history.replaceState({ tab: currentTab }, "", TAB_PATHS[currentTab]);
+      window.history.replaceState(
+        { tab: currentTab },
+        "",
+        `${TAB_PATHS[currentTab]}${window.location.search}`
+      );
     }
 
     window.addEventListener("popstate", syncTabWithUrl);
@@ -156,6 +236,16 @@ export default function App() {
       addLog(
         "ATUALIZAR_APOSTA",
         `Aposta #${updated.id.substring(0, 8)} editada e recalculada (Lucro: ${updated.netProfit}${preferences.currency}).`
+      );
+    }
+  };
+
+  const handleIgnoreBet = async (id: string, ignored: boolean, comment?: string | null) => {
+    const updated = await ignoreBet(id, ignored, comment);
+    if (updated) {
+      addLog(
+        ignored ? "IGNORAR_APOSTA" : "REPOR_APOSTA",
+        `Aposta #${updated.id.substring(0, 8)} ${ignored ? "ignorada (excluída das estatísticas)" : "reposta nas estatísticas"}.`
       );
     }
   };
@@ -265,9 +355,17 @@ export default function App() {
     );
   }
 
+  // O documento SSR é sempre renderizado com o shell desktop (o servidor não
+  // conhece o viewport). Para a hidratação bater certo, o primeiro render no
+  // cliente usa também o desktop quando há initialData; o shell certo entra
+  // logo após montar (routeAnimationsReady vira true no primeiro effect).
+  const isMobileUI = initialData && !routeAnimationsReady ? false : isMobileUIRaw;
+
   // Contrato partilhado injetado no shell escolhido.
   const shellProps: ShellProps = {
     activeTab,
+    locationSearch,
+    routeAnimationsReady,
     navigateToTab,
     navigateToFilteredBets,
     currentUser,
@@ -288,6 +386,7 @@ export default function App() {
     onRefresh: refreshBets,
     onAddBet: handleAddBet,
     onUpdateBet: handleUpdateBet,
+    onIgnoreBet: handleIgnoreBet,
     onDeleteBet: handleDeleteBet,
     onDuplicateBets: handleDuplicateBets,
     onImportCSV: handleImportCSV,
@@ -308,3 +407,4 @@ export default function App() {
     </Suspense>
   );
 }
+

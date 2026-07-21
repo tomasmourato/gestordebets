@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { Moon, Sun, X } from "lucide-react";
 
 import { BrandMark } from "./components/BrandMark";
@@ -21,6 +21,8 @@ const AIInsights = lazy(() => import("./components/AIInsights"));
 // apresentação, alimentada pelo ShellProps.
 export default function DesktopApp({
   activeTab,
+  locationSearch,
+  routeAnimationsReady,
   navigateToTab,
   navigateToFilteredBets,
   currentUser,
@@ -40,6 +42,7 @@ export default function DesktopApp({
   clearError,
   onAddBet,
   onUpdateBet,
+  onIgnoreBet,
   onDeleteBet,
   onDuplicateBets,
   onImportCSV,
@@ -175,15 +178,16 @@ export default function DesktopApp({
               {t("app.loadingBets")}
             </div>
           ) : (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.18 }}
-                className="h-full"
-              >
+            // Transição de separador: fade curto, sem AnimatePresence/exit —
+            // esperar pela saída atrasava o conteúdo novo. initial=false no
+            // primeiro render para o HTML vindo do SSR não piscar na hidratação.
+            <motion.div
+              key={activeTab}
+              initial={routeAnimationsReady ? { opacity: 0, y: 4, scale: 0.995 } : false}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="h-full"
+            >
                 <Suspense
                   fallback={
                     <div className="flex items-center justify-center py-24 text-xs text-zinc-400 dark:text-zinc-500 font-mono">
@@ -199,15 +203,18 @@ export default function DesktopApp({
                     isDark={isDark}
                     onOpenBets={navigateToFilteredBets}
                     accounts={accounts}
+                    initialSearch={locationSearch}
                   />
                 )}
                 {activeTab === "BETS" && (
                   <BetsManager
                     bets={bets}
                     currency={preferences.currency}
+                    initialSearch={locationSearch}
                     onAddBet={onAddBet}
                     onAddBets={onDuplicateBets}
                     onUpdateBet={onUpdateBet}
+                    onIgnoreBet={onIgnoreBet}
                     onDeleteBet={onDeleteBet}
                     accounts={accounts}
                   />
@@ -246,7 +253,6 @@ export default function DesktopApp({
                 )}
                 </Suspense>
               </motion.div>
-            </AnimatePresence>
           )}
         </main>
 

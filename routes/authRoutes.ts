@@ -6,11 +6,27 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "../db/pool.js";
-import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddleware.js";
+import {
+  authenticateToken,
+  AuthenticatedRequest,
+  SESSION_COOKIE,
+  tokenFromRequest,
+} from "../middleware/authMiddleware.js";
 
 const router = Router();
 const SALT_ROUNDS = 12;
 const TOKEN_EXPIRY = "7d";
+const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+function setSessionCookie(res: any, token: string) {
+  res.cookie(SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: Boolean(process.env.VERCEL) || process.env.COOKIE_SECURE === "true",
+    path: "/",
+    maxAge: SESSION_MAX_AGE_MS,
+  });
+}
 
 // Hash pré-calculado de um valor aleatório. Usado no login quando o email não
 // existe, para que o pedido demore o mesmo tempo que uma comparação real —
@@ -98,6 +114,7 @@ router.post("/register", async (req, res) => {
 
     const user = result.rows[0];
     const token = signToken(user);
+    setSessionCookie(res, token);
 
     res.status(201).json({
       success: true,
@@ -141,6 +158,7 @@ router.post("/login", async (req, res) => {
     }
 
     const token = signToken(user);
+    setSessionCookie(res, token);
 
     res.json({
       success: true,
@@ -151,6 +169,16 @@ router.post("/login", async (req, res) => {
     console.error("Erro no login:", error);
     res.status(500).json({ error: "Erro ao autenticar." });
   }
+});
+
+router.post("/logout", (_req, res) => {
+  res.clearCookie(SESSION_COOKIE, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: Boolean(process.env.VERCEL) || process.env.COOKIE_SECURE === "true",
+    path: "/",
+  });
+  res.status(204).end();
 });
 
 // ============================================================
@@ -166,6 +194,8 @@ router.get("/me", authenticateToken, async (req: AuthenticatedRequest, res) => {
       res.status(404).json({ error: "Utilizador não encontrado." });
       return;
     }
+    const token = tokenFromRequest(req);
+    if (token) setSessionCookie(res, token);
     res.json({ user: result.rows[0] });
   } catch (error) {
     console.error("Erro ao obter utilizador:", error);

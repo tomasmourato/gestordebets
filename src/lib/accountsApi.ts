@@ -13,6 +13,7 @@ function mapAccountFromApi(row: ApiAccountRow): BookieAccount {
     id: String(row.id),
     bookmaker: String(row.bookmaker ?? ""),
     label: String(row.label ?? ""),
+    username: row.username ? String(row.username) : undefined,
     createdAt: row.created_at ?? undefined,
   };
 }
@@ -24,20 +25,28 @@ export async function fetchAccounts(): Promise<BookieAccount[]> {
   return (data.accounts as ApiAccountRow[]).map(mapAccountFromApi);
 }
 
-export async function createAccount(bookmaker: string, label: string): Promise<BookieAccount> {
+export async function createAccount(
+  bookmaker: string,
+  label: string,
+  username?: string | null
+): Promise<BookieAccount> {
   const res = await authFetch("/api/accounts", {
     method: "POST",
-    body: JSON.stringify({ bookmaker, label }),
+    body: JSON.stringify({ bookmaker, label, username: username ?? null }),
   });
   const data = await parseJsonResponse(res);
   if (!res.ok) throw new Error(data.error || "Erro ao criar a conta.");
   return mapAccountFromApi(data.account);
 }
 
-export async function renameAccount(id: string, label: string): Promise<BookieAccount> {
+export async function renameAccount(
+  id: string,
+  label: string,
+  username?: string | null
+): Promise<BookieAccount> {
   const res = await authFetch(`/api/accounts/${encodeURIComponent(id)}`, {
     method: "PUT",
-    body: JSON.stringify({ label }),
+    body: JSON.stringify({ label, username: username ?? null }),
   });
   const data = await parseJsonResponse(res);
   if (!res.ok) throw new Error(data.error || "Erro ao renomear a conta.");

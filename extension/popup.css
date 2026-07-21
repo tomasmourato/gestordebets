@@ -61,6 +61,11 @@ header p {
   margin-bottom: 14px;
   font-size: 12px;
 }
+/* Regras de autor com display explícito (.row, botões) ganham ao [hidden] do
+   browser; força o hidden a esconder mesmo assim (casas desativadas no site). */
+[hidden] {
+  display: none !important;
+}
 .row {
   display: flex;
   align-items: center;

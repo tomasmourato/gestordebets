@@ -4,9 +4,32 @@ import { mapBetanoBets, parseBetanoMoney } from "../src/mapper-betano.js";
 import { mapBetclicBet } from "../src/mapper.js";
 import { fetchBetanoHistory, createSixMonthWindows } from "../src/betano-history.js";
 import { fetchBetclicHistory } from "../src/betclic-history.js";
+import { mapSolverdeBets, mapSolverdeBet, solverdeRef } from "../src/mapper-solverde.js";
+import { fetchSolverdeHistory } from "../src/solverde-history.js";
 import { importedBetChanged, reconcileImportedBets } from "../src/import-utils.js";
 
 describe("Betclic mapper", () => {
+  test("maps only explicit selection outcomes", () => {
+    const mapped = mapBetclicBet({
+      bet_reference: "selection-results",
+      bet_type: "multiple",
+      result: "Lose",
+      stake: 10,
+      odds: 3,
+      bet_selections: [
+        { selection_label: "Casa", result: "Win" },
+        { selection_label: "Mais de 2.5", result: "Lose" },
+        { selection_label: "Ambas marcam" },
+      ],
+    });
+
+    expect(mapped.selections.map((selection) => selection.result)).toEqual([
+      "GANHA",
+      "PERDIDA",
+      undefined,
+    ]);
+  });
+
   test("maps FullCashout using the actual cashout return", () => {
     const mapped = mapBetclicBet({
       id: -1,
@@ -119,6 +142,28 @@ describe("Betclic pagination", () => {
 });
 
 describe("Betano mapper", () => {
+  test("maps selection outcomes without falling back to the overall bet result", () => {
+    const mapped = mapBetanoBets([{
+      BetId: "selection-results",
+      Type: "Triple",
+      Settled: true,
+      Status: 3,
+      Stake: "10,00 €",
+      DecimalOdds: 3,
+      Legs: [{ LegItems: [{ Selections: [
+        { Title: "Casa", Status: 2 },
+        { Title: "Mais de 2.5", Result: "Lost" },
+        { Title: "Ambas marcam" },
+      ] }] }],
+    }]).bets[0];
+
+    expect(mapped.selections.map((selection) => selection.result)).toEqual([
+      "GANHA",
+      "PERDIDA",
+      undefined,
+    ]);
+  });
+
   test("parses Portuguese money formats", () => {
     expect(parseBetanoMoney("5,00 €")).toBe(5);
     expect(parseBetanoMoney("1.234,56 €")).toBe(1234.56);
@@ -130,9 +175,16 @@ describe("Betano mapper", () => {
     expect(unsupported).toBe(0);
     expect(bets).toHaveLength(4);
 
-    expect(bets[0]).toMatchObject({ status: "PERDIDA", isFreebet: false, netProfit: -5 });
-    expect(bets[1]).toMatchObject({ status: "GANHA", isFreebet: false, finalReturn: 10.2, netProfit: 5.2 });
-    expect(bets[2]).toMatchObject({ status: "PERDIDA", isFreebet: true, netProfit: 0, type: "MULTIPLA" });
+    // Aposta sem risco perdida: stake real, mas a derrota é compensada (stake
+    // devolvida) -> resultado neutro, não -5.
+    expect(bets[0]).toMatchObject({
+      status: "PERDIDA", isFreebet: false, isRiskFree: true, finalReturn: 5, netProfit: 0,
+    });
+    // Aposta sem risco ganha: paga como uma aposta normal.
+    expect(bets[1]).toMatchObject({
+      status: "GANHA", isFreebet: false, isRiskFree: true, finalReturn: 10.2, netProfit: 5.2,
+    });
+    expect(bets[2]).toMatchObject({ status: "PERDIDA", isFreebet: true, isRiskFree: false, netProfit: 0, type: "MULTIPLA" });
     expect(bets[2].selections).toHaveLength(2);
     expect(bets[3]).toMatchObject({ status: "POR_LIQUIDAR", finalReturn: 0, netProfit: 0 });
 
@@ -141,7 +193,22 @@ describe("Betano mapper", () => {
       Stake: "10,00 €", Return: "59,00 €", PossibleWinnings: "59,00 €",
       DecimalOdds: 5.9, BonusTokens: [{ Type: "FullBet", Amount: "10,00 €" }],
     }]).bets[0];
-    expect(fullBetWin).toMatchObject({ isFreebet: true, finalReturn: 59, netProfit: 59 });
+    expect(fullBetWin).toMatchObject({ isFreebet: true, isRiskFree: false, finalReturn: 59, netProfit: 59 });
+  });
+
+  test("detects risk-free bets from BonusType when tokens are absent", () => {
+    const [riskFreeLoss] = mapBetanoBets([{
+      BetId: "rf-bonustype", Type: "Single", Settled: true, Status: 3,
+      Stake: "20,00 €", Return: "0,00 €", DecimalOdds: 2, BonusType: 3, BonusTokens: [],
+    }]).bets;
+    expect(riskFreeLoss).toMatchObject({ isRiskFree: true, isFreebet: false, netProfit: 0, finalReturn: 20 });
+
+    const [riskFreeWin] = mapBetanoBets([{
+      BetId: "rf-win", Type: "Single", Settled: true, Status: 2,
+      Stake: "20,00 €", Return: "50,00 €", DecimalOdds: 2.5,
+      BonusTokens: [{ Type: "RiskFree", Amount: "20,00 €" }],
+    }]).bets;
+    expect(riskFreeWin).toMatchObject({ isRiskFree: true, isFreebet: false, finalReturn: 50, netProfit: 30 });
   });
 
   test("keeps an explicitly labelled Betano cashout in the dedicated status", () => {
@@ -182,6 +249,117 @@ describe("Betano pagination", () => {
   });
 });
 
+describe("Solverde mapper", () => {
+  const wonSingle = {
+    id: 1001,
+    betType: "SGL",
+    settled: true,
+    status: "WON",
+    odds: 2.5,
+    placementTime: "2026-07-12T18:30:00Z",
+    funds: { stake: 10, cashStake: 10, freebetStake: 0, payout: 25, payoutNet: 23, payoutTax: 2 },
+    legs: [{
+      odds: 2.5,
+      legInfo: { eventName: "Benfica - Porto", sportId: "FOOT" },
+      parts: [{ marketName: "Resultado Final", selectionName: "Benfica" }],
+    }],
+    channel: { name: "web" },
+  };
+
+  test("maps a settled winning single using the house net payout", () => {
+    const bet = mapSolverdeBet(wonSingle);
+    expect(bet).toMatchObject({
+      type: "SIMPLES",
+      status: "GANHA",
+      stake: 10,
+      odd: 2.5,
+      isFreebet: false,
+      potentialReturn: 25,
+      finalReturn: 23,
+      netProfit: 13, // payoutNet(23) - cashStake(10)
+      bookmaker: "Solverde",
+    });
+    expect(bet.dateTime).toMatch(/^2026-07-12 /);
+    expect(bet.selections).toEqual([
+      expect.objectContaining({ event: "Benfica - Porto", market: "Resultado Final", choice: "Benfica", odd: 2.5, sport: "FOOT" }),
+    ]);
+    expect(bet.metadata).toMatchObject({ source: "solverde", ref: "1001", importKey: "solverde:1001" });
+  });
+
+  test("a lost bet loses only the cash stake", () => {
+    const bet = mapSolverdeBet({ ...wonSingle, id: 2, status: "LOST", funds: { stake: 5, cashStake: 5, payout: 0, payoutNet: 0 } });
+    expect(bet).toMatchObject({ status: "PERDIDA", finalReturn: 0, netProfit: -5 });
+  });
+
+  test("a freebet stakes no real cash, so the whole net payout is profit", () => {
+    const bet = mapSolverdeBet({
+      ...wonSingle, id: 3, status: "WON",
+      funds: { stake: 10, cashStake: 0, freebetStake: 10, payout: 20, payoutNet: 18 },
+    });
+    expect(bet).toMatchObject({ isFreebet: true, freebetType: "SR", finalReturn: 18, netProfit: 18 });
+  });
+
+  test("an unsettled bet is pending regardless of status", () => {
+    const bet = mapSolverdeBet({ ...wonSingle, id: 4, settled: false, status: "WON" });
+    expect(bet).toMatchObject({ status: "POR_LIQUIDAR", finalReturn: 0, netProfit: 0 });
+  });
+
+  test("flattens a multiple across legs and parts", () => {
+    const combo = {
+      id: 5, betType: "MUL", settled: true, status: "LOST", odds: 3.6,
+      placementTime: "2026-07-01T12:00:00Z",
+      funds: { stake: 4, cashStake: 4, payout: 0, payoutNet: 0 },
+      legs: [
+        { odds: 1.8, legInfo: { eventName: "A - B", sportId: "FOOT" }, parts: [{ marketName: "1X2", selectionName: "1" }] },
+        { odds: 2.0, legInfo: { eventName: "C - D", sportId: "BASK" }, parts: [{ marketName: "Total", selectionName: "Mais de 2.5" }] },
+      ],
+    };
+    const bet = mapSolverdeBet(combo);
+    expect(bet.type).toBe("MULTIPLA");
+    expect(bet.selections).toHaveLength(2);
+    expect(bet.selections.map((s) => s.choice)).toEqual(["1", "Mais de 2.5"]);
+  });
+
+  test("skips unknown settled states as unsupported, keeps the rest", () => {
+    const { bets, unsupported } = mapSolverdeBets([
+      wonSingle,
+      { id: 9, settled: true, status: "SOME_NEW_STATE", funds: { stake: 1 }, odds: 1.5 },
+    ]);
+    expect(bets).toHaveLength(1);
+    expect(unsupported).toBe(1);
+    expect(solverdeRef(wonSingle)).toBe("1001");
+  });
+});
+
+describe("Solverde pagination", () => {
+  const now = new Date("2026-07-20T00:00:00.000Z");
+
+  test("pages a window via hasMoreData and dedupes by id", async () => {
+    const all = Array.from({ length: 25 }, (_, i) => ({ id: i + 1 }));
+    const seenPages = [];
+    const bets = await fetchSolverdeHistory(async ({ page, itemsPerPage }) => {
+      seenPages.push(page);
+      const slice = all.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+      return { bets: slice, pagination: { hasMoreData: page * itemsPerPage < all.length } };
+    }, { now, start: new Date("2026-07-10T00:00:00.000Z"), itemsPerPage: 20 });
+
+    expect(seenPages).toEqual([1, 2]); // single 90-day window
+    expect(bets.map((b) => b.id).sort((a, b) => a - b)).toEqual(all.map((b) => b.id));
+  });
+
+  test("without hasMoreData, stops when a page comes back not full", async () => {
+    const seenPages = [];
+    const bets = await fetchSolverdeHistory(async ({ page }) => {
+      seenPages.push(page);
+      if (page === 1) return { bets: [{ id: 1 }, { id: 2 }], pagination: {} };
+      return { bets: [{ id: 3 }], pagination: {} };
+    }, { now, start: new Date("2026-07-15T00:00:00.000Z"), itemsPerPage: 2 });
+
+    expect(seenPages).toEqual([1, 2]);
+    expect(bets.map((b) => b.id)).toEqual([1, 2, 3]);
+  });
+});
+
 describe("source-aware reconciliation", () => {
   test("does not collide across bookmakers and updates changed bets", () => {
     const existing = [
@@ -197,5 +375,39 @@ describe("source-aware reconciliation", () => {
     expect(result.updates).toHaveLength(1);
     expect(result.updates[0].id).toBe("1");
     expect(importedBetChanged(existing[1], incoming[1])).toBe(false);
+  });
+
+  test("updates an existing import when a selection result becomes available", () => {
+    const existing = {
+      id: "selection-update",
+      type: "MULTIPLA",
+      status: "PERDIDA",
+      stake: 10,
+      odd: 3,
+      is_freebet: false,
+      potential_return: 30,
+      final_return: 0,
+      net_profit: -10,
+      bookmaker: "Betclic",
+      date_time: "2026-07-15 12:00",
+      selections: [{ event: "A - B", market: "Resultado", choice: "A", odd: 2 }],
+      metadata: { source: "betclic", ref: "selection-update", importKey: "betclic:selection-update" },
+    };
+    const incoming = {
+      type: "MULTIPLA",
+      status: "PERDIDA",
+      stake: 10,
+      odd: 3,
+      isFreebet: false,
+      potentialReturn: 30,
+      finalReturn: 0,
+      netProfit: -10,
+      bookmaker: "Betclic",
+      dateTime: "2026-07-15 12:00",
+      selections: [{ event: "A - B", market: "Resultado", choice: "A", odd: 2, result: "PERDIDA" }],
+      metadata: { source: "betclic", ref: "selection-update", importKey: "betclic:selection-update" },
+    };
+
+    expect(importedBetChanged(existing, incoming)).toBe(true);
   });
 });

@@ -2,12 +2,12 @@
 // Preferências gerais da aplicação. Este é um dos poucos dados que
 // continua a ser guardado em localStorage (chave "g_prefs").
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Preferences } from "../types";
 
 const PREFS_KEY = "g_prefs";
 
-const DEFAULT_PREFERENCES: Preferences = {
+export const DEFAULT_PREFERENCES: Preferences = {
   currency: "€",
   defaultBookmaker: "Betano",
   defaultStake: 10,
@@ -27,8 +27,14 @@ function loadPreferences(): Preferences {
   return DEFAULT_PREFERENCES;
 }
 
-export function usePreferences() {
-  const [preferences, setPreferences] = useState<Preferences>(() => loadPreferences());
+export function usePreferences(initialPreferences?: Preferences) {
+  const [preferences, setPreferences] = useState<Preferences>(() => initialPreferences ?? loadPreferences());
+
+  // SSR starts with deterministic defaults. Read browser-only preferences after
+  // hydration so the server and first client render stay byte-for-byte aligned.
+  useEffect(() => {
+    if (initialPreferences) setPreferences(loadPreferences());
+  }, [initialPreferences]);
 
   const updatePreferences = (prefs: Preferences) => {
     setPreferences(prefs);

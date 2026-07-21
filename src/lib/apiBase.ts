@@ -18,7 +18,10 @@ export function isNativeApp(): boolean {
   }
 }
 
-const configured = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+// `?.` em env: no bundle CJS do servidor (SSR) o esbuild substitui
+// `import.meta` por `{}`, e o acesso direto a `.env.VITE_...` rebentava no
+// carregamento do módulo. No browser/Vite continua a ler a variável do build.
+const configured = (import.meta.env?.VITE_API_BASE_URL as string | undefined)?.trim();
 
 export const API_BASE: string = configured
   ? configured.replace(/\/+$/, "")

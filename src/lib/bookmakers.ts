@@ -33,6 +33,11 @@ export const BOOKMAKERS: Bookmaker[] = [
 /** Nomes para dropdowns (mantém compatibilidade com AVAILABLE_BOOKMAKERS). */
 export const AVAILABLE_BOOKMAKERS = BOOKMAKERS.map((b) => b.name);
 
+/** Nome apresentável de uma casa a partir do seu id (ex.: "betclic" -> "Betclic"). */
+export function bookmakerLabel(id: string): string {
+  return BOOKMAKERS.find((b) => b.id === id)?.name ?? id;
+}
+
 export function bookmakerByName(name: string | undefined): Bookmaker | undefined {
   if (!name) return undefined;
   const n = name.trim().toLowerCase();

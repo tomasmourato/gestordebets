@@ -1,3 +1,8 @@
+// Nota: o /ended do Betclic limita o histórico a ~3 meses no servidor e ignora
+// qualquer filtro de datas (startDate/endDate ISO e dateFrom/dateTo epoch-ms
+// foram testados sem efeito). Não há forma de recuperar apostas mais antigas
+// por este endpoint, por isso só existe paginação por offset.
+
 // Paginação pura do histórico Betclic. A API pode devolver menos registos do
 // que o `limit` pedido, por isso o próximo offset tem de avançar pelo número
 // realmente recebido, não pelo tamanho de página solicitado.

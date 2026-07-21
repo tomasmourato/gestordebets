@@ -1,0 +1,86 @@
+{
+  "generated_at": "2026-07-13T22:34:11.978245+00:00",
+  "nodes": {
+    "src_components_betsmanager": {
+      "code_fingerprint": "deeb877136523501c5b5c22f0127f2cc98b1e99f4064686574d6418eca520c9f",
+      "label": "BetsManager.tsx",
+      "last": "2026-07-13T22:34:11.924434+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-13T22:34:11.924434+00:00",
+          "outcome": "useful",
+          "q": "Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior"
+        }
+      ],
+      "score": 0.999999986,
+      "source_file": "src/components/BetsManager.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_components_dashboard_dashboard": {
+      "code_fingerprint": "8dc89e5512c0c175db12a7f50a38a9bc8acbf114dce645358ef7178b28a0e906",
+      "label": "Dashboard()",
+      "last": "2026-07-13T22:34:11.924434+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-13T22:34:11.924434+00:00",
+          "outcome": "useful",
+          "q": "Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior"
+        }
+      ],
+      "score": 0.999999986,
+      "source_file": "src/components/Dashboard.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_lib_betstatus_normalizebetstatus": {
+      "code_fingerprint": "5cf82f17067c0655be6e5167bcd248f223464c371789e77ef73a72f33536c0b5",
+      "label": "normalizeBetStatus()",
+      "last": "2026-07-13T22:34:11.924434+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-13T22:34:11.924434+00:00",
+          "outcome": "useful",
+          "q": "Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior"
+        }
+      ],
+      "score": 0.999999986,
+      "source_file": "src/lib/betStatus.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_utils_calculatebetreturnandprofit": {
+      "code_fingerprint": "0b00b5d09dabc9e5e34349826e43260083e5b58555f36b60280a4a4fc1c1cb1b",
+      "label": "calculateBetReturnAndProfit()",
+      "last": "2026-07-13T22:34:11.924434+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-13T22:34:11.924434+00:00",
+          "outcome": "useful",
+          "q": "Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior"
+        }
+      ],
+      "score": 0.999999986,
+      "source_file": "src/utils.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_utils_calculatedashboardstats": {
+      "code_fingerprint": "0b00b5d09dabc9e5e34349826e43260083e5b58555f36b60280a4a4fc1c1cb1b",
+      "label": "calculateDashboardStats()",
+      "last": "2026-07-13T22:34:11.924434+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-13T22:34:11.924434+00:00",
+          "outcome": "useful",
+          "q": "Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior"
+        }
+      ],
+      "score": 0.999999986,
+      "source_file": "src/utils.ts",
+      "status": "tentative",
+      "uses": 1
+    }
+  },
+  "version": 1
+}
