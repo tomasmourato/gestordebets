@@ -3,7 +3,19 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Instante deste build. Vai (a) embutido no bundle como __BUILD_TIME__, para
+// o código saber a idade do bundle que está a correr, e (b) escrito em
+// dist/build-time.json, que o scripts/bundle-app.mjs copia para
+// app-version.json. Com os dois valores, o live update consegue recusar
+// bundles que NÃO sejam mais recentes do que o que já corre (ver
+// src/lib/liveUpdate.ts) — sem isto, um APK novo era "atualizado" para um
+// bundle de produção mais antigo.
+const BUILD_TIME = Date.now();
+
 export default defineConfig({
+  define: {
+    __BUILD_TIME__: JSON.stringify(BUILD_TIME),
+  },
   build: {
     rollupOptions: {
       output: {
@@ -21,6 +33,19 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    {
+      // Escreve o mesmo BUILD_TIME num ficheiro, para o empacotador do live
+      // update (scripts/bundle-app.mjs) o publicar em app-version.json.
+      name: 'bettrackr-build-time',
+      apply: 'build',
+      generateBundle() {
+        this.emitFile({
+          type: 'asset',
+          fileName: 'build-time.json',
+          source: JSON.stringify({ buildTime: BUILD_TIME }) + '\n',
+        });
+      },
+    },
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['pwa-192x192.png', 'pwa-512x512.png', 'favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],

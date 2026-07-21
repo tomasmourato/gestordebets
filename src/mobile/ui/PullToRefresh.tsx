@@ -1,8 +1,10 @@
 // src/mobile/ui/PullToRefresh.tsx
-// Puxar para atualizar (pull-to-refresh) por toque: quando o conteúdo está
-// no topo, arrastar para baixo revela um indicador; ao largar além do
-// limiar, chama onRefresh. Só ativa quando o scroll está no topo, para não
-// competir com o scroll normal.
+// Puxar para atualizar (pull-to-refresh) por toque. IMPORTANTE: NÃO cria um
+// contentor de scroll próprio — o shell mobile usa o scroll da PÁGINA (body).
+// Este wrapper é um bloco normal em fluxo; só engata o gesto de "puxar"
+// quando a página já está no topo (window.scrollY <= 0). Assim o scroll
+// normal nunca é bloqueado (era o bug: `h-full overflow-y-auto` aninhado
+// criava um viewport de altura automática que não deslizava).
 
 import React, { useRef, useState } from "react";
 import { motion, useMotionValue, animate } from "motion/react";
@@ -21,11 +23,8 @@ export function PullToRefresh({ onRefresh, children, threshold = 72 }: PullToRef
   const [refreshing, setRefreshing] = useState(false);
   const startRef = useRef<number | null>(null);
   const pullingRef = useRef(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // No topo do próprio contentor E da página (o conteúdo mobile usa o scroll
-  // do body): sem isto, puxar para cima a meio da página disparava o refresh.
-  const atTop = () => (containerRef.current?.scrollTop ?? 0) <= 0 && window.scrollY <= 0;
+  const atTop = () => window.scrollY <= 0;
 
   const onTouchStart = (e: React.TouchEvent) => {
     if (refreshing || !atTop()) return;
@@ -36,8 +35,12 @@ export function PullToRefresh({ onRefresh, children, threshold = 72 }: PullToRef
   const onTouchMove = (e: React.TouchEvent) => {
     if (!pullingRef.current || startRef.current === null) return;
     const delta = e.touches[0].clientY - startRef.current;
+    // Se o dedo sobe (delta<=0) ou já saímos do topo, é scroll normal da
+    // página: desiste do gesto de puxar e deixa o body deslizar à vontade.
     if (delta <= 0 || !atTop()) {
-      y.set(0);
+      pullingRef.current = false;
+      startRef.current = null;
+      if (y.get() !== 0) animate(y, 0, { duration: 0.15 });
       return;
     }
     // Resistência: puxa cada vez mais devagar.
@@ -66,13 +69,12 @@ export function PullToRefresh({ onRefresh, children, threshold = 72 }: PullToRef
 
   return (
     <div
-      ref={containerRef}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      className="relative h-full overflow-y-auto overscroll-contain"
+      className="relative"
     >
-      {/* Indicador */}
+      {/* Indicador (altura 0 em repouso — não ocupa espaço) */}
       <motion.div
         style={{ height: y, opacity: y }}
         className="flex items-end justify-center overflow-hidden"

@@ -26,6 +26,10 @@ const config: CapacitorConfig = {
     // somos nós, a partir da própria Vercel.
     CapacitorUpdater: {
       autoUpdate: false,
+      // Instalar um APK novo volta ao bundle embutido, descartando bundles
+      // descarregados antes. Sem isto, um bundle antigo já transferido
+      // sobrevivia à reinstalação e continuava a substituir a app nova.
+      resetWhenUpdate: true,
     },
     // Teclado: empurra o corpo (não sobrepõe) para os campos e as bottom
     // sheets ficarem sempre visíveis; combina com adjustResize no manifesto.
@@ -34,8 +38,14 @@ const config: CapacitorConfig = {
     },
     // Splash com a marca em vez do flash de fundo; escondido pela app após o
     // primeiro paint (src/mobile/lib/useNativeChrome.ts).
+    // O splash esconde-se sozinho ao fim de launchShowDuration. É uma rede de
+    // segurança deliberada: com launchAutoHide:false, qualquer bundle que não
+    // chamasse SplashScreen.hide() (ex.: um bundle antigo vindo do live
+    // update) deixava a app presa no splash para sempre. A app continua a
+    // escondê-lo mal pinta (src/lib/splash.ts), muito antes deste limite.
     SplashScreen: {
-      launchAutoHide: false,
+      launchAutoHide: true,
+      launchShowDuration: 3000,
       backgroundColor: "#09090b",
       androidSplashResourceName: "splash",
       showSpinner: false,

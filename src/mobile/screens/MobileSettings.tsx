@@ -260,8 +260,24 @@ export default function MobileSettings({
       {/* Dados */}
       <SectionHeader>Dados</SectionHeader>
       <ListGroup>
-        <ListItem icon={FileSpreadsheet} title="Exportar CSV" subtitle="Todas as apostas em formato CSV" onClick={() => exportBetsCSV(bets, accounts)} />
-        <ListItem icon={Download} title="Backup completo (JSON)" subtitle="Apostas + preferências" onClick={() => exportBackupJSON(bets, preferences)} />
+        <ListItem
+          icon={FileSpreadsheet}
+          title="Exportar CSV"
+          subtitle={bets.length === 0 ? "Sem apostas para exportar" : "Todas as apostas em formato CSV"}
+          onClick={() => {
+            if (bets.length === 0) return toast.show("Não há apostas para exportar.", "info");
+            void exportBetsCSV(bets, accounts);
+          }}
+        />
+        <ListItem
+          icon={Download}
+          title="Backup completo (JSON)"
+          subtitle="Apostas + preferências"
+          onClick={() => {
+            if (bets.length === 0) return toast.show("Não há apostas para exportar.", "info");
+            void exportBackupJSON(bets, preferences);
+          }}
+        />
         <ListItem icon={Upload} title="Importar ficheiro" subtitle="Backup JSON ou CSV" onClick={() => fileInputRef.current?.click()} />
       </ListGroup>
       <input ref={fileInputRef} type="file" accept=".csv,.json,text/csv,application/json" onChange={handleImportFile} className="hidden" />

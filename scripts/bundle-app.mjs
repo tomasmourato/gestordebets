@@ -8,7 +8,7 @@
 // Corre DEPOIS do vite build (o conteúdo de dist/ tem de estar completo).
 // É NÃO-FATAL: um problema aqui nunca deve fazer falhar o deploy do site.
 
-import { existsSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -40,9 +40,21 @@ try {
     else zip.addLocalFile(full);
   }
   zip.writeZip(zipFile);
-  writeFileSync(versionFile, JSON.stringify({ version }) + "\n");
 
-  console.log(`[bundle-app] criado dist/app-bundle.zip + app-version.json (versão ${version})`);
+  // buildTime: escrito pelo vite (dist/build-time.json) e embutido no próprio
+  // bundle como __BUILD_TIME__. Publicá-lo aqui permite à app comparar idades
+  // e RECUSAR bundles que não sejam mais recentes do que o que já corre — sem
+  // isto, um APK acabado de instalar era "atualizado" para um bundle antigo.
+  let buildTime = null;
+  try {
+    buildTime = JSON.parse(readFileSync(path.join(distDir, "build-time.json"), "utf8")).buildTime ?? null;
+  } catch {
+    console.warn("[bundle-app] build-time.json ausente — app-version.json sai sem buildTime.");
+  }
+
+  writeFileSync(versionFile, JSON.stringify({ version, buildTime }) + "\n");
+
+  console.log(`[bundle-app] criado dist/app-bundle.zip + app-version.json (versão ${version}, buildTime ${buildTime})`);
 } catch (err) {
   console.warn("[bundle-app] falhou (ignorado):", (err && err.message) || err);
   process.exit(0);

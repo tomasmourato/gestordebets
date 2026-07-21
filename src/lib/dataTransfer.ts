@@ -8,8 +8,39 @@ import { Bet, BookieAccount, Preferences, Selection, BetStatus, BetType, Freebet
 import { calculateBetReturnAndProfit, safeNum } from "../utils";
 import { defaultFreebetTypeFor } from "./bookmakers";
 import { normalizeBetStatus } from "./betStatus";
+import { isNativeApp } from "./apiBase";
 
-function downloadBlob(blob: Blob, filename: string) {
+/**
+ * Entrega um ficheiro de texto ao utilizador.
+ *
+ * - Na web: descarrega via blob + <a download> (funciona nos browsers).
+ * - Na app nativa: o WebView do Android IGNORA o atributo download de blob
+ *   URLs (o clique navegava o WebView para o blob e "partia" a UI). A via
+ *   correta é escrever o ficheiro na cache e abrir o share sheet nativo, de
+ *   onde o utilizador pode gravar em Ficheiros, enviar por email, etc.
+ */
+async function deliverTextFile(filename: string, content: string, mime: string): Promise<void> {
+  if (isNativeApp()) {
+    try {
+      const { Filesystem, Directory, Encoding } = await import("@capacitor/filesystem");
+      const { Share } = await import("@capacitor/share");
+      await Filesystem.writeFile({
+        path: filename,
+        data: content,
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8,
+      });
+      const { uri } = await Filesystem.getUri({ path: filename, directory: Directory.Cache });
+      await Share.share({ title: filename, url: uri, dialogTitle: "Exportar" });
+      return;
+    } catch (err) {
+      // Utilizador cancelou o share, ou plugin indisponível: sem crash.
+      // (Cancelar o share sheet rejeita a promessa — é esperado.)
+      return;
+    }
+  }
+
+  const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -21,7 +52,7 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 /** Exporta todas as apostas para CSV (formato próprio, round-trip seguro). */
-export function exportBetsCSV(bets: Bet[], accounts: BookieAccount[]): void {
+export async function exportBetsCSV(bets: Bet[], accounts: BookieAccount[]): Promise<void> {
   const accountLabelById = new Map(accounts.map((a) => [a.id, a.label]));
 
   let csvContent = "DATE;TIME;GAME;BET;STAKE;ODDS;STATUS;RETURN;SPORT;BOOKIE;BETTYPE;FREEBET;FREEBET_TYPE;RISK_FREE;ACCOUNT;COMMENT;TAGS\n";
@@ -86,11 +117,11 @@ export function exportBetsCSV(bets: Bet[], accounts: BookieAccount[]): void {
     csvContent += `${dateVal};${timeVal};${escapeField(gameVal)};${escapeField(betVal)};${stakeVal};${oddsVal};${statusVal};${returnVal};${sportVal};${bookieVal};${betTypeVal};${freebetVal};${freebetTypeVal};${riskFreeVal};${escapeField(accountVal)};${escapeField(commentVal)};${escapeField(tagsVal)}\n`;
   });
 
-  downloadBlob(new Blob([csvContent], { type: "text/csv;charset=utf-8;" }), "apostas_export.csv");
+  await deliverTextFile("apostas_export.csv", csvContent, "text/csv;charset=utf-8;");
 }
 
 /** Backup JSON completo (apostas + preferências). */
-export function exportBackupJSON(bets: Bet[], preferences: Preferences): void {
+export async function exportBackupJSON(bets: Bet[], preferences: Preferences): Promise<void> {
   const backupData = {
     bets,
     preferences,
@@ -98,9 +129,10 @@ export function exportBackupJSON(bets: Bet[], preferences: Preferences): void {
     exportTime: new Date().toISOString(),
   };
   const str = JSON.stringify(backupData, null, 2);
-  downloadBlob(
-    new Blob([str], { type: "application/json" }),
+  await deliverTextFile(
     `backup_gestao_apostas_${new Date().toISOString().split("T")[0]}.json`,
+    str,
+    "application/json",
   );
 }
 
