@@ -386,14 +386,24 @@ async function updateBet(existing, incoming, cfg, accountId) {
 }
 
 async function persistMapped(mapped, unsupported, source, cfg, accountId) {
+  // Modo "só atualizar": sincroniza as apostas já registadas no BetTrackr e
+  // ignora as que a casa tem mas a app não — útil para quem regista as apostas
+  // à mão (ou selecionou o que quis importar) e só quer os estados/valores
+  // atualizados sem o histórico completo da casa a entrar.
+  const stored = await chrome.storage.local.get("updateOnlyImport");
+  const updateOnly = stored.updateOnlyImport === true;
   const existing = await fetchExistingBets(cfg);
   const fresh = [];
   const updates = [];
   let skipped = 0;
+  let ignoredNew = 0;
   for (const bet of mapped) {
     const key = importKey(bet);
     const old = key && existing.get(key);
-    if (!old) fresh.push(bet);
+    if (!old) {
+      if (updateOnly) ignoredNew++;
+      else fresh.push(bet);
+    }
     else if (needsUpdate(old, bet, accountId)) updates.push({ old, bet });
     else skipped++;
   }
@@ -411,7 +421,7 @@ async function persistMapped(mapped, unsupported, source, cfg, accountId) {
     progress(`A atualizar ${source}: ${updated}/${updates.length}…`);
   }
   const cashouts = mapped.filter((bet) => bet?.metadata?.isCashout === true).length;
-  return { fetched: mapped.length, imported, updated, skipped, unsupported, cashouts };
+  return { fetched: mapped.length, imported, updated, skipped, unsupported, cashouts, ignoredNew };
 }
 
 async function runBetclicImport(cfg, accountId) {
@@ -763,9 +773,9 @@ async function runImportSources(source, cfg, accountIds, opts = {}) {
   }
   const totals = Object.values(results).reduce((sum, result) => {
     if (!result.ok) return sum;
-    for (const key of ["fetched", "imported", "updated", "skipped", "unsupported", "cashouts"]) sum[key] += result[key] || 0;
+    for (const key of ["fetched", "imported", "updated", "skipped", "unsupported", "cashouts", "ignoredNew"]) sum[key] += result[key] || 0;
     return sum;
-  }, { fetched: 0, imported: 0, updated: 0, skipped: 0, unsupported: 0, cashouts: 0 });
+  }, { fetched: 0, imported: 0, updated: 0, skipped: 0, unsupported: 0, cashouts: 0, ignoredNew: 0 });
   return { ok: true, sourceResults: results, ...totals };
 }
 
@@ -784,7 +794,7 @@ async function runImport(source, sessionSnapshot, accountIds, opts = {}) {
 async function extensionStatus() {
   // O token/base vêm do storage; lê-o primeiro para que o fetch das casas ativas
   // corra em paralelo com as sondas de sessão (Betano/Solverde), não em série.
-  const stored = await chrome.storage.local.get(["betclicToken", "bettrackrToken", "bettrackrBase", "bettrackrUser", "autoImport"]);
+  const stored = await chrome.storage.local.get(["betclicToken", "bettrackrToken", "bettrackrBase", "bettrackrUser", "autoImport", "updateOnlyImport"]);
   const bettrackrBase = stored.bettrackrBase || DEFAULT_BETTRACKR_BASE;
   const [tabs, solverde, enabledBookmakers] = await Promise.all([
     chrome.tabs.query({ url: ["https://www.betano.pt/*", "https://betano.pt/*"] }),
@@ -804,6 +814,7 @@ async function extensionStatus() {
     bettrackrBase,
     bettrackrUser: stored.bettrackrUser || null,
     autoImport: stored.autoImport === true,
+    updateOnly: stored.updateOnlyImport === true,
     enabledBookmakers,
   };
 }
@@ -954,6 +965,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg && msg.type === "SET_AUTO_IMPORT") {
     chrome.storage.local.set({ autoImport: msg.enabled === true })
+      .then(() => sendResponse({ ok: true }))
+      .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));
+    return true;
+  }
+  if (msg && msg.type === "SET_UPDATE_ONLY") {
+    chrome.storage.local.set({ updateOnlyImport: msg.enabled === true })
       .then(() => sendResponse({ ok: true }))
       .catch((error) => sendResponse({ ok: false, error: String(error && error.message || error) }));
     return true;

@@ -4,6 +4,12 @@ import { Writable } from "node:stream";
 import App from "./App";
 import type { InitialAppData } from "./initialData";
 
+// Reexportado para o server.ts: o mapeamento das linhas da BD vive em código
+// do frontend, que o server só pode obter através do bundle SSR (o builder da
+// Vercel não compila ficheiros de src/ importados estaticamente — ver o
+// comentário sobre o loadSsrModule no server.ts).
+export { mapBetFromApi } from "./lib/betsApi";
+
 // Os separadores são carregados com React.lazy (code splitting para o arranque
 // da app nativa). O renderToString não espera por lazy — renderizava só o
 // fallback do Suspense e o SSR ficava sem conteúdo. Com renderToPipeableStream

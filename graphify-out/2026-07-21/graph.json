@@ -248,8 +248,8 @@
         "kind": "file"
       },
       "_origin": "ast",
-      "id": "android_gradlew",
-      "community": 93,
+      "id": "home_ronk_projects_bettrackr_android_gradlew",
+      "community": 28,
       "norm_label": "gradlew"
     },
     {
@@ -262,8 +262,8 @@
         "kind": "bash_entrypoint"
       },
       "_origin": "ast",
-      "id": "android_gradlew__entry",
-      "community": 93,
+      "id": "home_ronk_projects_bettrackr_android_gradlew__entry",
+      "community": 28,
       "norm_label": "gradlew script"
     },
     {
@@ -276,8 +276,8 @@
         "kind": "bash_function"
       },
       "_origin": "ast",
-      "id": "android_gradlew_warn",
-      "community": 93,
+      "id": "home_ronk_projects_bettrackr_android_gradlew_warn",
+      "community": 28,
       "norm_label": "warn()"
     },
     {
@@ -290,8 +290,8 @@
         "kind": "bash_function"
       },
       "_origin": "ast",
-      "id": "android_gradlew_die",
-      "community": 93,
+      "id": "home_ronk_projects_bettrackr_android_gradlew_die",
+      "community": 28,
       "norm_label": "die()"
     },
     {
@@ -353,76 +353,6 @@
       "id": "db_betcolumns",
       "community": 5,
       "norm_label": "betcolumns.ts"
-    },
-    {
-      "label": "001_sync_bets_schema.sql",
-      "file_type": "code",
-      "source_file": "db/migrations/001_sync_bets_schema.sql",
-      "source_location": null,
-      "_origin": "ast",
-      "id": "db_migrations_001_sync_bets_schema",
-      "community": 24,
-      "norm_label": "001_sync_bets_schema.sql"
-    },
-    {
-      "label": "bets",
-      "file_type": "code",
-      "source_file": "db/migrations/001_sync_bets_schema.sql",
-      "source_location": "L36",
-      "_origin": "ast",
-      "id": "db_migrations_001_sync_bets_schema_bets",
-      "community": 24,
-      "norm_label": "bets"
-    },
-    {
-      "label": "users",
-      "file_type": "code",
-      "source_file": "db/migrations/001_sync_bets_schema.sql",
-      "source_location": "L64",
-      "_origin": "ast",
-      "id": "db_migrations_001_sync_bets_schema_users",
-      "community": 24,
-      "norm_label": "users"
-    },
-    {
-      "label": "002_fix_status_constraint.sql",
-      "file_type": "code",
-      "source_file": "db/migrations/002_fix_status_constraint.sql",
-      "source_location": null,
-      "_origin": "ast",
-      "id": "db_migrations_002_fix_status_constraint",
-      "community": 27,
-      "norm_label": "002_fix_status_constraint.sql"
-    },
-    {
-      "label": "bets",
-      "file_type": "code",
-      "source_file": "db/migrations/002_fix_status_constraint.sql",
-      "source_location": "L21",
-      "_origin": "ast",
-      "id": "db_migrations_002_fix_status_constraint_bets",
-      "community": 27,
-      "norm_label": "bets"
-    },
-    {
-      "label": "003_cashout_and_freebet_type.sql",
-      "file_type": "code",
-      "source_file": "db/migrations/003_cashout_and_freebet_type.sql",
-      "source_location": null,
-      "_origin": "ast",
-      "id": "db_migrations_003_cashout_and_freebet_type",
-      "community": 28,
-      "norm_label": "003_cashout_and_freebet_type.sql"
-    },
-    {
-      "label": "bets",
-      "file_type": "code",
-      "source_file": "db/migrations/003_cashout_and_freebet_type.sql",
-      "source_location": "L22",
-      "_origin": "ast",
-      "id": "db_migrations_003_cashout_and_freebet_type_bets",
-      "community": 28,
-      "norm_label": "bets"
     },
     {
       "label": "pool.ts",
@@ -1801,7 +1731,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "extension_src_bettrackr_identity",
-      "community": 1,
+      "community": 24,
       "norm_label": "bettrackr-identity.js"
     },
     {
@@ -1811,7 +1741,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "extension_src_bettrackr_identity_cleanbaseurl",
-      "community": 1,
+      "community": 24,
       "norm_label": "cleanbaseurl()"
     },
     {
@@ -1821,7 +1751,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "extension_src_bettrackr_identity_cleanuserid",
-      "community": 1,
+      "community": 24,
       "norm_label": "cleanuserid()"
     },
     {
@@ -1831,7 +1761,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "extension_src_bettrackr_identity_responseerror",
-      "community": 1,
+      "community": 24,
       "norm_label": "responseerror()"
     },
     {
@@ -1841,7 +1771,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "extension_src_bettrackr_identity_verifybettrackridentity",
-      "community": 1,
+      "community": 24,
       "norm_label": "verifybettrackridentity()"
     },
     {
@@ -1851,7 +1781,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "extension_src_bettrackr_identity_runafterbettrackrverification",
-      "community": 1,
+      "community": 24,
       "norm_label": "runafterbettrackrverification()"
     },
     {
@@ -1961,7 +1891,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "extension_src_import_utils",
-      "community": 37,
+      "community": 1,
       "norm_label": "import-utils.js"
     },
     {
@@ -1971,7 +1901,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "extension_src_import_utils_metadataof",
-      "community": 37,
+      "community": 1,
       "norm_label": "metadataof()"
     },
     {
@@ -1981,7 +1911,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "extension_src_import_utils_importkeyof",
-      "community": 37,
+      "community": 1,
       "norm_label": "importkeyof()"
     },
     {
@@ -1991,7 +1921,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "extension_src_import_utils_indexexistingbets",
-      "community": 37,
+      "community": 1,
       "norm_label": "indexexistingbets()"
     },
     {
@@ -2001,7 +1931,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "extension_src_import_utils_comparableexisting",
-      "community": 37,
+      "community": 1,
       "norm_label": "comparableexisting()"
     },
     {
@@ -2011,7 +1941,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "extension_src_import_utils_stable",
-      "community": 37,
+      "community": 1,
       "norm_label": "stable()"
     },
     {
@@ -2021,7 +1951,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "extension_src_import_utils_importedbetchanged",
-      "community": 37,
+      "community": 1,
       "norm_label": "importedbetchanged()"
     },
     {
@@ -2031,7 +1961,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "extension_src_import_utils_reconcileimportedbets",
-      "community": 37,
+      "community": 1,
       "norm_label": "reconcileimportedbets()"
     },
     {
@@ -2661,7 +2591,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "extension_test_bettrackr_identity_test",
-      "community": 1,
+      "community": 24,
       "norm_label": "bettrackr-identity.test.js"
     },
     {
@@ -2671,7 +2601,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "extension_test_bettrackr_identity_test_response",
-      "community": 1,
+      "community": 24,
       "norm_label": "response()"
     },
     {
@@ -4135,6 +4065,56 @@
       "norm_label": "png()"
     },
     {
+      "label": "migrate.mjs",
+      "file_type": "code",
+      "source_file": "scripts/migrate.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "scripts_migrate",
+      "community": 27,
+      "norm_label": "migrate.mjs"
+    },
+    {
+      "label": "dir",
+      "file_type": "code",
+      "source_file": "scripts/migrate.mjs",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "scripts_migrate_dir",
+      "community": 27,
+      "norm_label": "dir"
+    },
+    {
+      "label": "isLocalDb",
+      "file_type": "code",
+      "source_file": "scripts/migrate.mjs",
+      "source_location": "L16",
+      "_origin": "ast",
+      "id": "scripts_migrate_islocaldb",
+      "community": 27,
+      "norm_label": "islocaldb"
+    },
+    {
+      "label": "pool",
+      "file_type": "code",
+      "source_file": "scripts/migrate.mjs",
+      "source_location": "L17",
+      "_origin": "ast",
+      "id": "scripts_migrate_pool",
+      "community": 27,
+      "norm_label": "pool"
+    },
+    {
+      "label": "files",
+      "file_type": "code",
+      "source_file": "scripts/migrate.mjs",
+      "source_location": "L22",
+      "_origin": "ast",
+      "id": "scripts_migrate_files",
+      "community": 27,
+      "norm_label": "files"
+    },
+    {
       "label": "zip-extension.mjs",
       "file_type": "code",
       "source_file": "scripts/zip-extension.mjs",
@@ -4198,7 +4178,7 @@
       "label": "currentGitBranch()",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L33",
+      "source_location": "L32",
       "_origin": "ast",
       "id": "server_currentgitbranch",
       "community": 5,
@@ -4208,7 +4188,7 @@
       "label": "gitBranch",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L45",
+      "source_location": "L44",
       "_origin": "ast",
       "id": "server_gitbranch",
       "community": 5,
@@ -4218,7 +4198,7 @@
       "label": "app",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L51",
+      "source_location": "L50",
       "_origin": "ast",
       "id": "server_app",
       "community": 5,
@@ -4228,7 +4208,7 @@
       "label": "execFileAsync",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L53",
+      "source_location": "L52",
       "_origin": "ast",
       "id": "server_execfileasync",
       "community": 5,
@@ -4238,7 +4218,7 @@
       "label": "extensionZipPath",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L54",
+      "source_location": "L53",
       "_origin": "ast",
       "id": "server_extensionzippath",
       "community": 5,
@@ -4248,17 +4228,47 @@
       "label": "SSR_PATHS",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L55",
+      "source_location": "L54",
       "_origin": "ast",
       "id": "server_ssr_paths",
       "community": 5,
       "norm_label": "ssr_paths"
     },
     {
+      "label": "SsrModule",
+      "file_type": "code",
+      "source_file": "server.ts",
+      "source_location": "L66",
+      "_origin": "ast",
+      "id": "server_ssrmodule",
+      "community": 5,
+      "norm_label": "ssrmodule"
+    },
+    {
+      "label": "dynamicImport",
+      "file_type": "code",
+      "source_file": "server.ts",
+      "source_location": "L73",
+      "_origin": "ast",
+      "id": "server_dynamicimport",
+      "community": 5,
+      "norm_label": "dynamicimport"
+    },
+    {
+      "label": "loadSsrModule()",
+      "file_type": "code",
+      "source_file": "server.ts",
+      "source_location": "L78",
+      "_origin": "ast",
+      "id": "server_loadssrmodule",
+      "community": 5,
+      "norm_label": "loadssrmodule()"
+    },
+    {
       "label": "NATIVE_APP_ORIGINS",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L102",
+      "source_location": "L132",
       "_origin": "ast",
       "id": "server_native_app_origins",
       "community": 5,
@@ -4268,7 +4278,7 @@
       "label": "clearServerSessionCookie()",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L157",
+      "source_location": "L187",
       "_origin": "ast",
       "id": "server_clearserversessioncookie",
       "community": 5,
@@ -4278,7 +4288,7 @@
       "label": "loadInitialAppData()",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L166",
+      "source_location": "L196",
       "_origin": "ast",
       "id": "server_loadinitialappdata",
       "community": 5,
@@ -4288,7 +4298,7 @@
       "label": "serializeInitialData()",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L202",
+      "source_location": "L236",
       "_origin": "ast",
       "id": "server_serializeinitialdata",
       "community": 5,
@@ -4298,7 +4308,7 @@
       "label": "renderDocument()",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L209",
+      "source_location": "L243",
       "_origin": "ast",
       "id": "server_renderdocument",
       "community": 5,
@@ -4308,7 +4318,7 @@
       "label": "productionSsrHandler()",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L225",
+      "source_location": "L260",
       "_origin": "ast",
       "id": "server_productionssrhandler",
       "community": 5,
@@ -4318,7 +4328,7 @@
       "label": "getAiClient()",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L236",
+      "source_location": "L283",
       "_origin": "ast",
       "id": "server_getaiclient",
       "community": 5,
@@ -4328,7 +4338,7 @@
       "label": "start()",
       "file_type": "code",
       "source_file": "server.ts",
-      "source_location": "L485",
+      "source_location": "L532",
       "_origin": "ast",
       "id": "server_start",
       "community": 5,
@@ -5208,7 +5218,7 @@
       "label": "renderApp()",
       "file_type": "code",
       "source_file": "src/entry-server.tsx",
-      "source_location": "L12",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "src_entry_server_renderapp",
       "community": 25,
@@ -5531,7 +5541,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_apibase",
-      "community": 25,
+      "community": 15,
       "norm_label": "apibase.ts"
     },
     {
@@ -5541,7 +5551,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_lib_apibase_isnativeapp",
-      "community": 25,
+      "community": 15,
       "norm_label": "isnativeapp()"
     },
     {
@@ -5551,7 +5561,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_lib_apibase_configured",
-      "community": 25,
+      "community": 15,
       "norm_label": "configured"
     },
     {
@@ -6201,7 +6211,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_liveupdate",
-      "community": 25,
+      "community": 15,
       "norm_label": "liveupdate.ts"
     },
     {
@@ -6211,7 +6221,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_lib_liveupdate_initliveupdate",
-      "community": 25,
+      "community": 15,
       "norm_label": "initliveupdate()"
     },
     {
@@ -6371,7 +6381,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_main",
-      "community": 25,
+      "community": 15,
       "norm_label": "main.tsx"
     },
     {
@@ -6953,6 +6963,16 @@
       "id": "vercel_routes",
       "community": 16,
       "norm_label": "routes"
+    },
+    {
+      "label": "vite.config.ssr.ts",
+      "file_type": "code",
+      "source_file": "vite.config.ssr.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "vite_config_ssr",
+      "community": 29,
+      "norm_label": "vite.config.ssr.ts"
     },
     {
       "label": "vite.config.ts",
@@ -8444,8 +8464,8 @@
       "source_file": "android/gradlew",
       "source_location": "L1",
       "weight": 1.0,
-      "source": "android_gradlew",
-      "target": "android_gradlew__entry",
+      "source": "home_ronk_projects_bettrackr_android_gradlew",
+      "target": "home_ronk_projects_bettrackr_android_gradlew__entry",
       "confidence_score": 1.0
     },
     {
@@ -8454,8 +8474,8 @@
       "source_file": "android/gradlew",
       "source_location": "L98",
       "weight": 1.0,
-      "source": "android_gradlew",
-      "target": "android_gradlew_die",
+      "source": "home_ronk_projects_bettrackr_android_gradlew",
+      "target": "home_ronk_projects_bettrackr_android_gradlew_die",
       "confidence_score": 1.0
     },
     {
@@ -8464,8 +8484,8 @@
       "source_file": "android/gradlew",
       "source_location": "L94",
       "weight": 1.0,
-      "source": "android_gradlew",
-      "target": "android_gradlew_warn",
+      "source": "home_ronk_projects_bettrackr_android_gradlew",
+      "target": "home_ronk_projects_bettrackr_android_gradlew_warn",
       "confidence_score": 1.0
     },
     {
@@ -8475,8 +8495,8 @@
       "source_location": "L129",
       "weight": 1.0,
       "context": "call",
-      "source": "android_gradlew__entry",
-      "target": "android_gradlew_die",
+      "source": "home_ronk_projects_bettrackr_android_gradlew__entry",
+      "target": "home_ronk_projects_bettrackr_android_gradlew_die",
       "confidence_score": 1.0
     },
     {
@@ -8486,8 +8506,8 @@
       "source_location": "L152",
       "weight": 1.0,
       "context": "call",
-      "source": "android_gradlew__entry",
-      "target": "android_gradlew_warn",
+      "source": "home_ronk_projects_bettrackr_android_gradlew__entry",
+      "target": "home_ronk_projects_bettrackr_android_gradlew_warn",
       "confidence_score": 1.0
     },
     {
@@ -8516,50 +8536,10 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L17",
+      "source_location": "L18",
       "weight": 1.0,
       "source": "server",
       "target": "db_betcolumns",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "db/migrations/001_sync_bets_schema.sql",
-      "source_location": "L36",
-      "weight": 1.0,
-      "source": "db_migrations_001_sync_bets_schema",
-      "target": "db_migrations_001_sync_bets_schema_bets",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "db/migrations/001_sync_bets_schema.sql",
-      "source_location": "L64",
-      "weight": 1.0,
-      "source": "db_migrations_001_sync_bets_schema",
-      "target": "db_migrations_001_sync_bets_schema_users",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "db/migrations/002_fix_status_constraint.sql",
-      "source_location": "L21",
-      "weight": 1.0,
-      "source": "db_migrations_002_fix_status_constraint",
-      "target": "db_migrations_002_fix_status_constraint_bets",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "db/migrations/003_cashout_and_freebet_type.sql",
-      "source_location": "L22",
-      "weight": 1.0,
-      "source": "db_migrations_003_cashout_and_freebet_type",
-      "target": "db_migrations_003_cashout_and_freebet_type_bets",
       "confidence_score": 1.0
     },
     {
@@ -8663,7 +8643,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L16",
+      "source_location": "L17",
       "weight": 1.0,
       "source": "server",
       "target": "db_pool",
@@ -13285,7 +13265,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L18",
+      "source_location": "L19",
       "weight": 1.0,
       "source": "server",
       "target": "middleware_authmiddleware",
@@ -13362,7 +13342,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L18",
+      "source_location": "L19",
       "weight": 1.0,
       "source": "server",
       "target": "middleware_authmiddleware_authenticatedrequest",
@@ -13428,7 +13408,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L18",
+      "source_location": "L19",
       "weight": 1.0,
       "source": "server",
       "target": "middleware_authmiddleware_authenticateduserfromrequest",
@@ -13439,7 +13419,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L167",
+      "source_location": "L201",
       "weight": 1.0,
       "source": "server_loadinitialappdata",
       "target": "middleware_authmiddleware_authenticateduserfromrequest",
@@ -13516,7 +13496,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L18",
+      "source_location": "L19",
       "weight": 1.0,
       "source": "server",
       "target": "middleware_authmiddleware_authenticatetoken",
@@ -13547,7 +13527,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L24",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "server",
       "target": "middleware_ratelimit",
@@ -13558,7 +13538,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L24",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "server",
       "target": "middleware_ratelimit_ratelimit",
@@ -14441,7 +14421,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L13",
+      "source_location": "L14",
       "weight": 1.0,
       "source": "server",
       "target": "routes_accountsroutes",
@@ -14452,7 +14432,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L13",
+      "source_location": "L14",
       "weight": 1.0,
       "source": "server",
       "target": "routes_accountsroutes_router",
@@ -14533,7 +14513,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L10",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "server",
       "target": "routes_authroutes",
@@ -14544,7 +14524,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L10",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "server",
       "target": "routes_authroutes_router",
@@ -14658,7 +14638,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L11",
+      "source_location": "L12",
       "weight": 1.0,
       "source": "server",
       "target": "routes_betsroutes",
@@ -14669,7 +14649,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L11",
+      "source_location": "L12",
       "weight": 1.0,
       "source": "server",
       "target": "routes_betsroutes_router",
@@ -14752,7 +14732,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L14",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "server",
       "target": "routes_insightsroutes",
@@ -14763,7 +14743,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L14",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "server",
       "target": "routes_insightsroutes_router",
@@ -14815,7 +14795,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L15",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "server",
       "target": "routes_settingsroutes",
@@ -14826,7 +14806,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L15",
+      "source_location": "L16",
       "weight": 1.0,
       "source": "server",
       "target": "routes_settingsroutes_router",
@@ -14857,7 +14837,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L12",
+      "source_location": "L13",
       "weight": 1.0,
       "source": "server",
       "target": "routes_socialroutes",
@@ -14868,7 +14848,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L12",
+      "source_location": "L13",
       "weight": 1.0,
       "source": "server",
       "target": "routes_socialroutes_router",
@@ -14977,6 +14957,46 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "scripts/migrate.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "scripts_migrate",
+      "target": "scripts_migrate_dir",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/migrate.mjs",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "scripts_migrate",
+      "target": "scripts_migrate_files",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/migrate.mjs",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "scripts_migrate",
+      "target": "scripts_migrate_islocaldb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/migrate.mjs",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "scripts_migrate",
+      "target": "scripts_migrate_pool",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "scripts/zip-extension.mjs",
       "source_location": "L14",
       "weight": 1.0,
@@ -15018,7 +15038,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L51",
+      "source_location": "L50",
       "weight": 1.0,
       "source": "server",
       "target": "server_app",
@@ -15028,7 +15048,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L157",
+      "source_location": "L187",
       "weight": 1.0,
       "source": "server",
       "target": "server_clearserversessioncookie",
@@ -15038,7 +15058,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L33",
+      "source_location": "L32",
       "weight": 1.0,
       "source": "server",
       "target": "server_currentgitbranch",
@@ -15048,7 +15068,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L53",
+      "source_location": "L73",
+      "weight": 1.0,
+      "source": "server",
+      "target": "server_dynamicimport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.ts",
+      "source_location": "L52",
       "weight": 1.0,
       "source": "server",
       "target": "server_execfileasync",
@@ -15058,7 +15088,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L54",
+      "source_location": "L53",
       "weight": 1.0,
       "source": "server",
       "target": "server_extensionzippath",
@@ -15068,7 +15098,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L236",
+      "source_location": "L283",
       "weight": 1.0,
       "source": "server",
       "target": "server_getaiclient",
@@ -15078,7 +15108,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L45",
+      "source_location": "L44",
       "weight": 1.0,
       "source": "server",
       "target": "server_gitbranch",
@@ -15088,7 +15118,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L166",
+      "source_location": "L196",
       "weight": 1.0,
       "source": "server",
       "target": "server_loadinitialappdata",
@@ -15098,7 +15128,17 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L102",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "server",
+      "target": "server_loadssrmodule",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server.ts",
+      "source_location": "L132",
       "weight": 1.0,
       "source": "server",
       "target": "server_native_app_origins",
@@ -15108,7 +15148,7 @@
       "relation": "indirect_call",
       "confidence": "INFERRED",
       "source_file": "server.ts",
-      "source_location": "L232",
+      "source_location": "L279",
       "weight": 1.0,
       "context": "argument",
       "source": "server",
@@ -15119,7 +15159,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L209",
+      "source_location": "L243",
       "weight": 1.0,
       "source": "server",
       "target": "server_renderdocument",
@@ -15129,7 +15169,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L202",
+      "source_location": "L236",
       "weight": 1.0,
       "source": "server",
       "target": "server_serializeinitialdata",
@@ -15139,7 +15179,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L55",
+      "source_location": "L54",
       "weight": 1.0,
       "source": "server",
       "target": "server_ssr_paths",
@@ -15149,21 +15189,20 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L485",
+      "source_location": "L66",
       "weight": 1.0,
       "source": "server",
-      "target": "server_start",
+      "target": "server_ssrmodule",
       "confidence_score": 1.0
     },
     {
-      "relation": "imports",
-      "context": "import",
+      "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L25",
+      "source_location": "L532",
       "weight": 1.0,
       "source": "server",
-      "target": "src_entry_server_renderapp",
+      "target": "server_start",
       "confidence_score": 1.0
     },
     {
@@ -15171,7 +15210,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L27",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "server",
       "target": "src_initialdata",
@@ -15182,32 +15221,43 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L27",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "server",
       "target": "src_initialdata_initialappdata",
       "confidence_score": 1.0
     },
     {
-      "relation": "imports_from",
-      "context": "import",
+      "relation": "references",
+      "context": "call",
       "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
       "source_file": "server.ts",
-      "source_location": "L26",
+      "source_location": "L219",
       "weight": 1.0,
-      "source": "server",
-      "target": "src_lib_betsapi",
-      "confidence_score": 1.0
+      "source": "server_loadinitialappdata",
+      "target": "server_ssrmodule"
     },
     {
-      "relation": "imports",
-      "context": "import",
+      "relation": "references",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "server.ts",
+      "source_location": "L250",
+      "weight": 1.0,
+      "source": "server_renderdocument",
+      "target": "server_ssrmodule"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L26",
+      "source_location": "L81",
       "weight": 1.0,
-      "source": "server",
-      "target": "src_lib_betsapi_mapbetfromapi",
+      "source": "server_loadssrmodule",
+      "target": "server_dynamicimport",
       "confidence_score": 1.0
     },
     {
@@ -15215,29 +15265,29 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L187",
+      "source_location": "L248",
+      "weight": 1.0,
+      "source": "server_renderdocument",
+      "target": "server_loadssrmodule",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server.ts",
+      "source_location": "L221",
       "weight": 1.0,
       "source": "server_loadinitialappdata",
       "target": "server_clearserversessioncookie",
       "confidence_score": 1.0
     },
     {
-      "relation": "indirect_call",
-      "context": "argument",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "server.ts",
-      "source_location": "L185",
-      "weight": 1.0,
-      "source": "server_loadinitialappdata",
-      "target": "src_lib_betsapi_mapbetfromapi"
-    },
-    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L214",
+      "source_location": "L249",
       "weight": 1.0,
       "source": "server_renderdocument",
       "target": "server_loadinitialappdata",
@@ -15248,7 +15298,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L216",
+      "source_location": "L251",
       "weight": 1.0,
       "source": "server_renderdocument",
       "target": "server_serializeinitialdata",
@@ -15259,7 +15309,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server.ts",
-      "source_location": "L227",
+      "source_location": "L263",
       "weight": 1.0,
       "source": "server_productionssrhandler",
       "target": "server_renderdocument",
@@ -15269,19 +15319,8 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "server.ts",
-      "source_location": "L215",
-      "weight": 1.0,
-      "source": "server_renderdocument",
-      "target": "src_entry_server_renderapp"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server.ts",
-      "source_location": "L512",
+      "source_location": "L562",
       "weight": 1.0,
       "source": "server_start",
       "target": "server_renderdocument",
@@ -15292,7 +15331,7 @@
       "context": "argument",
       "confidence": "INFERRED",
       "source_file": "server.ts",
-      "source_location": "L531",
+      "source_location": "L581",
       "weight": 1.0,
       "source": "server_start",
       "target": "server_productionssrhandler",
@@ -15847,17 +15886,6 @@
       "target": "src_app_nav_items"
     },
     {
-      "relation": "references",
-      "context": "field",
-      "confidence": "EXTRACTED",
-      "source_file": "src/App.tsx",
-      "source_location": "L90",
-      "weight": 1.0,
-      "source": "src_app_appprops",
-      "target": "src_initialdata_initialappdata",
-      "confidence_score": 1.0
-    },
-    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -15988,28 +16016,6 @@
       "weight": 1.0,
       "source": "src_app_app",
       "target": "src_utils_safenum"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/entry-server.tsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "source": "src_entry_server",
-      "target": "src_app_app",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main.tsx",
-      "source_location": "L3",
-      "weight": 1.0,
-      "source": "src_main",
-      "target": "src_app_app",
-      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -18993,7 +18999,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/entry-server.tsx",
-      "source_location": "L12",
+      "source_location": "L18",
       "weight": 1.0,
       "source": "src_entry_server",
       "target": "src_entry_server_renderapp",
@@ -19019,6 +19025,28 @@
       "weight": 1.0,
       "source": "src_entry_server",
       "target": "src_initialdata_initialappdata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "re_exports",
+      "context": "export",
+      "confidence": "EXTRACTED",
+      "source_file": "src/entry-server.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "src_entry_server",
+      "target": "src_lib_betsapi",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "src/entry-server.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "src_entry_server",
+      "target": "src_lib_betsapi_mapbetfromapi",
       "confidence_score": 1.0
     },
     {
@@ -23475,5 +23503,5 @@
       "source_file": "public/pwa-512x512.png"
     }
   ],
-  "built_at_commit": "88389f4bc07778c077badecaf1d52a74c064bbb9"
+  "built_at_commit": "a07b559640b04aa8ab8fba36390260d3a9ad0de3"
 }
