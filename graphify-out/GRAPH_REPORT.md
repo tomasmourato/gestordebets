@@ -1,16 +1,16 @@
-# Graph Report - bettrackr  (2026-07-21)
+# Graph Report - gestão-de-apostas  (2026-07-21)
 
 ## Corpus Check
-- 117 files · ~145,996 words
+- 219 files · ~202,215 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 809 nodes · 1434 edges · 103 communities (46 shown, 57 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 38 edges (avg confidence: 0.71)
+- 2972 nodes · 7554 edges · 177 communities (94 shown, 83 thin omitted)
+- Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 739 edges (avg confidence: 0.68)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a455dcbb`
+- Built from commit: `a922691e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -44,11 +44,10 @@
 - BetTrackr Token Bridge
 - Status Constraint Migration
 - Cashout Freebet Migration
-- persistMapped
 - Betclic Content Bridge
+- bet
 - betStatus.ts
-- betStatus.ts
-- import-utils.js
+- importers.test.js
 - BetTrackr — Extensão de importação de apostas
 - Extension Usage Instructions
 - Pre-Mount Theme Bootstrap
@@ -95,42 +94,110 @@
 - Language Options
 - Manual Import Improvements
 - BetTrackr Product Backlog
-- bettrackr-identity.js
-- fetchSolverdeHistory
-- migrate.mjs
+- mapper-solverde.js
+- import-utils.js
+- rr
+- index-GUdJqaP1.js
 - bundle-app.mjs
 - gen-icons.mjs
 - ExampleInstrumentedTest.java
 - Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior
 - ExampleUnitTest.java
-- gradlew
+- concat
 - MainActivity.java
 - capacitor.config.ts
 - CLAUDE.md
+- build.gradle
+- build.gradle
+- settings.gradle
+- variables.gradle
+- v
+- l
+- o
+- os
+- Dashboard-CiJmES5V.js
+- .forEach
+- Settings-B3PiUVnh.js
+- BetsManager-DThhK6Cx.js
+- MobileApp.tsx
+- rs
+- Ct
+- bo
+- N
+- lk
+- I
+- .constructor
+- Ze
+- .readValue
+- iO
+- Ht
+- Implementation Plan
+- DesktopApp.tsx
+- MobileSocial-BXwyEbj8.js
+- MobileImport-COK0PxdU.js
+- en
+- Do
+- index-BzOvdiRd.js
+- so
+- Ko
+- qr
+- vn
+- j
+- pb
+- u
+- scripts
+- Ba
+- s
+- fg
+- M
+- BetTrackr
+- ug
+- Nh
+- Bt
+- BetTrackr — Extensão de importação de apostas
+- vercel.json
+- .unavailable
+- index-DuVHi_Fd.js
+- ig
+- pg
+- package.json
+- Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior
+- index-DXvZjjot.js
+- ua
+- web-DiSom0bG.js
+- ExampleUnitTest
+- graphify
+- @capacitor/cli
+- @capacitor/core
+- @capacitor/splash-screen
+- @google/genai
+- bets
+- Test
+- Test
 
 ## God Nodes (most connected - your core abstractions)
-1. `authFetch()` - 35 edges
-2. `parseJsonResponse()` - 34 edges
-3. `Bet` - 20 edges
-4. `App()` - 17 edges
-5. `mapBetFromApi()` - 15 edges
-6. `safeNum()` - 15 edges
-7. `compilerOptions` - 14 edges
-8. `normalizeBetStatus()` - 13 edges
-9. `bet()` - 12 edges
-10. `BookieAccount` - 12 edges
+1. `nd` - 85 edges
+2. `t()` - 69 edges
+3. `qy()` - 66 edges
+4. `l()` - 64 edges
+5. `nr` - 56 edges
+6. `ae()` - 54 edges
+7. `v` - 54 edges
+8. `e()` - 53 edges
+9. `b` - 50 edges
+10. `qt()` - 41 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `ScreenshotImporter()` --indirect_call--> `response()`  [INFERRED]
-  src/components/ScreenshotImporter.tsx → extension/test/bettrackr-identity.test.js
-- `BetsManager()` --indirect_call--> `bet()`  [INFERRED]
-  src/components/BetsManager.tsx → extension/test/dashboard-stats.test.ts
+- `SwipeableRow()` --indirect_call--> `to()`  [INFERRED]
+  src/mobile/ui/SwipeableRow.tsx → android/app/src/main/assets/public/assets/vendor-motion-B4Dy8_CB.js
+- `BetsManager()` --indirect_call--> `b`  [INFERRED]
+  src/components/BetsManager.tsx → android/app/src/main/assets/public/workbox-0bb07689.js
+- `MobileBets()` --indirect_call--> `b`  [INFERRED]
+  src/mobile/screens/MobileBets.tsx → android/app/src/main/assets/public/workbox-0bb07689.js
+- `MobileDashboard()` --indirect_call--> `b`  [INFERRED]
+  src/mobile/screens/MobileDashboard.tsx → android/app/src/main/assets/public/workbox-0bb07689.js
 - `useBets()` --indirect_call--> `bet()`  [INFERRED]
   src/hooks/useBets.ts → extension/test/dashboard-stats.test.ts
-- `React Application Mount Point` --implements--> `BetTrackr`  [INFERRED]
-  index.html → README.md
-- `parse()` --calls--> `readFilters()`  [EXTRACTED]
-  extension/test/filter-params.test.ts → src/lib/filterParams.ts
 
 ## Import Cycles
 - None detected.
@@ -142,23 +209,23 @@
 - **Sports Betting Tracking Motif** — public_pwa_192x192_betting_slip, public_pwa_192x192_soccer_ball, public_pwa_192x192_performance_bar_chart [INFERRED 0.85]
 - **Sports Analytics Branding** — public_pwa_512x512_bettrackr_pwa_icon, public_pwa_512x512_football, public_pwa_512x512_performance_analytics, public_pwa_512x512_upward_trend, public_pwa_512x512_betting_ticket [INFERRED 0.95]
 
-## Communities (103 total, 57 thin omitted)
+## Communities (177 total, 83 thin omitted)
 
 ### Community 0 - "Bet Lifecycle UI"
-Cohesion: 0.05
-Nodes (77): response(), parse(), now, react, react, BetsManager(), BetsManagerProps, SortDirection (+69 more)
+Cohesion: 0.10
+Nodes (50): response(), BetsManagerProps, SortDirection, SortField, BookieAccountsCardProps, DashboardProps, ScreenshotImporter(), ScreenshotImporterProps (+42 more)
 
 ### Community 1 - "Extension Import Orchestration"
 Cohesion: 0.10
 Nodes (35): accountsForBookmaker(), betanoRequestId(), betanoTokenWaiters, betclicReadStateFn(), BETTRACKR_APP_URLS, configForImport(), detectBookmakerUsernames(), ensureBetanoHistoryTab() (+27 more)
 
 ### Community 2 - "App Shell and State"
-Cohesion: 0.09
-Nodes (55): AIInsights(), AIInsightsProps, InsightsResponse, Pick, Social(), SocialProps, statusMeta(), useAccounts() (+47 more)
+Cohesion: 0.08
+Nodes (56): AIInsights(), AIInsightsProps, InsightsResponse, Pick, Social(), SocialProps, statusMeta(), useAccounts() (+48 more)
 
 ### Community 3 - "Runtime Dependencies"
-Cohesion: 0.05
-Nodes (43): bcryptjs, @capacitor/android, @capacitor/core, @capgo/capacitor-updater, dotenv, express, @google/genai, jsonwebtoken (+35 more)
+Cohesion: 0.07
+Nodes (29): bcryptjs, @capacitor/app, @capacitor/camera, @capacitor/core, @capacitor/filesystem, @capacitor/keyboard, @capacitor/status-bar, @capgo/capacitor-updater (+21 more)
 
 ### Community 4 - "Build Toolchain"
 Cohesion: 0.06
@@ -166,7 +233,7 @@ Nodes (33): adm-zip, @capacitor/cli, esbuild, devDependencies, adm-zip, @capacit
 
 ### Community 5 - "API Security and Database"
 Cohesion: 0.05
-Nodes (44): connect(), getPool(), query(), extractJson(), getGeminiClient(), AuthenticatedRequest, authenticatedUserFromRequest(), authenticateToken() (+36 more)
+Nodes (43): connect(), getPool(), query(), extractJson(), getGeminiClient(), AuthenticatedRequest, authenticatedUserFromRequest(), authenticateToken() (+35 more)
 
 ### Community 6 - "History and Reconciliation"
 Cohesion: 0.28
@@ -174,7 +241,7 @@ Nodes (14): amountOrNull(), betclicRef(), betclicSelectionResult(), calc(), cash
 
 ### Community 7 - "TypeScript Project Config"
 Cohesion: 0.07
-Nodes (27): bootstrap.ts, db, DOM, DOM.Iterable, ES2022, middleware, node, routes (+19 more)
+Nodes (27): compilerOptions, esModuleInterop, isolatedModules, jsx, lib, module, moduleDetection, moduleResolution (+19 more)
 
 ### Community 8 - "Browser Extension Manifest"
 Cohesion: 0.05
@@ -184,25 +251,21 @@ Nodes (36): action, default_icon, default_popup, default_title, background, serv
 Cohesion: 0.06
 Nodes (37): accountBox, accountChoices, accountHints, accountOptionsByKey, accountsBox, accountSelects, accountUser, applyDetectedUsernames() (+29 more)
 
-### Community 11 - "App Architecture and Auth"
-Cohesion: 0.22
-Nodes (8): React Application Mount Point, API, App Android (Capacitor), Arquitetura, BetTrackr, Configuração, Scripts, Stack
-
 ### Community 15 - "Extension Import Settings"
-Cohesion: 0.14
-Nodes (15): BetclicImport(), BetclicImportProps, EXTENSION_BOOKIE_KEYS, EXTENSION_BOOKIES, importSummary(), loadAccountChoices(), EnabledBookmakersCard(), EnabledBookmakersCardProps (+7 more)
+Cohesion: 0.18
+Nodes (12): BetclicImport(), BetclicImportProps, EXTENSION_BOOKIE_KEYS, EXTENSION_BOOKIES, importSummary(), loadAccountChoices(), EnabledBookmakersCard(), EnabledBookmakersCardProps (+4 more)
 
 ### Community 16 - "Vercel Deployment"
-Cohesion: 0.29
-Nodes (6): builds, test, git, deploymentEnabled, routes, version
+Cohesion: 0.01
+Nodes (127): $2(), a2(), ak(), bb(), bj(), bv(), c2(), ch() (+119 more)
 
 ### Community 18 - "Betano Request Capture"
 Cohesion: 0.60
 Nodes (3): headersToObject(), isBetanoRequest(), rememberHeaders()
 
 ### Community 19 - "Gemini Import Planning"
-Cohesion: 0.08
-Nodes (23): Appendix — freebet research sources (F3), Build Spec — Slice 1 (Cashout end-to-end + Dashboard fix), C1 — Language options (i18n), Configurations (TODO §5), Cross-cutting risks & notes, D1 — Fix "Distribuição de Resultados" count (confirmed bug), D2 — Dashboard filters (bookie, sport, bet type, …), Dashboard (TODO §4) (+15 more)
+Cohesion: 0.03
+Nodes (88): ai(), An(), as, Bi, bn(), bs(), ca, Ci (+80 more)
 
 ### Community 20 - "PWA Icon 192"
 Cohesion: 0.70
@@ -220,49 +283,57 @@ Nodes (4): extDir, outDir, outFile, root
 Cohesion: 0.32
 Nodes (4): looksLikeBetsApi(), looksLikeIdentityApi(), report(), sniffIdentity()
 
+### Community 24 - "Schema Migration Bootstrap"
+Cohesion: 0.57
+Nodes (5): cleanBaseUrl(), cleanUserId(), responseError(), runAfterBettrackrVerification(), verifyBettrackrIdentity()
+
 ### Community 25 - "Canonical Database Schema"
-Cohesion: 0.06
-Nodes (37): AIInsights, App(), AppProps, AppTab, BetsManager, BrandMark(), Dashboard, NAV_ITEMS (+29 more)
+Cohesion: 0.05
+Nodes (59): App(), AppProps, DesktopApp, Gallery, MobileApp, AccountPanel(), AccountPanelProps, AuthPageProps (+51 more)
 
 ### Community 27 - "Status Constraint Migration"
-Cohesion: 0.36
-Nodes (10): flattenSelections(), formatDateTime(), isCashoutStatus(), mapSolverdeBet(), mapStatus(), normalize(), num(), round2() (+2 more)
+Cohesion: 0.40
+Nodes (4): dir, files, isLocalDb, pool
 
-### Community 29 - "persistMapped"
-Cohesion: 0.20
-Nodes (17): betPayload(), fetchBetclicBets(), fetchBetclicBetsForImport(), fetchExistingBets(), importKey(), persistMapped(), postBulk(), progress() (+9 more)
+### Community 28 - "Cashout Freebet Migration"
+Cohesion: 0.83
+Nodes (3): gradlew script, die(), warn()
 
 ### Community 32 - "Betclic Content Bridge"
 Cohesion: 0.70
 Nodes (4): betclicLoggedIn(), captureBetclicUsername(), extensionAlive(), extractBetclicUsername()
 
-### Community 34 - "betStatus.ts"
+### Community 34 - "bet"
+Cohesion: 0.14
+Nodes (17): betPayload(), fetchBetclicBets(), fetchBetclicBetsForImport(), fetchExistingBets(), fetchSolverdeBets(), importKey(), needsUpdate(), persistMapped() (+9 more)
+
+### Community 36 - "betStatus.ts"
+Cohesion: 0.29
+Nodes (14): betanoRef(), CASHOUT_STATUS_TOKENS, dateTime(), flattenSelections(), isBetanoCashout(), mapBetanoBet(), mapBetanoBets(), mapBetanoSelectionResult() (+6 more)
+
+### Community 37 - "importers.test.js"
 Cohesion: 0.50
 Nodes (7): comparableExisting(), importedBetChanged(), importKeyOf(), indexExistingBets(), metadataOf(), reconcileImportedBets(), stable()
 
-### Community 36 - "betStatus.ts"
-Cohesion: 0.31
-Nodes (13): betanoRef(), CASHOUT_STATUS_TOKENS, dateTime(), flattenSelections(), isBetanoCashout(), mapBetanoBet(), mapBetanoSelectionResult(), mapBetanoStatus() (+5 more)
-
-### Community 37 - "import-utils.js"
-Cohesion: 0.36
-Nodes (6): createSixMonthWindows(), EARLIEST_HISTORY, fetchBetanoHistory(), fetchPages(), fetchBetclicHistory(), mapBetclicBet
-
 ### Community 38 - "BetTrackr — Extensão de importação de apostas"
-Cohesion: 0.29
-Nodes (6): BetTrackr — Extensão de importação de apostas, Como funciona, Ficheiros, Instalação (modo programador), Limitações conhecidas, Utilização
+Cohesion: 0.04
+Nodes (105): xt, hg, jg(), l(), ae(), AS(), Be(), bm() (+97 more)
 
-### Community 84 - "bettrackr-identity.js"
-Cohesion: 0.57
-Nodes (5): cleanBaseUrl(), cleanUserId(), responseError(), runAfterBettrackrVerification(), verifyBettrackrIdentity()
+### Community 84 - "mapper-solverde.js"
+Cohesion: 0.17
+Nodes (19): createSixMonthWindows(), EARLIEST_HISTORY, fetchBetanoHistory(), fetchPages(), mapBetclicBet, flattenSelections(), formatDateTime(), isCashoutStatus() (+11 more)
 
-### Community 85 - "fetchSolverdeHistory"
-Cohesion: 0.47
-Nodes (5): fetchSolverdeBets(), solverdeRequestPage(), addDays(), fetchSolverdeHistory(), solverdeHistoryStart()
+### Community 85 - "import-utils.js"
+Cohesion: 0.05
+Nodes (69): app, haptics(), ImpactWeight, NotificationKind, notifyHaptic(), selectionHaptic(), tapHaptic(), AccountSheet() (+61 more)
 
-### Community 86 - "migrate.mjs"
-Cohesion: 0.40
-Nodes (4): dir, files, isLocalDb, pool
+### Community 86 - "rr"
+Cohesion: 0.09
+Nodes (61): F(), nr, Ve(), ge(), ie, me, ue(), v() (+53 more)
+
+### Community 87 - "index-GUdJqaP1.js"
+Cohesion: 0.04
+Nodes (102): _1(), a1(), ag, ao, b1(), bg(), bh(), bi() (+94 more)
 
 ### Community 88 - "bundle-app.mjs"
 Cohesion: 0.33
@@ -272,37 +343,197 @@ Nodes (5): distDir, EXCLUDE, root, versionFile, zipFile
 Cohesion: 0.33
 Nodes (3): base, master, repoRoot
 
-### Community 90 - "ExampleInstrumentedTest.java"
-Cohesion: 0.60
-Nodes (3): ExampleInstrumentedTest, Test, RunWith
-
 ### Community 91 - "Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior"
+Cohesion: 0.06
+Nodes (13): C, d, f(), i, L, m, N(), o (+5 more)
+
+### Community 92 - "ExampleUnitTest.java"
+Cohesion: 0.04
+Nodes (81): ad(), ah(), Al(), Ar(), at(), Ax(), b1(), bS() (+73 more)
+
+### Community 93 - "concat"
+Cohesion: 0.04
+Nodes (67): er, rr, pp, _0(), _A(), ab(), ay(), bo() (+59 more)
+
+### Community 96 - "CLAUDE.md"
+Cohesion: 0.07
+Nodes (65): A(), e, r, o, r, D, G, H() (+57 more)
+
+### Community 97 - "build.gradle"
+Cohesion: 0.06
+Nodes (54): K(), A0(), af(), Aj(), applyPatches(), bp(), bw(), Cl() (+46 more)
+
+### Community 99 - "build.gradle"
+Cohesion: 0.07
+Nodes (48): de(), _e, Fe, Le(), Me(), Ne, pe(), Re (+40 more)
+
+### Community 101 - "settings.gradle"
+Cohesion: 0.07
+Nodes (44): bet(), parse(), now, BetsManager(), Dashboard(), DashboardBetsFilters, FilterDropdownOption, FilterDropdownProps (+36 more)
+
+### Community 102 - "variables.gradle"
+Cohesion: 0.10
+Nodes (20): Aa(), an, Cg(), deleteProperty(), dw(), fd(), fT(), kl() (+12 more)
+
+### Community 103 - "v"
+Cohesion: 0.05
+Nodes (62): ar, ct, dr, Jt, or, sr, tr, Zt (+54 more)
+
+### Community 104 - "l"
+Cohesion: 0.10
+Nodes (47): e, t, Ah, Cp, Eh(), fe(), fp(), ip() (+39 more)
+
+### Community 105 - "o"
+Cohesion: 0.08
+Nodes (14): f1(), Zm(), ck(), ny(), Tt(), At(), dl, ga() (+6 more)
+
+### Community 106 - "os"
+Cohesion: 0.06
+Nodes (13): lo, ao, co(), cs(), fo, ho(), lo(), ns() (+5 more)
+
+### Community 107 - "Dashboard-CiJmES5V.js"
+Cohesion: 0.11
+Nodes (24): o(), ph(), ug, $y, B(), De, Ee, Ie (+16 more)
+
+### Community 108 - ".forEach"
+Cohesion: 0.09
+Nodes (18): brighter(), darker(), aa(), da(), fa(), fl(), Fn(), io() (+10 more)
+
+### Community 110 - "BetsManager-DThhK6Cx.js"
+Cohesion: 0.07
+Nodes (35): qy(), Vy(), Df(), ey(), Nr(), qf(), qv(), X0() (+27 more)
+
+### Community 111 - "MobileApp.tsx"
+Cohesion: 0.07
+Nodes (31): cd(), clamp(), copy(), cS(), dI(), displayable(), Ei(), Ek() (+23 more)
+
+### Community 112 - "rs"
+Cohesion: 0.05
+Nodes (18): Xn(), Si(), $a, au, ds(), fs(), Gi(), Gl() (+10 more)
+
+### Community 113 - "Ct"
+Cohesion: 0.09
+Nodes (26): ap(), Ct(), cu(), Cx(), Db(), deref(), Ex(), gc() (+18 more)
+
+### Community 114 - "bo"
+Cohesion: 0.07
+Nodes (9): bo, Cn(), es(), Ni(), or(), Pn(), so(), Tn() (+1 more)
+
+### Community 116 - "lk"
+Cohesion: 0.09
+Nodes (20): aw(), Bk(), c1(), dM(), Ec(), fm(), Ic(), iw() (+12 more)
+
+### Community 119 - "Ze"
+Cohesion: 0.05
+Nodes (31): c1(), e1(), Gm, Km(), kn(), Ks(), l1(), m1 (+23 more)
+
+### Community 120 - ".readValue"
+Cohesion: 0.18
+Nodes (3): ki(), qr(), ze
+
+### Community 121 - "iO"
+Cohesion: 0.08
+Nodes (25): aO(), cf(), eO(), Fr(), fS(), Gg(), iO(), lf() (+17 more)
+
+### Community 122 - "Ht"
+Cohesion: 0.14
+Nodes (5): av(), Hr(), Ht, ks(), Yi()
+
+### Community 123 - "Implementation Plan"
+Cohesion: 0.08
+Nodes (23): Appendix — freebet research sources (F3), Build Spec — Slice 1 (Cashout end-to-end + Dashboard fix), C1 — Language options (i18n), Configurations (TODO §5), Cross-cutting risks & notes, D1 — Fix "Distribuição de Resultados" count (confirmed bug), D2 — Dashboard filters (bookie, sport, bet type, …), Dashboard (TODO §4) (+15 more)
+
+### Community 124 - "DesktopApp.tsx"
+Cohesion: 0.11
+Nodes (9): e, a, A, G(), V(), m, m, G (+1 more)
+
+### Community 125 - "MobileSocial-BXwyEbj8.js"
+Cohesion: 0.20
+Nodes (3): j, z(), o
+
+### Community 126 - "MobileImport-COK0PxdU.js"
+Cohesion: 0.30
+Nodes (10): CASHOUT_TOKENS, compactStatusToken(), hasCashoutSignal(), isCashoutStatusValue(), normalizeBetStatus(), parseBetMetadata(), STATUS_ALIASES, statusToken() (+2 more)
+
+### Community 127 - "en"
+Cohesion: 0.13
+Nodes (17): cu(), en(), ft, go(), jo(), $o(), pr(), ql() (+9 more)
+
+### Community 128 - "Do"
+Cohesion: 0.11
+Nodes (7): Do, ee(), hs(), Pi(), qi(), $s(), wo()
+
+### Community 132 - "qr"
+Cohesion: 0.12
+Nodes (15): cA(), dc(), EA(), HA(), jC(), Kc(), qr(), sA() (+7 more)
+
+### Community 133 - "vn"
+Cohesion: 0.11
+Nodes (19): cM(), cO(), dO(), dS(), fO(), Fu(), gS(), hf() (+11 more)
+
+### Community 134 - "j"
+Cohesion: 0.31
+Nodes (6): C(), d(), f(), g, m(), R()
+
+### Community 135 - "pb"
+Cohesion: 0.15
+Nodes (3): hb(), pb, zi()
+
+### Community 136 - "u"
+Cohesion: 0.29
+Nodes (3): B(), D(), M
+
+### Community 137 - "scripts"
+Cohesion: 0.18
+Nodes (11): scripts, android:open, android:sync, build, clean, dev, lint, preview (+3 more)
+
+### Community 138 - "Ba"
+Cohesion: 0.18
+Nodes (6): hp(), Ba, ja(), ka(), ls, Ui
+
+### Community 142 - "BetTrackr"
+Cohesion: 0.25
+Nodes (7): API, App Android (Capacitor), Arquitetura, BetTrackr, Configuração, Scripts, Stack
+
+### Community 144 - "Nh"
+Cohesion: 0.22
+Nodes (3): cg, wm(), Nh
+
+### Community 146 - "BetTrackr — Extensão de importação de apostas"
+Cohesion: 0.29
+Nodes (6): BetTrackr — Extensão de importação de apostas, Como funciona, Ficheiros, Instalação (modo programador), Limitações conhecidas, Utilização
+
+### Community 147 - "vercel.json"
+Cohesion: 0.29
+Nodes (6): builds, test, git, deploymentEnabled, routes, version
+
+### Community 152 - "package.json"
+Cohesion: 0.33
+Nodes (5): description, name, private, type, version
+
+### Community 153 - "Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior"
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior, Source Nodes
 
-### Community 93 - "gradlew"
-Cohesion: 0.83
-Nodes (3): gradlew script, die(), warn()
-
 ## Knowledge Gaps
-- **290 isolated node(s):** `config`, `bets`, `users`, `bets`, `manifest_version` (+285 more)
+- **500 isolated node(s):** `Jt`, `Zt`, `tr`, `ar`, `sr` (+495 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **57 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **83 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `bet()` connect `persistMapped` to `Bet Lifecycle UI`, `betStatus.ts`, `App Shell and State`, `fetchSolverdeHistory`?**
-  _High betweenness centrality (0.124) - this node is a cross-community bridge._
-- **Why does `dependencies` connect `Runtime Dependencies` to `Bet Lifecycle UI`?**
-  _High betweenness centrality (0.106) - this node is a cross-community bridge._
-- **Why does `react` connect `Bet Lifecycle UI` to `Runtime Dependencies`?**
-  _High betweenness centrality (0.103) - this node is a cross-community bridge._
-- **What connects `config`, `bets`, `users` to the rest of the system?**
-  _290 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Bet Lifecycle UI` be split into smaller, more focused modules?**
-  _Cohesion score 0.05494949494949495 - nodes in this community are weakly interconnected._
-- **Should `Extension Import Orchestration` be split into smaller, more focused modules?**
-  _Cohesion score 0.0953058321479374 - nodes in this community are weakly interconnected._
-- **Should `App Shell and State` be split into smaller, more focused modules?**
-  _Cohesion score 0.09271822704658525 - nodes in this community are weakly interconnected._
+- **Why does `b` connect `index-GUdJqaP1.js` to `CLAUDE.md`, `build.gradle`, `build.gradle`, `vn`, `BetTrackr — Extensão de importação de apostas`, `variables.gradle`, `l`, `settings.gradle`, `lk`, `I`, `rr`, `Ze`, `.constructor`, `iO`, `Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior`, `DesktopApp.tsx`, `concat`?**
+  _High betweenness centrality (0.241) - this node is a cross-community bridge._
+- **Why does `BetsManager()` connect `settings.gradle` to `Bet Lifecycle UI`, `MobileImport-COK0PxdU.js`, `index-GUdJqaP1.js`?**
+  _High betweenness centrality (0.151) - this node is a cross-community bridge._
+- **Why does `MobileBets()` connect `settings.gradle` to `import-utils.js`, `index-GUdJqaP1.js`?**
+  _High betweenness centrality (0.056) - this node is a cross-community bridge._
+- **Are the 38 inferred relationships involving `t()` (e.g. with `qy()` and `ad()`) actually correct?**
+  _`t()` has 38 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 32 inferred relationships involving `qy()` (e.g. with `F()` and `l()`) actually correct?**
+  _`qy()` has 32 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 57 inferred relationships involving `l()` (e.g. with `pe()` and `H()`) actually correct?**
+  _`l()` has 57 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 11 inferred relationships involving `nr` (e.g. with `U()` and `E()`) actually correct?**
+  _`nr` has 11 INFERRED edges - model-reasoned connections that need verification._

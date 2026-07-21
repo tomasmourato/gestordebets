@@ -86,6 +86,20 @@ export function useBets(enabled: boolean, onSessionExpired: () => void, initialB
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
+  // Recarrega as apostas do servidor (usado no pull-to-refresh mobile).
+  // Não mexe no isLoading para não trocar o ecrã pelo spinner de arranque;
+  // o indicador de refresh é da responsabilidade de quem chama.
+  const refresh = async (): Promise<void> => {
+    if (!enabled) return;
+    setError(null);
+    try {
+      const loaded = await fetchBets();
+      setBets(loaded);
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
   // ----------------------------------------------------
   // Mutações (server-first)
   // ----------------------------------------------------
@@ -184,6 +198,7 @@ export function useBets(enabled: boolean, onSessionExpired: () => void, initialB
     isLoading,
     error,
     clearError,
+    refresh,
     addBet,
     importBets,
     editBet,

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { login, register } from "../lib/authApi";
-import { BrandMark } from "../App";
+import { BrandMark } from "./BrandMark";
 
 type Mode = "login" | "signup";
 
@@ -10,8 +10,10 @@ interface AuthPageProps {
   onAuthenticated: (user: { id: string; username: string; email: string }) => void;
 }
 
+// Mobile-first: inputs a text-base/h-12 no telemóvel para o Android não fazer
+// zoom-on-focus (dispara com fontes <16px); no desktop mantém o look compacto.
 const INPUT_CLASSES =
-  "w-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 rounded-sm px-3 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors";
+  "w-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 rounded-sm px-3 py-3 text-base sm:py-2.5 sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors";
 
 export default function AuthPage({ onAuthenticated }: AuthPageProps) {
   const [mode, setMode] = useState<Mode>("login");
@@ -44,7 +46,7 @@ export default function AuthPage({ onAuthenticated }: AuthPageProps) {
   }
 
   return (
-    <div className="relative min-h-screen bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center p-6 font-sans text-zinc-900 dark:text-zinc-100 antialiased selection:bg-emerald-500/90 selection:text-zinc-950 overflow-hidden">
+    <div className="relative min-h-screen bg-zinc-100 dark:bg-zinc-950 flex items-center justify-center p-6 pt-[calc(1.5rem+var(--safe-top))] pb-[calc(1.5rem+var(--safe-bottom))] font-sans text-zinc-900 dark:text-zinc-100 antialiased selection:bg-emerald-500/90 selection:text-zinc-950 overflow-hidden">
 
       {/* Fundo: grelha subtil de terminal + brilho esmeralda difuso */}
       <div
@@ -58,7 +60,7 @@ export default function AuthPage({ onAuthenticated }: AuthPageProps) {
       />
       <div aria-hidden="true" className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[36rem] h-[36rem] rounded-full bg-emerald-500/10 dark:bg-emerald-500/8 blur-3xl" />
 
-      <div className="relative w-full max-w-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm shadow-xl shadow-zinc-950/5 dark:shadow-black/30 p-8">
+      <div className="relative w-full max-w-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm shadow-xl shadow-zinc-950/5 dark:shadow-black/30 p-6 sm:p-8">
 
         {/* Marca — mesmo desenho do ícone da app */}
         <div className="flex flex-col items-center gap-3 mb-7">
@@ -160,7 +162,7 @@ export default function AuthPage({ onAuthenticated }: AuthPageProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm rounded-sm py-2.5 transition-colors cursor-pointer shadow-lg shadow-emerald-600/20"
+            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm rounded-sm py-3 sm:py-2.5 transition-colors cursor-pointer shadow-lg shadow-emerald-600/20"
           >
             {loading ? "Aguarda…" : mode === "login" ? "Entrar" : "Criar conta"}
           </button>
