@@ -35,13 +35,13 @@
     "semantic_hash": ""
   },
   "extension/popup.js": {
-    "mtime": 1784643847.5384214,
-    "ast_hash": "e52b1879b77f4ca01f7bfbbdd073c517",
+    "mtime": 1784645571.3152657,
+    "ast_hash": "4252bc754a9bb8bc333a98846fd33f29",
     "semantic_hash": ""
   },
   "extension/src/background.js": {
-    "mtime": 1784643847.5394292,
-    "ast_hash": "ff63508320f66222a187cca763ee2c6a",
+    "mtime": 1784645176.7733715,
+    "ast_hash": "a0409500bba5cfb8af98d04b548835b3",
     "semantic_hash": ""
   },
   "extension/src/betano-history.js": {
@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "extension/popup.html": {
-    "mtime": 1784643847.5373733,
-    "ast_hash": "cfab9a7e0cdacc606052f72da59572bd",
+    "mtime": 1784645192.341886,
+    "ast_hash": "150e393403fc2a4678bfefbcf0febfaf",
     "semantic_hash": ""
   },
   "index.html": {
