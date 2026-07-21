@@ -175,8 +175,8 @@
     "semantic_hash": ""
   },
   "src/components/Settings.tsx": {
-    "mtime": 1784597297.0465963,
-    "ast_hash": "19517d8dfdc6f5821eea65d4ba185e01",
+    "mtime": 1784597754.2996569,
+    "ast_hash": "881eb13a762a75d7dd02117527b3ee3d",
     "semantic_hash": ""
   },
   "src/hooks/useAuditLog.ts": {
@@ -875,8 +875,8 @@
     "semantic_hash": ""
   },
   "src/lib/settingsApi.ts": {
-    "mtime": 1784597259.4270816,
-    "ast_hash": "568c6d263d9a510b0b1e1f4887285204",
+    "mtime": 1784597721.067088,
+    "ast_hash": "52a1515cd264b424b1409b3543e53c14",
     "semantic_hash": ""
   }
 }

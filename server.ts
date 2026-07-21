@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { pathToFileURL } from "node:url";
 import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
@@ -22,8 +23,6 @@ import {
   SESSION_COOKIE,
 } from "./middleware/authMiddleware.js";
 import { rateLimit } from "./middleware/rateLimit.js";
-import { renderApp } from "./src/entry-server.js";
-import { mapBetFromApi } from "./src/lib/betsApi.js";
 import type { InitialAppData } from "./src/initialData.js";
 
 // O .env.local sobrepõe-se ao .env; um .env.<branch>.local sobrepõe-se aos
@@ -57,6 +56,37 @@ const SSR_PATHS = ["/dashboard", "/bets"];
 // /api/bets (omitir is_risk_free/account_id partia os filtros "Sem risco" e de
 // conta nas páginas renderizadas no servidor, porque useBets não refaz o fetch).
 const SSR_BET_COLUMNS = BET_SELECT_COLUMNS;
+
+// O server nunca importa estaticamente o código React (entry-server.tsx e a
+// árvore da App): o builder @vercel/node compila .ts mas não .tsx, por isso um
+// import estático ficava por resolver e a função caía no arranque com
+// ERR_MODULE_NOT_FOUND — derrubando também toda a /api. Em produção o Vite
+// gera um bundle SSR auto-contido (vite.config.ssr.ts -> dist-ssr/) carregado
+// aqui em runtime; em dev o start() troca o loader pelo vite.ssrLoadModule.
+type SsrModule = {
+  renderApp: (initialData: InitialAppData) => Promise<string>;
+  mapBetFromApi: (row: Record<string, any>) => InitialAppData["bets"][number];
+};
+
+// Indireção via Function: impede o esbuild (bundle CJS local) de reescrever o
+// import() para require(), que não aceita URLs file:// nem módulos ESM.
+const dynamicImport = new Function("specifier", "return import(specifier)") as (
+  specifier: string
+) => Promise<any>;
+
+let ssrModulePromise: Promise<SsrModule> | null = null;
+let loadSsrModule = (): Promise<SsrModule> => {
+  if (!ssrModulePromise) {
+    const bundlePath = path.join(process.cwd(), "dist-ssr", "entry-server.js");
+    ssrModulePromise = dynamicImport(pathToFileURL(bundlePath).href);
+    // Um import falhado (ex.: bundle em falta) não fica fixado: o pedido
+    // seguinte tenta de novo; entretanto o handler responde com o SPA.
+    ssrModulePromise.catch(() => {
+      ssrModulePromise = null;
+    });
+  }
+  return ssrModulePromise;
+};
 
 // Atrás do proxy da Vercel, o IP real do cliente vem no X-Forwarded-For.
 // Sem isto o rate limiting veria o IP do proxy para todos os pedidos.
@@ -163,7 +193,11 @@ function clearServerSessionCookie(res: express.Response) {
   });
 }
 
-async function loadInitialAppData(req: express.Request, res: express.Response): Promise<InitialAppData> {
+async function loadInitialAppData(
+  req: express.Request,
+  res: express.Response,
+  ssr: SsrModule
+): Promise<InitialAppData> {
   const sessionUser = authenticatedUserFromRequest(req);
   let user: InitialAppData["user"] = null;
   let bets: InitialAppData["bets"] = [];
@@ -182,7 +216,7 @@ async function loadInitialAppData(req: express.Request, res: express.Response): 
 
     if (userResult.rows[0]) {
       user = userResult.rows[0];
-      bets = betsResult.rows.map(mapBetFromApi);
+      bets = betsResult.rows.map((row) => ssr.mapBetFromApi(row));
     } else {
       clearServerSessionCookie(res);
     }
@@ -211,8 +245,9 @@ async function renderDocument(
   res: express.Response,
   template: string
 ) {
-  const initialData = await loadInitialAppData(req, res);
-  const appHtml = await renderApp(initialData);
+  const ssr = await loadSsrModule();
+  const initialData = await loadInitialAppData(req, res, ssr);
+  const appHtml = await ssr.renderApp(initialData);
   const bootScript = `<script>window.__BETTRACKR_INITIAL_DATA__=${serializeInitialData(initialData)}</script>`;
   const html = template
     .replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`)
@@ -223,9 +258,21 @@ async function renderDocument(
 }
 
 function productionSsrHandler(req: express.Request, res: express.Response, next: express.NextFunction) {
-  readFile(path.join(process.cwd(), "dist", "index.html"), "utf8")
+  const indexPath = path.join(process.cwd(), "dist", "index.html");
+  readFile(indexPath, "utf8")
     .then((template) => renderDocument(req, res, template))
-    .catch(next);
+    .catch((error) => {
+      // O SSR é uma otimização: qualquer falha (bundle em falta, erro de
+      // render) degrada para o SPA normal em vez de responder 500.
+      console.error("SSR falhou; a servir o SPA:", error);
+      if (res.headersSent) {
+        next(error);
+        return;
+      }
+      res.sendFile(indexPath, (err) => {
+        if (err) next(err);
+      });
+    });
 }
 
 if (process.env.VERCEL) {
@@ -496,6 +543,9 @@ async function start() {
       appType: "custom",
     });
     app.use(vite.middlewares);
+    // Em dev o entry-server é servido pelo Vite (compila .tsx, HMR, etc.).
+    loadSsrModule = () =>
+      vite.ssrLoadModule("/src/entry-server.tsx") as unknown as Promise<SsrModule>;
     app.get(SSR_PATHS, async (req, res, next) => {
       try {
         const source = await readFile(path.join(process.cwd(), "index.html"), "utf8");

@@ -17,7 +17,7 @@
       "src": "server.ts",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["dist/**"],
+        "includeFiles": ["dist/**", "dist-ssr/**"],
         "maxDuration": 60
       }
     }
