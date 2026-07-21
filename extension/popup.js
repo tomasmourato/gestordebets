@@ -56,6 +56,7 @@ const accountBox = document.getElementById("account-box");
 const accountUser = document.getElementById("account-user");
 const logoutBtn = document.getElementById("logout-btn");
 const autoImportToggle = document.getElementById("auto-import");
+const updateOnlyToggle = document.getElementById("update-only");
 
 function setMsg(text, kind) {
   msg.textContent = text || "";
@@ -90,6 +91,7 @@ async function refreshStatus() {
   if (status.bettrackr) {
     accountUser.textContent = status.bettrackrUser ? `Sessão: ${status.bettrackrUser}` : "Sessão iniciada";
     autoImportToggle.checked = status.autoImport === true;
+    updateOnlyToggle.checked = status.updateOnly === true;
   }
   return status;
 }
@@ -196,9 +198,9 @@ async function applyDetectedUsernames(saved) {
   let detected;
   try {
     detected = await chrome.runtime.sendMessage({ type: "DETECT_USERNAMES" });
-    console.log("[BetTrackr] build=logout-1 DETECT_USERNAMES ->", JSON.stringify(detected));
+    console.log("[BetTrackr] build=update-only-1 DETECT_USERNAMES ->", JSON.stringify(detected));
   } catch (e) {
-    console.log("[BetTrackr] build=logout-1 DETECT_USERNAMES falhou:", String((e && e.message) || e));
+    console.log("[BetTrackr] build=update-only-1 DETECT_USERNAMES falhou:", String((e && e.message) || e));
     return;
   }
   if (!detected || typeof detected !== "object") return;
@@ -269,6 +271,7 @@ function formatSource(name, result) {
   if (!result || !result.ok) return `${name}: ${result?.error || "indisponível"}`;
   return `${name}: ${result.imported || 0} importadas, ${result.updated || 0} atualizadas` +
     (result.skipped ? `, ${result.skipped} já existentes` : "") +
+    (result.ignoredNew ? `, ${result.ignoredNew} novas ignoradas` : "") +
     (result.cashouts ? `, ${result.cashouts} cashout detetado${result.cashouts === 1 ? "" : "s"}` : "") +
     (result.unsupported ? `, ${result.unsupported} ignoradas` : "");
 }
@@ -334,6 +337,16 @@ autoImportToggle.addEventListener("change", async () => {
   setMsg(autoImportToggle.checked ? "Importação automática ligada." : "Importação automática desligada.", null);
 });
 
+updateOnlyToggle.addEventListener("change", async () => {
+  await chrome.runtime.sendMessage({ type: "SET_UPDATE_ONLY", enabled: updateOnlyToggle.checked });
+  setMsg(
+    updateOnlyToggle.checked
+      ? "Só atualizar existentes: as próximas importações não criam apostas novas."
+      : "Modo normal: as importações voltam a criar apostas novas.",
+    null
+  );
+});
+
 chrome.runtime.onMessage.addListener((message) => {
   if (message && message.type === "PROGRESS") setMsg(message.text, null);
 });
@@ -348,7 +361,7 @@ refreshStatus()
 // (o load de extensões unpacked em WSL fica muitas vezes com o worker antigo).
 try {
   const mark = document.createElement("div");
-  mark.textContent = "build: logout-1";
+  mark.textContent = "build: update-only-1";
   mark.style.cssText = "font-size:9px;color:#667085;text-align:center;padding:3px 0;opacity:.65;";
   document.body.appendChild(mark);
 } catch (_) {}
