@@ -86,6 +86,7 @@
   "84": "bettrackr-identity.js",
   "85": "fetchSolverdeHistory",
   "86": "migrate.mjs",
+  "87": "vite.config.ssr.ts",
   "88": "bundle-app.mjs",
   "89": "gen-icons.mjs",
   "90": "ExampleInstrumentedTest.java",

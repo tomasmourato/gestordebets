@@ -10,9 +10,9 @@
     "semantic_hash": "3381c6bccb8ff81e841defaf4fabcb5a"
   },
   "db/migrations/002_fix_status_constraint.sql": {
-    "mtime": 1783893929.2123713,
-    "ast_hash": "ff8671c2abdef319262ac4685dc0090d",
-    "semantic_hash": "ff8671c2abdef319262ac4685dc0090d"
+    "mtime": 1784599906.1177287,
+    "ast_hash": "4289e6bd9613134b91625a8cdc7cef13",
+    "semantic_hash": ""
   },
   "db/migrations/003_cashout_and_freebet_type.sql": {
     "mtime": 1783976557.398174,
@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "extension/src/mapper-betano.js": {
-    "mtime": 1784560129.1517122,
-    "ast_hash": "71fac4b966b0ae8902d5f3fbe9be0c07",
+    "mtime": 1784659716.2902513,
+    "ast_hash": "2b43ec1450d18dfc92dab795a79daae1",
     "semantic_hash": ""
   },
   "extension/src/mapper.js": {
@@ -105,8 +105,8 @@
     "semantic_hash": "d95242fb688377fff503fdb14501a350"
   },
   "extension/test/importers.test.js": {
-    "mtime": 1784567365.4475765,
-    "ast_hash": "c1ad4a59aeff6441e36b668c5359a7df",
+    "mtime": 1784659725.2393632,
+    "ast_hash": "417dc004a415e31acc407a502765d069",
     "semantic_hash": ""
   },
   "middleware/authMiddleware.ts": {
@@ -160,8 +160,8 @@
     "semantic_hash": ""
   },
   "src/components/BetsManager.tsx": {
-    "mtime": 1784595616.5483522,
-    "ast_hash": "1e1cb11c1b2be9ccbf363f9267f73191",
+    "mtime": 1784659730.7672546,
+    "ast_hash": "d506dc3fa2472cda50c7258a77d91c85",
     "semantic_hash": ""
   },
   "src/components/Dashboard.tsx": {
@@ -235,13 +235,13 @@
     "semantic_hash": ""
   },
   "src/types.ts": {
-    "mtime": 1784575044.1305807,
-    "ast_hash": "c93ffd655a3fbcf21df5fa6a8d644021",
+    "mtime": 1784659738.1610887,
+    "ast_hash": "4e7f42a003427aa5e3893d3bbae6cc26",
     "semantic_hash": ""
   },
   "src/utils.ts": {
-    "mtime": 1784520599.529402,
-    "ast_hash": "67e4ed01bba40411463514366031f5cf",
+    "mtime": 1784659707.1472347,
+    "ast_hash": "f1dd3dafeab3d09ba67a4af13aebfeb4",
     "semantic_hash": ""
   },
   "tsconfig.json": {
@@ -877,6 +877,16 @@
   "src/lib/settingsApi.ts": {
     "mtime": 1784597721.067088,
     "ast_hash": "52a1515cd264b424b1409b3543e53c14",
+    "semantic_hash": ""
+  },
+  ".claude/settings.local.json": {
+    "mtime": 1784659753.999515,
+    "ast_hash": "e9f4ba3749e398aa2f5b0d92b74ba5c1",
+    "semantic_hash": ""
+  },
+  "scripts/migrate.mjs": {
+    "mtime": 1784599865.591812,
+    "ast_hash": "169872701cdf69628f5624cbf12924a2",
     "semantic_hash": ""
   }
 }
