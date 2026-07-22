@@ -6,6 +6,9 @@
 // Custo controlado: gera-se UMA vez por dia e guarda-se em daily_insights;
 // todos os utilizadores leem a mesma linha. Pedidos concorrentes no primeiro
 // acesso do dia são resolvidos pelo UNIQUE(insight_date) + ON CONFLICT.
+//
+// A geração é pré-aquecida por um cron diário (ver vercel.json + /cron aqui),
+// para nenhum utilizador apanhar a espera da geração.
 
 import { Router } from "express";
 import pool from "../db/pool.js";
@@ -13,10 +16,19 @@ import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddl
 import { getGeminiClient, extractJson } from "../lib/gemini.js";
 
 const router = Router();
-router.use(authenticateToken);
 
+// O modelo é imposto pelo plano, não por preferência: no free tier o grounding
+// do Google Search só tem quota no gemini-2.5-flash — os modelos mais recentes
+// (3.x) devolvem 429 assim que a pesquisa é ativada, e sem pesquisa o modelo
+// inventaria jogos. Reavaliar se/quando houver faturação ativa.
 const MODEL = "gemini-2.5-flash";
 const MAX_PICKS = 12;
+
+// Uma chamada estabiliza em ~13s; com maxDuration=60 na Vercel, três
+// tentativas cabem com folga. O orçamento trava tentativas que arrisquem
+// passar do limite da função.
+const MAX_ATTEMPTS = 3;
+const TIME_BUDGET_MS = 40_000;
 
 /** Data de "hoje" em Lisboa (o dia desportivo do utilizador, não UTC). */
 function todayInLisbon(): string {
@@ -60,8 +72,14 @@ function sanitizeContent(raw: any): { summary: string; picks: Pick[] } {
   return { summary: clip(raw?.summary, 600), picks };
 }
 
-async function generateInsights(dateLisbon: string) {
-  const prompt = `
+function buildPrompt(dateLisbon: string, insistOnJson: boolean) {
+  // Nas repetições reforçamos a instrução de formato: a falha mais comum é o
+  // modelo devolver só a prosa da pesquisa, sem o JSON.
+  const insist = insistOnJson
+    ? `\n\nATENÇÃO: a tua resposta anterior não continha JSON válido. Responde SÓ com o objeto JSON, a começar em { e a terminar em }. Sem texto antes ou depois, sem blocos de código.`
+    : "";
+
+  return `
 Hoje é ${dateLisbon}. És um analista de apostas desportivas experiente e prudente, a escrever em português de Portugal.
 
 USA A PESQUISA GOOGLE para descobrires jogos REAIS que se realizam HOJE (${dateLisbon}) e as odds aproximadas atuais nas casas europeias. NÃO inventes jogos, equipas nem odds — inclui apenas eventos que confirmaste na pesquisa.
@@ -89,8 +107,11 @@ Responde APENAS com JSON válido, sem texto fora do JSON, neste formato:
     }
   ]
 }
-"confidence" é um inteiro de 1 (arriscado) a 5 (forte). "kickoffLisbon" é a hora em Lisboa.`;
+"confidence" é um inteiro de 1 (arriscado) a 5 (forte). "kickoffLisbon" é a hora em Lisboa.${insist}`;
+}
 
+/** Uma chamada ao modelo. Devolve o texto bruto. */
+async function callModel(prompt: string): Promise<string> {
   const ai = getGeminiClient();
   const response = await ai.models.generateContent({
     model: MODEL,
@@ -98,46 +119,117 @@ Responde APENAS com JSON válido, sem texto fora do JSON, neste formato:
     config: {
       tools: [{ googleSearch: {} }],
       temperature: 0.4,
-      // Sem "thinking": corta a latência para caber no timeout da função
-      // serverless (a qualidade chega perfeitamente para picks diários).
+      // Sem "thinking" de propósito: medido no free tier, o raciocínio ligado
+      // devolve 503 ("high demand") de forma consistente com o grounding
+      // ativo, enquanto sem ele a chamada estabiliza em ~13s. A folga dos 60s
+      // é gasta em REPETIÇÕES, que valem mais aqui do que thinking.
       thinkingConfig: { thinkingBudget: 0 },
     },
   });
+  return String((response as any).text ?? "");
+}
 
-  const text = (response as any).text ?? "";
-  return sanitizeContent(extractJson(String(text)));
+/**
+ * Gera as dicas com repetições. Cobre as duas falhas reais e observadas:
+ * o 503 "high demand" da API, e a resposta sem JSON (o grounding impede
+ * responseSchema, por isso o formato nunca é garantido no pedido).
+ */
+async function generateInsights(dateLisbon: string) {
+  const started = Date.now();
+  let lastError: unknown = new Error("Falha desconhecida ao gerar insights.");
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    // Nunca começar uma tentativa que arrisque estourar o limite da função.
+    if (attempt > 1 && Date.now() - started > TIME_BUDGET_MS) break;
+
+    try {
+      const text = await callModel(buildPrompt(dateLisbon, attempt > 1));
+      return sanitizeContent(extractJson(text));
+    } catch (err) {
+      lastError = err;
+      console.warn(
+        `[insights] tentativa ${attempt}/${MAX_ATTEMPTS} falhou:`,
+        (err as Error)?.message
+      );
+      if (attempt < MAX_ATTEMPTS) {
+        await new Promise((r) => setTimeout(r, 1500 * attempt));
+      }
+    }
+  }
+
+  throw lastError;
+}
+
+/**
+ * Devolve a linha de hoje, gerando-a se ainda não existir. Partilhada pelo
+ * pedido do utilizador e pelo cron — o cron aquece a cache de madrugada e o
+ * utilizador normal só lê; se o cron falhar, o primeiro pedido ainda gera.
+ */
+async function ensureInsightsForDate(date: string) {
+  const cached = await pool.query(
+    "SELECT content, created_at FROM daily_insights WHERE insight_date = $1",
+    [date]
+  );
+  if (cached.rows.length > 0) {
+    return { row: cached.rows[0], generated: false };
+  }
+
+  const content = await generateInsights(date);
+
+  // Corrida entre instâncias serverless: o UNIQUE decide; quem perde relê.
+  await pool.query(
+    `INSERT INTO daily_insights (insight_date, content, model)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (insight_date) DO NOTHING`,
+    [date, JSON.stringify(content), MODEL]
+  );
+  const final = await pool.query(
+    "SELECT content, created_at FROM daily_insights WHERE insight_date = $1",
+    [date]
+  );
+  return {
+    row: final.rows[0] ?? { content, created_at: new Date().toISOString() },
+    generated: true,
+  };
 }
 
 // ============================================================
-// GET /api/insights -> dicas de hoje (cache diária; gera na 1.ª chamada)
+// GET /api/insights/cron -> pré-gera as dicas do dia (Vercel Cron)
+// Fica ANTES do authenticateToken: não há utilizador, a autenticação é o
+// segredo partilhado que a Vercel envia em Authorization: Bearer.
+// ============================================================
+router.get("/cron", async (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  // Fail closed: sem segredo configurado, ninguém dispara a geração.
+  if (!secret || req.headers.authorization !== `Bearer ${secret}`) {
+    res.status(401).json({ error: "Não autorizado." });
+    return;
+  }
+
+  const date = todayInLisbon();
+  try {
+    const { generated } = await ensureInsightsForDate(date);
+    res.json({ date, generated, model: MODEL });
+  } catch (error: any) {
+    console.error("[insights] cron falhou:", error);
+    res.status(503).json({ date, error: error?.message || "Falha ao gerar." });
+  }
+});
+
+router.use(authenticateToken);
+
+// ============================================================
+// GET /api/insights -> dicas de hoje (lê a cache; gera se o cron não correu)
 // ============================================================
 router.get("/", async (_req: AuthenticatedRequest, res) => {
   const date = todayInLisbon();
   try {
-    const cached = await pool.query(
-      "SELECT content, created_at FROM daily_insights WHERE insight_date = $1",
-      [date]
-    );
-    if (cached.rows.length > 0) {
-      res.json({ date, generatedAt: cached.rows[0].created_at, ...cached.rows[0].content });
-      return;
-    }
-
-    const content = await generateInsights(date);
-
-    // Corrida entre instâncias serverless: o UNIQUE decide; quem perde relê.
-    await pool.query(
-      `INSERT INTO daily_insights (insight_date, content, model)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (insight_date) DO NOTHING`,
-      [date, JSON.stringify(content), MODEL]
-    );
-    const final = await pool.query(
-      "SELECT content, created_at FROM daily_insights WHERE insight_date = $1",
-      [date]
-    );
-    const row = final.rows[0];
-    res.json({ date, generatedAt: row?.created_at ?? new Date().toISOString(), ...(row?.content ?? content) });
+    const { row } = await ensureInsightsForDate(date);
+    res.json({
+      date,
+      generatedAt: row?.created_at ?? new Date().toISOString(),
+      ...row?.content,
+    });
   } catch (error: any) {
     console.error("Erro ao gerar insights:", error);
     res.status(503).json({

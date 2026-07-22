@@ -22,6 +22,12 @@
       }
     }
   ],
+  "crons": [
+    {
+      "path": "/api/insights/cron",
+      "schedule": "0 5 * * *"
+    }
+  ],
   "routes": [
     {
       "src": "/(.*)",
