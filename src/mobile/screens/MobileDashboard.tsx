@@ -134,6 +134,9 @@ export default function MobileDashboard({
   const bets = useMemo(
     () =>
       allBets.filter((b) => {
+        // Apostas ignoradas nunca contam para estatísticas/gráficos (mesma
+        // regra do Dashboard desktop — sem isto os números divergiam).
+        if (b.isIgnored) return false;
         if (filterBookmaker !== "ALL" && b.bookmaker !== filterBookmaker) return false;
         if (filterAccount === "NONE" && b.accountId) return false;
         if (filterAccount !== "ALL" && filterAccount !== "NONE" && b.accountId !== filterAccount) return false;

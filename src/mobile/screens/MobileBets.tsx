@@ -19,6 +19,8 @@ import {
   MinusCircle,
   CheckSquare,
   PlusCircle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Bet, BookieAccount, BetStatus } from "../../types";
 import { AVAILABLE_BOOKMAKERS, safeNum } from "../../utils";
@@ -45,6 +47,8 @@ interface MobileBetsProps {
   onAddBet: (bet: Bet) => void | Promise<void>;
   onAddBets: (bets: Bet[]) => void | Promise<void>;
   onUpdateBet: (bet: Bet) => void | Promise<void>;
+  /** Ignorar exclui a aposta das estatísticas; repor traz-la de volta. */
+  onIgnoreBet: (id: string, ignored: boolean, comment?: string | null) => void | Promise<void>;
   onDeleteBet: (id: string) => void | Promise<void>;
 }
 
@@ -121,6 +125,7 @@ export default function MobileBets({
   onAddBet,
   onAddBets,
   onUpdateBet,
+  onIgnoreBet,
   onDeleteBet,
 }: MobileBetsProps) {
   const toast = useToast();
@@ -143,6 +148,10 @@ export default function MobileBets({
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailBet, setDetailBet] = useState<Bet | null>(null);
+  // Ignorar abre uma sheet própria para o comentário opcional (o desktop
+  // pré-preenche com o comentário atual da aposta); repor é imediato.
+  const [ignoringBet, setIgnoringBet] = useState<Bet | null>(null);
+  const [ignoreComment, setIgnoreComment] = useState("");
   const [deletingBet, setDeletingBet] = useState<Bet | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
@@ -291,6 +300,26 @@ export default function MobileBets({
     toast.show("Aposta duplicada", "success");
   };
 
+  const startIgnore = (bet: Bet) => {
+    setDetailBet(null);
+    setIgnoreComment(bet.comment ?? "");
+    setIgnoringBet(bet);
+  };
+
+  const confirmIgnore = async () => {
+    if (!ignoringBet) return;
+    await onIgnoreBet(ignoringBet.id, true, ignoreComment.trim() || null);
+    setIgnoringBet(null);
+    setIgnoreComment("");
+    toast.show("Aposta ignorada — fora das estatísticas", "success");
+  };
+
+  const handleUnignore = async (bet: Bet) => {
+    setDetailBet(null);
+    await onIgnoreBet(bet.id, false);
+    toast.show("Aposta reposta nas estatísticas", "success");
+  };
+
   const confirmDelete = async () => {
     if (!deletingBet) return;
     await onDeleteBet(deletingBet.id);
@@ -421,7 +450,9 @@ export default function MobileBets({
               const isSelected = selectedIds.has(bet.id);
               const card = (
                 <div
-                  className="px-4 py-3"
+                  // Ignorada: esbatida, como no desktop, para se perceber à
+                  // vista que não conta para as estatísticas.
+                  className={`px-4 py-3 ${bet.isIgnored ? "opacity-60" : ""}`}
                   onClick={() => (isSelecting ? toggleSelected(bet.id) : setDetailBet(bet))}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -434,6 +465,11 @@ export default function MobileBets({
                           </span>
                         )}
                       </p>
+                      {bet.isIgnored && (
+                        <span className="inline-flex items-center gap-1 mt-1 text-[9px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700">
+                          <EyeOff size={9} /> Ignorada
+                        </span>
+                      )}
                       <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
                         {bet.selections[0]?.market}
                         {bet.selections[0]?.choice ? ` · ${bet.selections[0].choice}` : ""}
@@ -614,9 +650,17 @@ export default function MobileBets({
                 {detailBet.isRiskFree ? " · Sem risco" : ""}
               </p>
               {detailBet.notes && <p className="italic">“{detailBet.notes}”</p>}
+              {detailBet.isIgnored && (
+                <p className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
+                  <EyeOff size={12} className="shrink-0" />
+                  Ignorada — excluída das estatísticas
+                  {detailBet.comment ? `: “${detailBet.comment}”` : ""}
+                </p>
+              )}
             </div>
 
-            <div className="grid grid-cols-3 gap-2 pt-1">
+            {/* 2×2: quatro ações cabem sem ficarem apertadas no telemóvel. */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
               <Pressable
                 as="button"
                 onClick={() => openEdit(detailBet)}
@@ -631,6 +675,23 @@ export default function MobileBets({
               >
                 <Copy size={13} /> Duplicar
               </Pressable>
+              {detailBet.isIgnored ? (
+                <Pressable
+                  as="button"
+                  onClick={() => void handleUnignore(detailBet)}
+                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900 text-xs font-semibold text-emerald-700 dark:text-emerald-300"
+                >
+                  <Eye size={13} /> Repor
+                </Pressable>
+              ) : (
+                <Pressable
+                  as="button"
+                  onClick={() => startIgnore(detailBet)}
+                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs font-semibold text-zinc-700 dark:text-zinc-200"
+                >
+                  <EyeOff size={13} /> Ignorar
+                </Pressable>
+              )}
               <Pressable
                 as="button"
                 onClick={() => setDeletingBet(detailBet)}
@@ -641,6 +702,44 @@ export default function MobileBets({
             </div>
           </div>
         )}
+      </BottomSheet>
+
+      {/* Ignorar: exclui das estatísticas, com motivo opcional */}
+      <BottomSheet open={!!ignoringBet} onClose={() => setIgnoringBet(null)} title="Ignorar aposta?">
+        <div className="space-y-3 pb-2">
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            A aposta em <strong>{ignoringBet?.selections[0]?.event || "Múltipla"}</strong> deixa de
+            contar para as estatísticas e gráficos. Continua na lista e podes repô-la quando quiseres.
+          </p>
+          <label className="block">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+              Motivo (opcional)
+            </span>
+            <textarea
+              value={ignoreComment}
+              onChange={(e) => setIgnoreComment(e.target.value)}
+              rows={2}
+              placeholder="Ex.: aposta de teste, erro de registo…"
+              className={`mt-1 ${inputClasses} h-auto py-2.5`}
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <Pressable
+              as="button"
+              onClick={() => setIgnoringBet(null)}
+              className="py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-700 dark:text-zinc-200 text-center"
+            >
+              Cancelar
+            </Pressable>
+            <Pressable
+              as="button"
+              onClick={() => void confirmIgnore()}
+              className="py-3 rounded-xl bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 text-sm font-semibold text-center"
+            >
+              Ignorar
+            </Pressable>
+          </div>
+        </div>
       </BottomSheet>
 
       {/* Confirmação de apagar */}

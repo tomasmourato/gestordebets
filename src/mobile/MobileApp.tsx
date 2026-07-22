@@ -45,6 +45,7 @@ function MobileShell(props: ShellProps) {
     onRefresh,
     onAddBet,
     onUpdateBet,
+    onIgnoreBet,
     onDeleteBet,
     onDuplicateBets,
     onImportCSV,
@@ -165,7 +166,7 @@ function MobileShell(props: ShellProps) {
                 )}
                 {activeTab === "BETS" && (
                   <PullToRefresh onRefresh={onRefresh}>
-                    <MobileBets bets={bets} currency={preferences.currency} onAddBet={onAddBet} onAddBets={onDuplicateBets} onUpdateBet={onUpdateBet} onDeleteBet={onDeleteBet} accounts={accounts} />
+                    <MobileBets bets={bets} currency={preferences.currency} onAddBet={onAddBet} onAddBets={onDuplicateBets} onUpdateBet={onUpdateBet} onIgnoreBet={onIgnoreBet} onDeleteBet={onDeleteBet} accounts={accounts} />
                   </PullToRefresh>
                 )}
                 {activeTab === "IMPORT" && (

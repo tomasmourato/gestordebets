@@ -124,6 +124,7 @@ function GalleryInner() {
             onAddBet={() => toast.show("onAddBet", "info")}
             onAddBets={() => toast.show("onAddBets", "info")}
             onUpdateBet={() => toast.show("onUpdateBet", "info")}
+            onIgnoreBet={(_id, ignored) => toast.show(ignored ? "onIgnoreBet(true)" : "onIgnoreBet(false)", "info")}
             onDeleteBet={() => toast.show("onDeleteBet", "info")}
           />
         </Suspense>
