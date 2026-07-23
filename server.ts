@@ -3,7 +3,6 @@ import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { pathToFileURL } from "node:url";
 import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
@@ -15,15 +14,11 @@ import accountsRoutes from "./routes/accountsRoutes.js";
 import insightsRoutes from "./routes/insightsRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import pool from "./db/pool.js";
-import { BET_SELECT_COLUMNS } from "./db/betColumns.js";
 import {
   authenticateToken,
-  authenticatedUserFromRequest,
   AuthenticatedRequest,
-  SESSION_COOKIE,
 } from "./middleware/authMiddleware.js";
 import { rateLimit } from "./middleware/rateLimit.js";
-import type { InitialAppData } from "./src/initialData.js";
 
 // O .env.local sobrepõe-se ao .env; um .env.<branch>.local sobrepõe-se aos
 // dois. Assim a branch "test" pode apontar para a BD de dev criando um
@@ -51,42 +46,11 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const execFileAsync = promisify(execFile);
 const extensionZipPath = path.join(process.cwd(), "dist", "bettrackr-extension.zip");
-const SSR_PATHS = ["/dashboard", "/bets"];
-// Mesma lista de colunas da rota REST, para o payload do SSR não divergir do
-// /api/bets (omitir is_risk_free/account_id partia os filtros "Sem risco" e de
-// conta nas páginas renderizadas no servidor, porque useBets não refaz o fetch).
-const SSR_BET_COLUMNS = BET_SELECT_COLUMNS;
 
-// O server nunca importa estaticamente o código React (entry-server.tsx e a
-// árvore da App): o builder @vercel/node compila .ts mas não .tsx, por isso um
-// import estático ficava por resolver e a função caía no arranque com
-// ERR_MODULE_NOT_FOUND — derrubando também toda a /api. Em produção o Vite
-// gera um bundle SSR auto-contido (vite.config.ssr.ts -> dist-ssr/) carregado
-// aqui em runtime; em dev o start() troca o loader pelo vite.ssrLoadModule.
-type SsrModule = {
-  renderApp: (initialData: InitialAppData) => Promise<string>;
-  mapBetFromApi: (row: Record<string, any>) => InitialAppData["bets"][number];
-};
-
-// Indireção via Function: impede o esbuild (bundle CJS local) de reescrever o
-// import() para require(), que não aceita URLs file:// nem módulos ESM.
-const dynamicImport = new Function("specifier", "return import(specifier)") as (
-  specifier: string
-) => Promise<any>;
-
-let ssrModulePromise: Promise<SsrModule> | null = null;
-let loadSsrModule = (): Promise<SsrModule> => {
-  if (!ssrModulePromise) {
-    const bundlePath = path.join(process.cwd(), "dist-ssr", "entry-server.js");
-    ssrModulePromise = dynamicImport(pathToFileURL(bundlePath).href);
-    // Um import falhado (ex.: bundle em falta) não fica fixado: o pedido
-    // seguinte tenta de novo; entretanto o handler responde com o SPA.
-    ssrModulePromise.catch(() => {
-      ssrModulePromise = null;
-    });
-  }
-  return ssrModulePromise;
-};
+// A app é uma SPA: /dashboard e /bets são servidos como o index.html estático
+// (a Vercel serve-os diretamente do dist/; ver vercel.json) e o React trata do
+// routing e do carregamento dos dados no cliente. Não há SSR das páginas — o
+// servidor só serve a API.
 
 // Atrás do proxy da Vercel, o IP real do cliente vem no X-Forwarded-For.
 // Sem isto o rate limiting veria o IP do proxy para todos os pedidos.
@@ -183,101 +147,6 @@ app.use("/api/social", socialRoutes);
 app.use("/api/accounts", accountsRoutes);
 app.use("/api/insights", insightsRoutes);
 app.use("/api/settings", settingsRoutes);
-
-function clearServerSessionCookie(res: express.Response) {
-  res.clearCookie(SESSION_COOKIE, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: Boolean(process.env.VERCEL) || process.env.COOKIE_SECURE === "true",
-    path: "/",
-  });
-}
-
-async function loadInitialAppData(
-  req: express.Request,
-  res: express.Response,
-  ssr: SsrModule
-): Promise<InitialAppData> {
-  const sessionUser = authenticatedUserFromRequest(req);
-  let user: InitialAppData["user"] = null;
-  let bets: InitialAppData["bets"] = [];
-
-  if (sessionUser) {
-    const [userResult, betsResult] = await Promise.all([
-      pool.query("SELECT id, username, email FROM users WHERE id = $1", [sessionUser.id]),
-      pool.query(
-        `SELECT ${SSR_BET_COLUMNS}
-         FROM bets
-         WHERE user_id = $1
-         ORDER BY date_time DESC NULLS LAST, created_at DESC`,
-        [sessionUser.id]
-      ),
-    ]);
-
-    if (userResult.rows[0]) {
-      user = userResult.rows[0];
-      bets = betsResult.rows.map((row) => ssr.mapBetFromApi(row));
-    } else {
-      clearServerSessionCookie(res);
-    }
-  } else if (req.headers.cookie?.includes(`${SESSION_COOKIE}=`)) {
-    clearServerSessionCookie(res);
-  }
-
-  return {
-    authenticated: Boolean(user),
-    user,
-    bets,
-    pathname: req.path,
-    search: req.originalUrl.includes("?") ? `?${req.originalUrl.split("?").slice(1).join("?")}` : "",
-  };
-}
-
-function serializeInitialData(data: InitialAppData): string {
-  return JSON.stringify(data)
-    .replace(/</g, "\\u003c")
-    .replace(/\u2028/g, "\\u2028")
-    .replace(/\u2029/g, "\\u2029");
-}
-
-async function renderDocument(
-  req: express.Request,
-  res: express.Response,
-  template: string
-) {
-  const ssr = await loadSsrModule();
-  const initialData = await loadInitialAppData(req, res, ssr);
-  const appHtml = await ssr.renderApp(initialData);
-  const bootScript = `<script>window.__BETTRACKR_INITIAL_DATA__=${serializeInitialData(initialData)}</script>`;
-  const html = template
-    .replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`)
-    .replace("</body>", `${bootScript}</body>`);
-
-  res.setHeader("Cache-Control", "private, no-store");
-  res.status(200).type("html").send(html);
-}
-
-function productionSsrHandler(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const indexPath = path.join(process.cwd(), "dist", "index.html");
-  readFile(indexPath, "utf8")
-    .then((template) => renderDocument(req, res, template))
-    .catch((error) => {
-      // O SSR é uma otimização: qualquer falha (bundle em falta, erro de
-      // render) degrada para o SPA normal em vez de responder 500.
-      console.error("SSR falhou; a servir o SPA:", error);
-      if (res.headersSent) {
-        next(error);
-        return;
-      }
-      res.sendFile(indexPath, (err) => {
-        if (err) next(err);
-      });
-    });
-}
-
-if (process.env.VERCEL) {
-  app.get(SSR_PATHS, productionSsrHandler);
-}
 
 let aiClient: GoogleGenAI | null = null;
 function getAiClient(): GoogleGenAI {
@@ -543,28 +412,8 @@ async function start() {
       appType: "custom",
     });
     app.use(vite.middlewares);
-    // Em dev o entry-server é servido pelo Vite (compila .tsx, HMR, etc.).
-    loadSsrModule = () =>
-      vite.ssrLoadModule("/src/entry-server.tsx") as unknown as Promise<SsrModule>;
-    app.get(SSR_PATHS, async (req, res, next) => {
-      try {
-        const source = await readFile(path.join(process.cwd(), "index.html"), "utf8");
-        const template = await vite.transformIndexHtml(req.originalUrl, source);
-        // Em dev o Vite injeta o CSS por JS, o que só acontece depois do HTML do
-        // SSR pintar -> flash de conteúdo sem estilo (FOUC) ao recarregar. Um
-        // <link> render-blocking para o CSS de entrada faz o browser aplicar os
-        // estilos antes de pintar. Só em dev: em produção o index.html já traz o
-        // <link> do CSS com hash; este URL /src/index.css não existe no build.
-        const withCss = template.replace(
-          "</head>",
-          '<link rel="stylesheet" href="/src/index.css">\n</head>'
-        );
-        await renderDocument(req, res, withCss);
-      } catch (error) {
-        vite.ssrFixStacktrace(error as Error);
-        next(error);
-      }
-    });
+    // SPA: qualquer rota (incluindo /dashboard e /bets) devolve o index.html
+    // transformado pelo Vite; o React trata do routing no cliente.
     app.get("*", async (req, res, next) => {
       try {
         const source = await readFile(path.join(process.cwd(), "index.html"), "utf8");
@@ -578,7 +427,7 @@ async function start() {
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath, { index: false }));
-    app.get(SSR_PATHS, productionSsrHandler);
+    // SPA: todas as rotas não-API servem o index.html estático.
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });

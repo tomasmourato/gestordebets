@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx bootstrap.ts",
-    "build": "vite build && vite build --config vite.config.ssr.ts && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist-server/server.cjs && node scripts/zip-extension.mjs && node scripts/bundle-app.mjs",
-    "vercel-build": "vite build && vite build --config vite.config.ssr.ts && node scripts/zip-extension.mjs && node scripts/bundle-app.mjs",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist-server/server.cjs && node scripts/zip-extension.mjs && node scripts/bundle-app.mjs",
+    "vercel-build": "vite build && node scripts/zip-extension.mjs && node scripts/bundle-app.mjs",
     "start": "node dist-server/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist dist-server dist-ssr",
