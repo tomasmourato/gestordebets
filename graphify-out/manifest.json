@@ -1020,8 +1020,8 @@
     "semantic_hash": ""
   },
   "src/mobile/screens/MobileSettings.tsx": {
-    "mtime": 1784667293.4157882,
-    "ast_hash": "035b2357873704c6e3dc6c5ea7e38453",
+    "mtime": 1784835839.6080997,
+    "ast_hash": "45b41a01628c4559e0cf48a8157f3e55",
     "semantic_hash": ""
   },
   "src/mobile/screens/MobileSocial.tsx": {
@@ -1095,8 +1095,8 @@
     "semantic_hash": ""
   },
   "src/navigation.ts": {
-    "mtime": 1784667293.4657576,
-    "ast_hash": "f2fb030f447fb048a673fbbad12b8c41",
+    "mtime": 1784835757.4300473,
+    "ast_hash": "503be093f4b05accc41bb4c65ccf0e16",
     "semantic_hash": ""
   },
   "android/app/src/main/assets/public/index.html": {

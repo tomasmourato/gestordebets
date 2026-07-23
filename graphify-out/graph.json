@@ -165,7 +165,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_aiinsights_dsoo2jmr_a",
-      "community": 29,
+      "community": 148,
       "norm_label": "a()"
     },
     {
@@ -185,7 +185,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_betsmanager_bucztrny",
-      "community": 103,
+      "community": 107,
       "norm_label": "betsmanager-bucztrny.js"
     },
     {
@@ -195,7 +195,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_betsmanager_bucztrny_jt",
-      "community": 103,
+      "community": 107,
       "norm_label": "jt"
     },
     {
@@ -205,7 +205,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_betsmanager_bucztrny_zt",
-      "community": 103,
+      "community": 107,
       "norm_label": "zt"
     },
     {
@@ -215,7 +215,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_betsmanager_bucztrny_er",
-      "community": 103,
+      "community": 107,
       "norm_label": "er"
     },
     {
@@ -225,7 +225,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_betsmanager_bucztrny_tr",
-      "community": 103,
+      "community": 107,
       "norm_label": "tr"
     },
     {
@@ -235,7 +235,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_betsmanager_bucztrny_rr",
-      "community": 103,
+      "community": 107,
       "norm_label": "rr"
     },
     {
@@ -245,7 +245,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_betsmanager_bucztrny_ar",
-      "community": 103,
+      "community": 107,
       "norm_label": "ar"
     },
     {
@@ -255,7 +255,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_betsmanager_bucztrny_sr",
-      "community": 103,
+      "community": 107,
       "norm_label": "sr"
     },
     {
@@ -265,7 +265,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_betsmanager_bucztrny_or",
-      "community": 103,
+      "community": 107,
       "norm_label": "or"
     },
     {
@@ -275,7 +275,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_betsmanager_bucztrny_vr",
-      "community": 86,
+      "community": 29,
       "norm_label": "vr()"
     },
     {
@@ -285,7 +285,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_chipgroup_dhjbdpkp",
-      "community": 103,
+      "community": 96,
       "norm_label": "chipgroup-dhjbdpkp.js"
     },
     {
@@ -295,7 +295,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_chipgroup_dhjbdpkp_o",
-      "community": 103,
+      "community": 96,
       "norm_label": "o()"
     },
     {
@@ -315,7 +315,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_dashboard_yagk07bn_ve",
-      "community": 86,
+      "community": 29,
       "norm_label": "ve()"
     },
     {
@@ -325,7 +325,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg",
-      "community": 99,
+      "community": 138,
       "norm_label": "desktopapp-drjl19jg.js"
     },
     {
@@ -335,7 +335,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_vite_mapdeps",
-      "community": 99,
+      "community": 138,
       "norm_label": "__vite__mapdeps()"
     },
     {
@@ -345,7 +345,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_ie",
-      "community": 104,
+      "community": 138,
       "norm_label": "ie"
     },
     {
@@ -355,7 +355,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_ne",
-      "community": 119,
+      "community": 150,
       "norm_label": "ne"
     },
     {
@@ -365,7 +365,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_ce",
-      "community": 99,
+      "community": 138,
       "norm_label": "ce"
     },
     {
@@ -375,7 +375,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_de",
-      "community": 99,
+      "community": 138,
       "norm_label": "de"
     },
     {
@@ -385,7 +385,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_oe",
-      "community": 99,
+      "community": 138,
       "norm_label": "oe"
     },
     {
@@ -395,7 +395,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_le",
-      "community": 163,
+      "community": 138,
       "norm_label": "le"
     },
     {
@@ -405,7 +405,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_xe",
-      "community": 99,
+      "community": 138,
       "norm_label": "xe"
     },
     {
@@ -415,7 +415,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_me",
-      "community": 86,
+      "community": 29,
       "norm_label": "me"
     },
     {
@@ -425,7 +425,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_pe",
-      "community": 99,
+      "community": 138,
       "norm_label": "pe"
     },
     {
@@ -435,7 +435,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_he",
-      "community": 99,
+      "community": 138,
       "norm_label": "he"
     },
     {
@@ -445,7 +445,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_v",
-      "community": 29,
+      "community": 138,
       "norm_label": "v()"
     },
     {
@@ -455,7 +455,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_ue",
-      "community": 29,
+      "community": 138,
       "norm_label": "ue()"
     },
     {
@@ -465,7 +465,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_be",
-      "community": 99,
+      "community": 96,
       "norm_label": "be"
     },
     {
@@ -475,7 +475,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_fe",
-      "community": 99,
+      "community": 138,
       "norm_label": "fe"
     },
     {
@@ -485,7 +485,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_ke",
-      "community": 99,
+      "community": 138,
       "norm_label": "ke"
     },
     {
@@ -495,7 +495,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_ze",
-      "community": 99,
+      "community": 138,
       "norm_label": "ze"
     },
     {
@@ -505,7 +505,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_ye",
-      "community": 99,
+      "community": 138,
       "norm_label": "ye"
     },
     {
@@ -515,7 +515,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_je",
-      "community": 99,
+      "community": 138,
       "norm_label": "je"
     },
     {
@@ -525,7 +525,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_ge",
-      "community": 29,
+      "community": 138,
       "norm_label": "ge()"
     },
     {
@@ -535,7 +535,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_desktopapp_drjl19jg_se",
-      "community": 99,
+      "community": 138,
       "norm_label": "se"
     },
     {
@@ -715,7 +715,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileapp_dk_19jfz_ye",
-      "community": 96,
+      "community": 99,
       "norm_label": "ye()"
     },
     {
@@ -785,7 +785,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileapp_dk_19jfz_ne",
-      "community": 86,
+      "community": 99,
       "norm_label": "ne()"
     },
     {
@@ -805,7 +805,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck",
-      "community": 103,
+      "community": 96,
       "norm_label": "mobilebets-dcuoq_ck.js"
     },
     {
@@ -815,7 +815,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck_ge",
-      "community": 86,
+      "community": 99,
       "norm_label": "ge()"
     },
     {
@@ -825,7 +825,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck_wt",
-      "community": 86,
+      "community": 99,
       "norm_label": "wt()"
     },
     {
@@ -835,7 +835,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck_qe",
-      "community": 103,
+      "community": 96,
       "norm_label": "qe"
     },
     {
@@ -845,7 +845,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck_it",
-      "community": 103,
+      "community": 96,
       "norm_label": "it"
     },
     {
@@ -855,7 +855,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck_lt",
-      "community": 97,
+      "community": 96,
       "norm_label": "lt"
     },
     {
@@ -865,7 +865,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck_rt",
-      "community": 103,
+      "community": 96,
       "norm_label": "rt"
     },
     {
@@ -875,7 +875,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck_ft",
-      "community": 103,
+      "community": 96,
       "norm_label": "ft"
     },
     {
@@ -885,7 +885,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck_ke",
-      "community": 86,
+      "community": 96,
       "norm_label": "ke()"
     },
     {
@@ -895,7 +895,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck_tt",
-      "community": 144,
+      "community": 87,
       "norm_label": "tt()"
     },
     {
@@ -905,7 +905,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck_as",
-      "community": 86,
+      "community": 96,
       "norm_label": "as()"
     },
     {
@@ -915,7 +915,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "c_users_tomasmourato_projects_gest\u00e3o_de_apostas_android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck",
-      "community": 103,
+      "community": 96,
       "norm_label": "$()"
     },
     {
@@ -925,7 +925,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilebets_dcuoq_ck_ve",
-      "community": 103,
+      "community": 96,
       "norm_label": "ve()"
     },
     {
@@ -965,7 +965,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobiledashboard_vxdqwtti_ee",
-      "community": 29,
+      "community": 138,
       "norm_label": "ee"
     },
     {
@@ -995,7 +995,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobiledashboard_vxdqwtti_ue",
-      "community": 107,
+      "community": 29,
       "norm_label": "ue()"
     },
     {
@@ -1005,7 +1005,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobiledashboard_vxdqwtti_je",
-      "community": 86,
+      "community": 29,
       "norm_label": "je()"
     },
     {
@@ -1035,7 +1035,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "c_users_tomasmourato_projects_gest\u00e3o_de_apostas_android_app_src_main_assets_public_assets_mobiledashboard_vxdqwtti",
-      "community": 107,
+      "community": 29,
       "norm_label": "$()"
     },
     {
@@ -1045,7 +1045,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobiledashboard_vxdqwtti_b",
-      "community": 107,
+      "community": 29,
       "norm_label": "b()"
     },
     {
@@ -1055,7 +1055,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileimport_bnqvsdxf",
-      "community": 163,
+      "community": 148,
       "norm_label": "mobileimport-bnqvsdxf.js"
     },
     {
@@ -1065,7 +1065,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileimport_bnqvsdxf_vite_mapdeps",
-      "community": 163,
+      "community": 148,
       "norm_label": "__vite__mapdeps()"
     },
     {
@@ -1075,7 +1075,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileimport_bnqvsdxf_te",
-      "community": 163,
+      "community": 148,
       "norm_label": "te"
     },
     {
@@ -1085,7 +1085,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileimport_bnqvsdxf_oe",
-      "community": 163,
+      "community": 148,
       "norm_label": "oe"
     },
     {
@@ -1095,7 +1095,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileimport_bnqvsdxf_fe",
-      "community": 163,
+      "community": 148,
       "norm_label": "fe"
     },
     {
@@ -1105,7 +1105,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileimport_bnqvsdxf_ce",
-      "community": 163,
+      "community": 148,
       "norm_label": "ce"
     },
     {
@@ -1115,7 +1115,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileimport_bnqvsdxf_me",
-      "community": 163,
+      "community": 148,
       "norm_label": "me"
     },
     {
@@ -1125,7 +1125,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileimport_bnqvsdxf_le",
-      "community": 29,
+      "community": 148,
       "norm_label": "le()"
     },
     {
@@ -1135,7 +1135,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileimport_bnqvsdxf_ye",
-      "community": 86,
+      "community": 99,
       "norm_label": "ye()"
     },
     {
@@ -1155,7 +1155,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileinsights_b4tcpjza_c",
-      "community": 96,
+      "community": 99,
       "norm_label": "c()"
     },
     {
@@ -1165,7 +1165,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobileinsights_b4tcpjza_h",
-      "community": 96,
+      "community": 99,
       "norm_label": "h()"
     },
     {
@@ -1175,7 +1175,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilesettings_239sc7qp",
-      "community": 138,
+      "community": 96,
       "norm_label": "mobilesettings-239sc7qp.js"
     },
     {
@@ -1185,7 +1185,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilesettings_239sc7qp_me",
-      "community": 86,
+      "community": 99,
       "norm_label": "me()"
     },
     {
@@ -1195,7 +1195,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilesocial_dplysdgp",
-      "community": 96,
+      "community": 103,
       "norm_label": "mobilesocial-dplysdgp.js"
     },
     {
@@ -1205,7 +1205,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilesocial_dplysdgp_vite_mapdeps",
-      "community": 96,
+      "community": 103,
       "norm_label": "__vite__mapdeps()"
     },
     {
@@ -1215,7 +1215,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilesocial_dplysdgp_ge",
-      "community": 96,
+      "community": 103,
       "norm_label": "ge"
     },
     {
@@ -1225,7 +1225,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilesocial_dplysdgp_be",
-      "community": 96,
+      "community": 103,
       "norm_label": "be()"
     },
     {
@@ -1235,7 +1235,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilesocial_dplysdgp_f",
-      "community": 104,
+      "community": 103,
       "norm_label": "f()"
     },
     {
@@ -1245,7 +1245,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_mobilesocial_dplysdgp_ee",
-      "community": 104,
+      "community": 103,
       "norm_label": "ee()"
     },
     {
@@ -1285,7 +1285,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_pulltorefresh_byt1y0gh_y",
-      "community": 96,
+      "community": 99,
       "norm_label": "y()"
     },
     {
@@ -1305,7 +1305,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_pulltorefresh_byt1y0gh_g",
-      "community": 96,
+      "community": 99,
       "norm_label": "g()"
     },
     {
@@ -1315,7 +1315,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_pulltorefresh_byt1y0gh_l",
-      "community": 96,
+      "community": 99,
       "norm_label": "l()"
     },
     {
@@ -1325,7 +1325,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_pulltorefresh_byt1y0gh_u",
-      "community": 86,
+      "community": 99,
       "norm_label": "u()"
     },
     {
@@ -1375,7 +1375,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_pulltorefresh_byt1y0gh_z",
-      "community": 96,
+      "community": 99,
       "norm_label": "z"
     },
     {
@@ -1395,7 +1395,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_pulltorefresh_byt1y0gh_x",
-      "community": 96,
+      "community": 99,
       "norm_label": "x()"
     },
     {
@@ -1465,7 +1465,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_screenshotimporter_bxeiemqd",
-      "community": 163,
+      "community": 148,
       "norm_label": "screenshotimporter-bxeiemqd.js"
     },
     {
@@ -1475,7 +1475,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_screenshotimporter_bxeiemqd_ue",
-      "community": 163,
+      "community": 148,
       "norm_label": "ue"
     },
     {
@@ -1485,7 +1485,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_screenshotimporter_bxeiemqd_ge",
-      "community": 163,
+      "community": 148,
       "norm_label": "ge"
     },
     {
@@ -1495,7 +1495,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_screenshotimporter_bxeiemqd_v",
-      "community": 163,
+      "community": 29,
       "norm_label": "v()"
     },
     {
@@ -1505,7 +1505,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_screenshotimporter_bxeiemqd_rt",
-      "community": 86,
+      "community": 29,
       "norm_label": "rt()"
     },
     {
@@ -1635,7 +1635,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_settings_dyr_wcrg_ue",
-      "community": 29,
+      "community": 138,
       "norm_label": "ue()"
     },
     {
@@ -1665,7 +1665,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_settings_dyr_wcrg_ve",
-      "community": 29,
+      "community": 138,
       "norm_label": "ve()"
     },
     {
@@ -1675,7 +1675,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_settings_dyr_wcrg_je",
-      "community": 29,
+      "community": 138,
       "norm_label": "je()"
     },
     {
@@ -1695,7 +1695,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_settings_dyr_wcrg_ne",
-      "community": 104,
+      "community": 87,
       "norm_label": "ne()"
     },
     {
@@ -1705,7 +1705,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_settings_dyr_wcrg_qe",
-      "community": 104,
+      "community": 87,
       "norm_label": "qe()"
     },
     {
@@ -1715,7 +1715,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_settings_dyr_wcrg_xe",
-      "community": 104,
+      "community": 87,
       "norm_label": "xe()"
     },
     {
@@ -1725,7 +1725,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_settings_dyr_wcrg_xs",
-      "community": 29,
+      "community": 138,
       "norm_label": "xs()"
     },
     {
@@ -1835,7 +1835,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_social_cs8p8si0_te",
-      "community": 104,
+      "community": 103,
       "norm_label": "te()"
     },
     {
@@ -1935,7 +1935,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_circle_minus_dpaetn_d",
-      "community": 103,
+      "community": 148,
       "norm_label": "circle-minus-dpaetn_d.js"
     },
     {
@@ -1945,7 +1945,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_circle_minus_dpaetn_d_e",
-      "community": 103,
+      "community": 148,
       "norm_label": "e"
     },
     {
@@ -1955,7 +1955,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_circle_minus_dpaetn_d_o",
-      "community": 103,
+      "community": 148,
       "norm_label": "o"
     },
     {
@@ -1965,7 +1965,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_circle_plus_dfobr4jz",
-      "community": 163,
+      "community": 148,
       "norm_label": "circle-plus-dfobr4jz.js"
     },
     {
@@ -1975,7 +1975,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_circle_plus_dfobr4jz_e",
-      "community": 163,
+      "community": 148,
       "norm_label": "e"
     },
     {
@@ -1985,7 +1985,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_circle_plus_dfobr4jz_r",
-      "community": 163,
+      "community": 148,
       "norm_label": "r"
     },
     {
@@ -1995,7 +1995,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_clock_efsclbg0",
-      "community": 148,
+      "community": 107,
       "norm_label": "clock-efsclbg0.js"
     },
     {
@@ -2005,7 +2005,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_clock_efsclbg0_o",
-      "community": 148,
+      "community": 107,
       "norm_label": "o"
     },
     {
@@ -2015,7 +2015,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_clock_efsclbg0_r",
-      "community": 148,
+      "community": 107,
       "norm_label": "r"
     },
     {
@@ -2025,7 +2025,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_copy_n8h3tqfr",
-      "community": 99,
+      "community": 138,
       "norm_label": "copy-n8h3tqfr.js"
     },
     {
@@ -2035,7 +2035,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_copy_n8h3tqfr_e",
-      "community": 99,
+      "community": 138,
       "norm_label": "e"
     },
     {
@@ -2045,7 +2045,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_copy_n8h3tqfr_t",
-      "community": 99,
+      "community": 138,
       "norm_label": "t"
     },
     {
@@ -2075,7 +2075,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_datatransfer_cv0xpgun_we",
-      "community": 138,
+      "community": 29,
       "norm_label": "we"
     },
     {
@@ -2135,7 +2135,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_datatransfer_cv0xpgun_ce",
-      "community": 29,
+      "community": 138,
       "norm_label": "ce()"
     },
     {
@@ -2165,7 +2165,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_datatransfer_cv0xpgun_pe",
-      "community": 29,
+      "community": 138,
       "norm_label": "pe()"
     },
     {
@@ -2175,7 +2175,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_funnel_dvodvngg",
-      "community": 103,
+      "community": 107,
       "norm_label": "funnel-dvodvngg.js"
     },
     {
@@ -2185,7 +2185,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_funnel_dvodvngg_e",
-      "community": 103,
+      "community": 107,
       "norm_label": "e"
     },
     {
@@ -2195,7 +2195,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_funnel_dvodvngg_o",
-      "community": 103,
+      "community": 107,
       "norm_label": "o"
     },
     {
@@ -2365,7 +2365,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_f",
-      "community": 144,
+      "community": 110,
       "norm_label": "f()"
     },
     {
@@ -2405,7 +2405,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_wy",
-      "community": 86,
+      "community": 29,
       "norm_label": "wy()"
     },
     {
@@ -2415,7 +2415,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_qy",
-      "community": 110,
+      "community": 87,
       "norm_label": "qy()"
     },
     {
@@ -2425,7 +2425,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_gy",
-      "community": 110,
+      "community": 92,
       "norm_label": "gy()"
     },
     {
@@ -2435,7 +2435,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_vy",
-      "community": 110,
+      "community": 87,
       "norm_label": "vy()"
     },
     {
@@ -2475,7 +2475,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_zp",
-      "community": 163,
+      "community": 148,
       "norm_label": "zp"
     },
     {
@@ -2485,7 +2485,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_mp",
-      "community": 29,
+      "community": 138,
       "norm_label": "mp()"
     },
     {
@@ -2505,7 +2505,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_dp",
-      "community": 86,
+      "community": 87,
       "norm_label": "dp()"
     },
     {
@@ -2515,7 +2515,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_fe",
-      "community": 86,
+      "community": 103,
       "norm_label": "fe()"
     },
     {
@@ -2525,7 +2525,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_xp",
-      "community": 86,
+      "community": 138,
       "norm_label": "xp()"
     },
     {
@@ -2535,7 +2535,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_op",
-      "community": 86,
+      "community": 87,
       "norm_label": "op()"
     },
     {
@@ -2545,7 +2545,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_zy",
-      "community": 87,
+      "community": 96,
       "norm_label": "zy"
     },
     {
@@ -2555,7 +2555,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_ky",
-      "community": 87,
+      "community": 148,
       "norm_label": "ky()"
     },
     {
@@ -2575,7 +2575,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_mh",
-      "community": 87,
+      "community": 148,
       "norm_label": "mh()"
     },
     {
@@ -2585,7 +2585,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_y",
-      "community": 87,
+      "community": 107,
       "norm_label": "$y"
     },
     {
@@ -2635,7 +2635,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_tg",
-      "community": 87,
+      "community": 141,
       "norm_label": "tg"
     },
     {
@@ -2655,7 +2655,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_ag",
-      "community": 29,
+      "community": 87,
       "norm_label": "ag"
     },
     {
@@ -2705,7 +2705,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_cg",
-      "community": 87,
+      "community": 132,
       "norm_label": "cg"
     },
     {
@@ -2745,7 +2745,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_rg",
-      "community": 87,
+      "community": 138,
       "norm_label": "rg"
     },
     {
@@ -2775,7 +2775,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_hg",
-      "community": 38,
+      "community": 174,
       "norm_label": "hg"
     },
     {
@@ -2805,7 +2805,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_xs",
-      "community": 144,
+      "community": 87,
       "norm_label": "xs()"
     },
     {
@@ -2815,7 +2815,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_cp",
-      "community": 99,
+      "community": 87,
       "norm_label": "cp"
     },
     {
@@ -2865,7 +2865,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_lm",
-      "community": 87,
+      "community": 150,
       "norm_label": "lm()"
     },
     {
@@ -2875,7 +2875,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_gg",
-      "community": 87,
+      "community": 150,
       "norm_label": "gg()"
     },
     {
@@ -2885,7 +2885,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_pg",
-      "community": 87,
+      "community": 150,
       "norm_label": "pg()"
     },
     {
@@ -2925,7 +2925,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_bg",
-      "community": 29,
+      "community": 87,
       "norm_label": "bg()"
     },
     {
@@ -2955,7 +2955,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_bm",
-      "community": 87,
+      "community": 110,
       "norm_label": "bm()"
     },
     {
@@ -2995,7 +2995,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_yh",
-      "community": 87,
+      "community": 141,
       "norm_label": "yh()"
     },
     {
@@ -3005,7 +3005,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_zg",
-      "community": 87,
+      "community": 141,
       "norm_label": "zg()"
     },
     {
@@ -3055,7 +3055,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_wm",
-      "community": 87,
+      "community": 132,
       "norm_label": "wm()"
     },
     {
@@ -3095,7 +3095,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_g",
-      "community": 138,
+      "community": 107,
       "norm_label": "_g()"
     },
     {
@@ -3115,7 +3115,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_jg",
-      "community": 38,
+      "community": 174,
       "norm_label": "jg()"
     },
     {
@@ -3135,7 +3135,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_wg",
-      "community": 144,
+      "community": 110,
       "norm_label": "wg"
     },
     {
@@ -3155,7 +3155,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_ah",
-      "community": 104,
+      "community": 87,
       "norm_label": "ah"
     },
     {
@@ -3185,7 +3185,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_eh",
-      "community": 104,
+      "community": 87,
       "norm_label": "eh()"
     },
     {
@@ -3195,7 +3195,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_zs",
-      "community": 87,
+      "community": 141,
       "norm_label": "zs()"
     },
     {
@@ -3205,7 +3205,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_kg",
-      "community": 87,
+      "community": 141,
       "norm_label": "kg()"
     },
     {
@@ -3215,7 +3215,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_fg_constructor",
-      "community": 38,
+      "community": 134,
       "norm_label": ".constructor()"
     },
     {
@@ -3265,7 +3265,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_wg_constructor",
-      "community": 144,
+      "community": 110,
       "norm_label": ".constructor()"
     },
     {
@@ -3275,7 +3275,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_wg_update",
-      "community": 144,
+      "community": 110,
       "norm_label": ".update()"
     },
     {
@@ -3285,7 +3285,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_wg_mount",
-      "community": 144,
+      "community": 110,
       "norm_label": ".mount()"
     },
     {
@@ -3295,7 +3295,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_wg_unmount",
-      "community": 144,
+      "community": 110,
       "norm_label": ".unmount()"
     },
     {
@@ -3305,7 +3305,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_kn",
-      "community": 87,
+      "community": 150,
       "norm_label": "kn()"
     },
     {
@@ -3315,7 +3315,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_xn",
-      "community": 150,
+      "community": 147,
       "norm_label": "xn()"
     },
     {
@@ -3325,7 +3325,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_th",
-      "community": 104,
+      "community": 87,
       "norm_label": "th()"
     },
     {
@@ -3455,7 +3455,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_a1",
-      "community": 87,
+      "community": 110,
       "norm_label": "a1()"
     },
     {
@@ -3465,7 +3465,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_vm",
-      "community": 87,
+      "community": 187,
       "norm_label": "vm()"
     },
     {
@@ -3475,7 +3475,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_l1",
-      "community": 87,
+      "community": 187,
       "norm_label": "l1()"
     },
     {
@@ -3485,7 +3485,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_ym",
-      "community": 119,
+      "community": 110,
       "norm_label": "ym()"
     },
     {
@@ -3495,7 +3495,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_n1",
-      "community": 119,
+      "community": 110,
       "norm_label": "n1()"
     },
     {
@@ -3515,7 +3515,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_i1",
-      "community": 87,
+      "community": 163,
       "norm_label": "i1()"
     },
     {
@@ -3725,7 +3725,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_zm",
-      "community": 87,
+      "community": 144,
       "norm_label": "zm()"
     },
     {
@@ -3735,7 +3735,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_f1",
-      "community": 87,
+      "community": 144,
       "norm_label": "f1()"
     },
     {
@@ -3815,7 +3815,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_m1",
-      "community": 150,
+      "community": 147,
       "norm_label": "m1"
     },
     {
@@ -3825,7 +3825,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_m1_constructor",
-      "community": 150,
+      "community": 147,
       "norm_label": ".constructor()"
     },
     {
@@ -3835,7 +3835,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_m1_onpointerdown",
-      "community": 150,
+      "community": 147,
       "norm_label": ".onpointerdown()"
     },
     {
@@ -3845,7 +3845,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_m1_createpanhandlers",
-      "community": 150,
+      "community": 147,
       "norm_label": ".createpanhandlers()"
     },
     {
@@ -3855,7 +3855,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_m1_mount",
-      "community": 150,
+      "community": 147,
       "norm_label": ".mount()"
     },
     {
@@ -3865,7 +3865,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_m1_update",
-      "community": 150,
+      "community": 147,
       "norm_label": ".update()"
     },
     {
@@ -3875,7 +3875,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_m1_unmount",
-      "community": 150,
+      "community": 147,
       "norm_label": ".unmount()"
     },
     {
@@ -3965,7 +3965,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_v1",
-      "community": 104,
+      "community": 87,
       "norm_label": "v1"
     },
     {
@@ -3975,7 +3975,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_km",
-      "community": 161,
+      "community": 150,
       "norm_label": "km()"
     },
     {
@@ -4115,7 +4115,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_fs",
-      "community": 87,
+      "community": 110,
       "norm_label": "fs"
     },
     {
@@ -4125,7 +4125,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_b1",
-      "community": 87,
+      "community": 110,
       "norm_label": "b1()"
     },
     {
@@ -4195,7 +4195,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_x1",
-      "community": 144,
+      "community": 132,
       "norm_label": "x1"
     },
     {
@@ -4245,7 +4245,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_np",
-      "community": 104,
+      "community": 87,
       "norm_label": "np()"
     },
     {
@@ -4255,7 +4255,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_up",
-      "community": 104,
+      "community": 87,
       "norm_label": "up()"
     },
     {
@@ -4285,7 +4285,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_lp",
-      "community": 86,
+      "community": 107,
       "norm_label": "lp()"
     },
     {
@@ -4305,7 +4305,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_vl",
-      "community": 138,
+      "community": 99,
       "norm_label": "vl()"
     },
     {
@@ -4315,7 +4315,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_ql",
-      "community": 104,
+      "community": 87,
       "norm_label": "ql()"
     },
     {
@@ -4335,7 +4335,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_kt",
-      "community": 104,
+      "community": 87,
       "norm_label": "kt()"
     },
     {
@@ -4345,7 +4345,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_yo",
-      "community": 161,
+      "community": 93,
       "norm_label": "yo()"
     },
     {
@@ -4365,7 +4365,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_go",
-      "community": 104,
+      "community": 87,
       "norm_label": "go()"
     },
     {
@@ -4385,7 +4385,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_mi",
-      "community": 104,
+      "community": 87,
       "norm_label": "mi()"
     },
     {
@@ -4405,7 +4405,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_fm",
-      "community": 144,
+      "community": 87,
       "norm_label": "fm()"
     },
     {
@@ -4415,7 +4415,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_q1",
-      "community": 104,
+      "community": 87,
       "norm_label": "q1()"
     },
     {
@@ -4435,7 +4435,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_re",
-      "community": 104,
+      "community": 87,
       "norm_label": "re()"
     },
     {
@@ -4465,7 +4465,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_j1",
-      "community": 144,
+      "community": 161,
       "norm_label": "j1()"
     },
     {
@@ -4495,7 +4495,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_rh",
-      "community": 87,
+      "community": 163,
       "norm_label": "rh()"
     },
     {
@@ -4505,7 +4505,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_pm",
-      "community": 87,
+      "community": 163,
       "norm_label": "pm()"
     },
     {
@@ -4545,7 +4545,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_jn",
-      "community": 104,
+      "community": 87,
       "norm_label": "jn()"
     },
     {
@@ -4555,7 +4555,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_po",
-      "community": 104,
+      "community": 87,
       "norm_label": "po()"
     },
     {
@@ -4565,7 +4565,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_ip",
-      "community": 104,
+      "community": 87,
       "norm_label": "ip()"
     },
     {
@@ -4575,7 +4575,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_sp",
-      "community": 144,
+      "community": 87,
       "norm_label": "sp()"
     },
     {
@@ -4585,7 +4585,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_fp",
-      "community": 104,
+      "community": 87,
       "norm_label": "fp()"
     },
     {
@@ -4605,7 +4605,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_h",
-      "community": 138,
+      "community": 87,
       "norm_label": "_h()"
     },
     {
@@ -4625,7 +4625,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_jp",
-      "community": 87,
+      "community": 138,
       "norm_label": "jp()"
     },
     {
@@ -4685,7 +4685,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_bgsic3gq_wp",
-      "community": 138,
+      "community": 99,
       "norm_label": "wp()"
     },
     {
@@ -4795,7 +4795,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_deh5j_nb_q",
-      "community": 124,
+      "community": 151,
       "norm_label": "q()"
     },
     {
@@ -4805,7 +4805,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_deh5j_nb_i",
-      "community": 124,
+      "community": 151,
       "norm_label": "i()"
     },
     {
@@ -5075,7 +5075,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_deh5j_nb_q_request",
-      "community": 124,
+      "community": 151,
       "norm_label": ".request()"
     },
     {
@@ -5085,7 +5085,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_deh5j_nb_q_get",
-      "community": 124,
+      "community": 151,
       "norm_label": ".get()"
     },
     {
@@ -5095,7 +5095,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_deh5j_nb_q_post",
-      "community": 124,
+      "community": 151,
       "norm_label": ".post()"
     },
     {
@@ -5105,7 +5105,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_deh5j_nb_q_put",
-      "community": 124,
+      "community": 151,
       "norm_label": ".put()"
     },
     {
@@ -5115,7 +5115,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_deh5j_nb_q_patch",
-      "community": 124,
+      "community": 151,
       "norm_label": ".patch()"
     },
     {
@@ -5125,7 +5125,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_index_deh5j_nb_q_delete",
-      "community": 124,
+      "community": 151,
       "norm_label": ".delete()"
     },
     {
@@ -5545,7 +5545,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_pencil_nxbwthnd",
-      "community": 138,
+      "community": 96,
       "norm_label": "pencil-nxbwthnd.js"
     },
     {
@@ -5555,7 +5555,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_pencil_nxbwthnd_c",
-      "community": 138,
+      "community": 96,
       "norm_label": "c"
     },
     {
@@ -5565,7 +5565,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_pencil_nxbwthnd_o",
-      "community": 138,
+      "community": 96,
       "norm_label": "o"
     },
     {
@@ -5605,7 +5605,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_screenshotmatch_18omikni",
-      "community": 163,
+      "community": 148,
       "norm_label": "screenshotmatch-18omikni.js"
     },
     {
@@ -5615,7 +5615,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_screenshotmatch_18omikni_u",
-      "community": 86,
+      "community": 148,
       "norm_label": "u()"
     },
     {
@@ -5625,7 +5625,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_screenshotmatch_18omikni_c",
-      "community": 163,
+      "community": 148,
       "norm_label": "c()"
     },
     {
@@ -5695,7 +5695,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_socialapi_cx0b5akv",
-      "community": 104,
+      "community": 103,
       "norm_label": "socialapi-cx0b5akv.js"
     },
     {
@@ -5705,7 +5705,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_socialapi_cx0b5akv_n",
-      "community": 104,
+      "community": 103,
       "norm_label": "n"
     },
     {
@@ -5725,7 +5725,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_socialapi_cx0b5akv_c",
-      "community": 104,
+      "community": 103,
       "norm_label": "c"
     },
     {
@@ -5755,7 +5755,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_socialapi_cx0b5akv_p",
-      "community": 104,
+      "community": 103,
       "norm_label": "p"
     },
     {
@@ -5765,7 +5765,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_socialapi_cx0b5akv_f",
-      "community": 104,
+      "community": 103,
       "norm_label": "f()"
     },
     {
@@ -5775,7 +5775,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_socialapi_cx0b5akv_l",
-      "community": 104,
+      "community": 92,
       "norm_label": "l()"
     },
     {
@@ -5785,7 +5785,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_socialapi_cx0b5akv_h",
-      "community": 104,
+      "community": 103,
       "norm_label": "h()"
     },
     {
@@ -5795,7 +5795,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_socialapi_cx0b5akv_e",
-      "community": 104,
+      "community": 103,
       "norm_label": "e()"
     },
     {
@@ -5805,7 +5805,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_socialapi_cx0b5akv_m",
-      "community": 104,
+      "community": 103,
       "norm_label": "m()"
     },
     {
@@ -5815,7 +5815,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_socialapi_cx0b5akv_k",
-      "community": 104,
+      "community": 103,
       "norm_label": "k()"
     },
     {
@@ -5825,7 +5825,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_socialapi_cx0b5akv_g",
-      "community": 104,
+      "community": 103,
       "norm_label": "g()"
     },
     {
@@ -5835,7 +5835,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_socialapi_cx0b5akv_q",
-      "community": 104,
+      "community": 103,
       "norm_label": "q()"
     },
     {
@@ -5845,7 +5845,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_square_check_big_deny2eq7",
-      "community": 103,
+      "community": 107,
       "norm_label": "square-check-big-deny2eq7.js"
     },
     {
@@ -5855,7 +5855,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_square_check_big_deny2eq7_a",
-      "community": 103,
+      "community": 107,
       "norm_label": "a"
     },
     {
@@ -5865,7 +5865,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_square_check_big_deny2eq7_y",
-      "community": 103,
+      "community": 107,
       "norm_label": "y"
     },
     {
@@ -5875,7 +5875,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_square_check_big_deny2eq7_c",
-      "community": 103,
+      "community": 107,
       "norm_label": "c"
     },
     {
@@ -5885,7 +5885,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_square_check_big_deny2eq7_d",
-      "community": 103,
+      "community": 107,
       "norm_label": "d"
     },
     {
@@ -5895,7 +5895,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_square_check_big_deny2eq7_o",
-      "community": 103,
+      "community": 107,
       "norm_label": "o"
     },
     {
@@ -5905,7 +5905,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_square_check_big_deny2eq7_h",
-      "community": 103,
+      "community": 107,
       "norm_label": "h"
     },
     {
@@ -5915,7 +5915,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_sun_dvjfxr_5",
-      "community": 99,
+      "community": 138,
       "norm_label": "sun-dvjfxr_5.js"
     },
     {
@@ -5925,7 +5925,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_sun_dvjfxr_5_o",
-      "community": 99,
+      "community": 138,
       "norm_label": "o"
     },
     {
@@ -5935,7 +5935,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_sun_dvjfxr_5_h",
-      "community": 99,
+      "community": 138,
       "norm_label": "h"
     },
     {
@@ -5945,7 +5945,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_sun_dvjfxr_5_e",
-      "community": 99,
+      "community": 138,
       "norm_label": "e"
     },
     {
@@ -5965,7 +5965,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_sun_dvjfxr_5_a",
-      "community": 29,
+      "community": 138,
       "norm_label": "a"
     },
     {
@@ -5975,7 +5975,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_sun_dvjfxr_5_n",
-      "community": 99,
+      "community": 138,
       "norm_label": "n"
     },
     {
@@ -5985,7 +5985,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_trash_2_dnvqbt13",
-      "community": 138,
+      "community": 96,
       "norm_label": "trash-2-dnvqbt13.js"
     },
     {
@@ -5995,7 +5995,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_trash_2_dnvqbt13_t",
-      "community": 138,
+      "community": 96,
       "norm_label": "t"
     },
     {
@@ -6005,7 +6005,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_trash_2_dnvqbt13_h",
-      "community": 138,
+      "community": 96,
       "norm_label": "h"
     },
     {
@@ -6015,7 +6015,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_trash_2_dnvqbt13_e",
-      "community": 138,
+      "community": 96,
       "norm_label": "e"
     },
     {
@@ -6025,7 +6025,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_trash_2_dnvqbt13_s",
-      "community": 138,
+      "community": 96,
       "norm_label": "s"
     },
     {
@@ -6175,7 +6175,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_upload_cwjibnkk",
-      "community": 138,
+      "community": 148,
       "norm_label": "upload-cwjibnkk.js"
     },
     {
@@ -6185,7 +6185,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_upload_cwjibnkk_o",
-      "community": 138,
+      "community": 148,
       "norm_label": "o"
     },
     {
@@ -6195,7 +6195,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_upload_cwjibnkk_t",
-      "community": 138,
+      "community": 148,
       "norm_label": "t"
     },
     {
@@ -6205,7 +6205,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_useurlfiltersync_bi_asihs",
-      "community": 103,
+      "community": 107,
       "norm_label": "useurlfiltersync-bi-asihs.js"
     },
     {
@@ -6215,7 +6215,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_useurlfiltersync_bi_asihs_f",
-      "community": 103,
+      "community": 107,
       "norm_label": "f()"
     },
     {
@@ -6225,7 +6225,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_useurlfiltersync_bi_asihs_m",
-      "community": 103,
+      "community": 107,
       "norm_label": "m()"
     },
     {
@@ -6245,7 +6245,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_x0",
-      "community": 110,
+      "community": 92,
       "norm_label": "x0()"
     },
     {
@@ -6285,7 +6285,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_q0",
-      "community": 163,
+      "community": 148,
       "norm_label": "q0"
     },
     {
@@ -6305,7 +6305,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_eb",
-      "community": 161,
+      "community": 92,
       "norm_label": "eb()"
     },
     {
@@ -6315,7 +6315,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_tb",
-      "community": 161,
+      "community": 92,
       "norm_label": "tb()"
     },
     {
@@ -6325,7 +6325,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_eh",
-      "community": 161,
+      "community": 93,
       "norm_label": "eh()"
     },
     {
@@ -6335,7 +6335,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_le",
-      "community": 161,
+      "community": 93,
       "norm_label": "le()"
     },
     {
@@ -6685,7 +6685,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nh",
-      "community": 144,
+      "community": 132,
       "norm_label": "nh"
     },
     {
@@ -6695,7 +6695,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nh_constructor",
-      "community": 144,
+      "community": 132,
       "norm_label": ".constructor()"
     },
     {
@@ -6705,7 +6705,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nh_areastart",
-      "community": 144,
+      "community": 132,
       "norm_label": ".areastart()"
     },
     {
@@ -6715,7 +6715,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nh_areaend",
-      "community": 144,
+      "community": 132,
       "norm_label": ".areaend()"
     },
     {
@@ -6725,7 +6725,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nh_linestart",
-      "community": 144,
+      "community": 132,
       "norm_label": ".linestart()"
     },
     {
@@ -6735,7 +6735,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nh_lineend",
-      "community": 144,
+      "community": 132,
       "norm_label": ".lineend()"
     },
     {
@@ -6745,7 +6745,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nh_point",
-      "community": 144,
+      "community": 132,
       "norm_label": ".point()"
     },
     {
@@ -6755,7 +6755,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_mb",
-      "community": 16,
+      "community": 92,
       "norm_label": "mb()"
     },
     {
@@ -6875,7 +6875,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_dc",
-      "community": 132,
+      "community": 16,
       "norm_label": "dc()"
     },
     {
@@ -6885,7 +6885,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_vc",
-      "community": 132,
+      "community": 16,
       "norm_label": "vc()"
     },
     {
@@ -6905,7 +6905,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_o",
-      "community": 93,
+      "community": 16,
       "norm_label": "$o()"
     },
     {
@@ -6915,7 +6915,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_wi",
-      "community": 92,
+      "community": 161,
       "norm_label": "wi()"
     },
     {
@@ -6935,7 +6935,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_fh",
-      "community": 87,
+      "community": 141,
       "norm_label": "fh()"
     },
     {
@@ -6995,7 +6995,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_tr",
-      "community": 16,
+      "community": 92,
       "norm_label": "tr()"
     },
     {
@@ -7015,7 +7015,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_b",
-      "community": 103,
+      "community": 96,
       "norm_label": "_b()"
     },
     {
@@ -7035,7 +7035,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_jb",
-      "community": 16,
+      "community": 92,
       "norm_label": "jb()"
     },
     {
@@ -7075,7 +7075,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_hh",
-      "community": 113,
+      "community": 144,
       "norm_label": "hh()"
     },
     {
@@ -7185,7 +7185,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_de",
-      "community": 161,
+      "community": 38,
       "norm_label": "de()"
     },
     {
@@ -7205,7 +7205,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_wl",
-      "community": 92,
+      "community": 161,
       "norm_label": "wl()"
     },
     {
@@ -7215,7 +7215,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_vu",
-      "community": 92,
+      "community": 161,
       "norm_label": "vu()"
     },
     {
@@ -7225,7 +7225,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_fx",
-      "community": 92,
+      "community": 161,
       "norm_label": "fx()"
     },
     {
@@ -7235,7 +7235,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_dx",
-      "community": 92,
+      "community": 161,
       "norm_label": "dx()"
     },
     {
@@ -7245,7 +7245,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ar",
-      "community": 92,
+      "community": 161,
       "norm_label": "ar()"
     },
     {
@@ -7265,7 +7265,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_vx",
-      "community": 92,
+      "community": 161,
       "norm_label": "vx()"
     },
     {
@@ -7325,7 +7325,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_px",
-      "community": 92,
+      "community": 161,
       "norm_label": "px()"
     },
     {
@@ -7345,7 +7345,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_rp",
-      "community": 92,
+      "community": 161,
       "norm_label": "rp()"
     },
     {
@@ -7355,7 +7355,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_yx",
-      "community": 92,
+      "community": 161,
       "norm_label": "yx()"
     },
     {
@@ -7385,7 +7385,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_bx",
-      "community": 92,
+      "community": 161,
       "norm_label": "bx()"
     },
     {
@@ -7395,7 +7395,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_xx",
-      "community": 92,
+      "community": 113,
       "norm_label": "xx()"
     },
     {
@@ -7415,7 +7415,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ax",
-      "community": 92,
+      "community": 161,
       "norm_label": "ax()"
     },
     {
@@ -7535,7 +7535,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_r",
-      "community": 161,
+      "community": 93,
       "norm_label": "r()"
     },
     {
@@ -7545,7 +7545,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_lx",
-      "community": 92,
+      "community": 161,
       "norm_label": "lx()"
     },
     {
@@ -7555,7 +7555,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_zx",
-      "community": 92,
+      "community": 161,
       "norm_label": "zx()"
     },
     {
@@ -7565,7 +7565,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_wx",
-      "community": 92,
+      "community": 161,
       "norm_label": "wx()"
     },
     {
@@ -7595,7 +7595,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_gi",
-      "community": 97,
+      "community": 161,
       "norm_label": "gi()"
     },
     {
@@ -7605,7 +7605,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_lp",
-      "community": 97,
+      "community": 161,
       "norm_label": "lp()"
     },
     {
@@ -7625,7 +7625,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_up",
-      "community": 92,
+      "community": 161,
       "norm_label": "up()"
     },
     {
@@ -7725,7 +7725,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_c",
-      "community": 96,
+      "community": 140,
       "norm_label": "_c()"
     },
     {
@@ -7835,7 +7835,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_hp",
-      "community": 161,
+      "community": 97,
       "norm_label": "hp()"
     },
     {
@@ -7865,7 +7865,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_dw",
-      "community": 140,
+      "community": 97,
       "norm_label": "dw()"
     },
     {
@@ -7885,7 +7885,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_el",
-      "community": 161,
+      "community": 97,
       "norm_label": "el()"
     },
     {
@@ -7905,7 +7905,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_hw",
-      "community": 97,
+      "community": 16,
       "norm_label": "hw()"
     },
     {
@@ -7935,7 +7935,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_l",
-      "community": 38,
+      "community": 97,
       "norm_label": "_l()"
     },
     {
@@ -7955,7 +7955,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_mw",
-      "community": 38,
+      "community": 97,
       "norm_label": "mw()"
     },
     {
@@ -7995,7 +7995,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_yp",
-      "community": 97,
+      "community": 161,
       "norm_label": "yp()"
     },
     {
@@ -8005,7 +8005,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_gp",
-      "community": 92,
+      "community": 97,
       "norm_label": "gp()"
     },
     {
@@ -8015,7 +8015,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_bw",
-      "community": 97,
+      "community": 29,
       "norm_label": "bw()"
     },
     {
@@ -8025,7 +8025,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_bp",
-      "community": 97,
+      "community": 161,
       "norm_label": "bp()"
     },
     {
@@ -8035,7 +8035,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_xw",
-      "community": 92,
+      "community": 97,
       "norm_label": "xw()"
     },
     {
@@ -8045,7 +8045,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ww",
-      "community": 104,
+      "community": 92,
       "norm_label": "ww()"
     },
     {
@@ -8085,7 +8085,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_set",
-      "community": 140,
+      "community": 97,
       "norm_label": "set()"
     },
     {
@@ -8095,7 +8095,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_deleteproperty",
-      "community": 140,
+      "community": 97,
       "norm_label": "deleteproperty()"
     },
     {
@@ -8165,7 +8165,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_kl",
-      "community": 140,
+      "community": 97,
       "norm_label": "kl()"
     },
     {
@@ -8175,7 +8175,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ni",
-      "community": 38,
+      "community": 97,
       "norm_label": "ni()"
     },
     {
@@ -8295,7 +8295,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_at",
-      "community": 97,
+      "community": 16,
       "norm_label": "at()"
     },
     {
@@ -8335,7 +8335,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_lc",
-      "community": 140,
+      "community": 97,
       "norm_label": "lc()"
     },
     {
@@ -8355,7 +8355,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_subscribe",
-      "community": 102,
+      "community": 161,
       "norm_label": "subscribe()"
     },
     {
@@ -8385,7 +8385,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_lw",
-      "community": 97,
+      "community": 29,
       "norm_label": "lw()"
     },
     {
@@ -8405,7 +8405,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_fw",
-      "community": 97,
+      "community": 16,
       "norm_label": "fw()"
     },
     {
@@ -8415,7 +8415,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_kw",
-      "community": 97,
+      "community": 29,
       "norm_label": "kw()"
     },
     {
@@ -8425,7 +8425,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_uw",
-      "community": 97,
+      "community": 16,
       "norm_label": "uw()"
     },
     {
@@ -8465,7 +8465,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nt",
-      "community": 97,
+      "community": 16,
       "norm_label": "nt()"
     },
     {
@@ -8525,7 +8525,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_tt",
-      "community": 93,
+      "community": 113,
       "norm_label": "tt()"
     },
     {
@@ -8535,7 +8535,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_kc",
-      "community": 132,
+      "community": 16,
       "norm_label": "kc()"
     },
     {
@@ -8545,7 +8545,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_qr",
-      "community": 132,
+      "community": 16,
       "norm_label": "qr()"
     },
     {
@@ -8555,7 +8555,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ua",
-      "community": 132,
+      "community": 16,
       "norm_label": "ua()"
     },
     {
@@ -8565,7 +8565,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_sa",
-      "community": 132,
+      "community": 16,
       "norm_label": "sa()"
     },
     {
@@ -8575,7 +8575,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ca",
-      "community": 132,
+      "community": 16,
       "norm_label": "ca()"
     },
     {
@@ -8635,7 +8635,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ea",
-      "community": 132,
+      "community": 16,
       "norm_label": "ea()"
     },
     {
@@ -8695,7 +8695,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ha",
-      "community": 132,
+      "community": 16,
       "norm_label": "ha()"
     },
     {
@@ -8705,7 +8705,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ya",
-      "community": 132,
+      "community": 16,
       "norm_label": "ya()"
     },
     {
@@ -8835,7 +8835,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_tf",
-      "community": 92,
+      "community": 97,
       "norm_label": "tf()"
     },
     {
@@ -8865,7 +8865,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_dl",
-      "community": 16,
+      "community": 149,
       "norm_label": "dl()"
     },
     {
@@ -8895,7 +8895,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_p",
-      "community": 16,
+      "community": 107,
       "norm_label": "_p()"
     },
     {
@@ -8935,7 +8935,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_af",
-      "community": 97,
+      "community": 161,
       "norm_label": "af()"
     },
     {
@@ -8955,7 +8955,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_rm",
-      "community": 147,
+      "community": 133,
       "norm_label": "rm()"
     },
     {
@@ -8965,7 +8965,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_lf",
-      "community": 147,
+      "community": 16,
       "norm_label": "lf()"
     },
     {
@@ -8975,7 +8975,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_fr",
-      "community": 147,
+      "community": 16,
       "norm_label": "fr()"
     },
     {
@@ -8985,7 +8985,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_vp",
-      "community": 97,
+      "community": 161,
       "norm_label": "vp()"
     },
     {
@@ -8995,7 +8995,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_qp",
-      "community": 147,
+      "community": 16,
       "norm_label": "qp()"
     },
     {
@@ -9005,7 +9005,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_zp",
-      "community": 147,
+      "community": 16,
       "norm_label": "zp()"
     },
     {
@@ -9015,7 +9015,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_uf",
-      "community": 147,
+      "community": 16,
       "norm_label": "uf()"
     },
     {
@@ -9025,7 +9025,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_eo",
-      "community": 147,
+      "community": 16,
       "norm_label": "eo()"
     },
     {
@@ -9035,7 +9035,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_to",
-      "community": 147,
+      "community": 16,
       "norm_label": "to()"
     },
     {
@@ -9045,7 +9045,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_sf",
-      "community": 147,
+      "community": 133,
       "norm_label": "sf()"
     },
     {
@@ -9055,7 +9055,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_cf",
-      "community": 147,
+      "community": 133,
       "norm_label": "cf()"
     },
     {
@@ -9065,7 +9065,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_no",
-      "community": 147,
+      "community": 133,
       "norm_label": "no()"
     },
     {
@@ -9075,7 +9075,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_io",
-      "community": 147,
+      "community": 133,
       "norm_label": "io()"
     },
     {
@@ -9085,7 +9085,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ao",
-      "community": 147,
+      "community": 133,
       "norm_label": "ao()"
     },
     {
@@ -9155,7 +9155,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_vo",
-      "community": 111,
+      "community": 86,
       "norm_label": "vo()"
     },
     {
@@ -9165,7 +9165,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ho",
-      "community": 111,
+      "community": 86,
       "norm_label": "ho()"
     },
     {
@@ -9175,7 +9175,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_yo",
-      "community": 140,
+      "community": 92,
       "norm_label": "yo()"
     },
     {
@@ -9185,7 +9185,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_go",
-      "community": 131,
+      "community": 92,
       "norm_label": "go()"
     },
     {
@@ -9365,7 +9365,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_jo_settimeout",
-      "community": 104,
+      "community": 103,
       "norm_label": ".settimeout()"
     },
     {
@@ -9375,7 +9375,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_mo",
-      "community": 147,
+      "community": 133,
       "norm_label": "mo()"
     },
     {
@@ -9385,7 +9385,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_xf",
-      "community": 93,
+      "community": 16,
       "norm_label": "xf()"
     },
     {
@@ -9395,7 +9395,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ro",
-      "community": 147,
+      "community": 133,
       "norm_label": "ro()"
     },
     {
@@ -9405,7 +9405,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_lm",
-      "community": 147,
+      "community": 133,
       "norm_label": "lm()"
     },
     {
@@ -9415,7 +9415,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_um",
-      "community": 147,
+      "community": 133,
       "norm_label": "um()"
     },
     {
@@ -9455,7 +9455,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_df",
-      "community": 110,
+      "community": 92,
       "norm_label": "df()"
     },
     {
@@ -9465,7 +9465,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_qo",
-      "community": 111,
+      "community": 86,
       "norm_label": "qo()"
     },
     {
@@ -9475,7 +9475,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_f",
-      "community": 111,
+      "community": 86,
       "norm_label": "$f()"
     },
     {
@@ -9485,7 +9485,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_xo",
-      "community": 111,
+      "community": 86,
       "norm_label": "xo()"
     },
     {
@@ -9495,7 +9495,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_zo",
-      "community": 111,
+      "community": 86,
       "norm_label": "zo()"
     },
     {
@@ -9535,7 +9535,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_fm",
-      "community": 140,
+      "community": 92,
       "norm_label": "fm()"
     },
     {
@@ -9545,7 +9545,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_rl",
-      "community": 161,
+      "community": 38,
       "norm_label": "rl()"
     },
     {
@@ -9565,7 +9565,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_c1",
-      "community": 140,
+      "community": 92,
       "norm_label": "c1()"
     },
     {
@@ -9575,7 +9575,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_f1",
-      "community": 92,
+      "community": 161,
       "norm_label": "f1()"
     },
     {
@@ -9585,7 +9585,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_hm",
-      "community": 161,
+      "community": 93,
       "norm_label": "hm()"
     },
     {
@@ -9665,7 +9665,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_mm",
-      "community": 93,
+      "community": 92,
       "norm_label": "mm()"
     },
     {
@@ -9685,7 +9685,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_gm",
-      "community": 108,
+      "community": 38,
       "norm_label": "gm()"
     },
     {
@@ -9695,7 +9695,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_jt",
-      "community": 86,
+      "community": 29,
       "norm_label": "jt()"
     },
     {
@@ -9835,7 +9835,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_pm",
-      "community": 93,
+      "community": 161,
       "norm_label": "pm()"
     },
     {
@@ -9875,7 +9875,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_s1",
-      "community": 87,
+      "community": 110,
       "norm_label": "s1()"
     },
     {
@@ -9915,7 +9915,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nm",
-      "community": 92,
+      "community": 161,
       "norm_label": "nm()"
     },
     {
@@ -9925,7 +9925,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_r1",
-      "community": 16,
+      "community": 107,
       "norm_label": "r1()"
     },
     {
@@ -9985,7 +9985,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_w1",
-      "community": 87,
+      "community": 163,
       "norm_label": "w1"
     },
     {
@@ -10015,7 +10015,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nd_get",
-      "community": 92,
+      "community": 161,
       "norm_label": ".get()"
     },
     {
@@ -10025,7 +10025,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nd_has",
-      "community": 92,
+      "community": 161,
       "norm_label": ".has()"
     },
     {
@@ -10045,7 +10045,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nd_delete",
-      "community": 102,
+      "community": 161,
       "norm_label": ".delete()"
     },
     {
@@ -10055,7 +10055,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_id",
-      "community": 92,
+      "community": 161,
       "norm_label": "id()"
     },
     {
@@ -10065,7 +10065,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_k1",
-      "community": 92,
+      "community": 161,
       "norm_label": "k1()"
     },
     {
@@ -10115,7 +10115,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_zl",
-      "community": 161,
+      "community": 38,
       "norm_label": "zl()"
     },
     {
@@ -10175,7 +10175,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_x1",
-      "community": 144,
+      "community": 87,
       "norm_label": "x1()"
     },
     {
@@ -10265,7 +10265,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_sd",
-      "community": 111,
+      "community": 86,
       "norm_label": "sd()"
     },
     {
@@ -10295,7 +10295,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_si",
-      "community": 112,
+      "community": 111,
       "norm_label": "si()"
     },
     {
@@ -10335,7 +10335,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_brighter",
-      "community": 141,
+      "community": 108,
       "norm_label": "brighter()"
     },
     {
@@ -10345,7 +10345,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_darker",
-      "community": 141,
+      "community": 108,
       "norm_label": "darker()"
     },
     {
@@ -10375,7 +10375,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_fd",
-      "community": 29,
+      "community": 87,
       "norm_label": "fd()"
     },
     {
@@ -10445,7 +10445,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ht",
-      "community": 86,
+      "community": 96,
       "norm_label": "ht()"
     },
     {
@@ -10495,7 +10495,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_fs",
-      "community": 147,
+      "community": 133,
       "norm_label": "fs()"
     },
     {
@@ -10695,7 +10695,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_is",
-      "community": 38,
+      "community": 102,
       "norm_label": "is()"
     },
     {
@@ -10885,7 +10885,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_jm",
-      "community": 161,
+      "community": 93,
       "norm_label": "jm()"
     },
     {
@@ -10915,7 +10915,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ke",
-      "community": 86,
+      "community": 99,
       "norm_label": "ke()"
     },
     {
@@ -10945,7 +10945,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_lr",
-      "community": 86,
+      "community": 99,
       "norm_label": "lr()"
     },
     {
@@ -10975,7 +10975,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nn",
-      "community": 161,
+      "community": 38,
       "norm_label": "nn"
     },
     {
@@ -10985,7 +10985,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_qs",
-      "community": 161,
+      "community": 93,
       "norm_label": "qs"
     },
     {
@@ -10995,7 +10995,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_br",
-      "community": 86,
+      "community": 99,
       "norm_label": "br()"
     },
     {
@@ -11005,7 +11005,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_lo",
-      "community": 128,
+      "community": 106,
       "norm_label": "lo"
     },
     {
@@ -11015,7 +11015,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_an",
-      "community": 38,
+      "community": 102,
       "norm_label": "an"
     },
     {
@@ -11035,7 +11035,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ny",
-      "community": 149,
+      "community": 92,
       "norm_label": "ny()"
     },
     {
@@ -11065,7 +11065,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_il",
-      "community": 161,
+      "community": 93,
       "norm_label": "il()"
     },
     {
@@ -11085,7 +11085,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ue",
-      "community": 38,
+      "community": 92,
       "norm_label": "ue()"
     },
     {
@@ -11095,7 +11095,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_en",
-      "community": 38,
+      "community": 92,
       "norm_label": "en()"
     },
     {
@@ -11145,7 +11145,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_he",
-      "community": 16,
+      "community": 38,
       "norm_label": "he()"
     },
     {
@@ -11235,7 +11235,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ay",
-      "community": 161,
+      "community": 38,
       "norm_label": "ay()"
     },
     {
@@ -11285,7 +11285,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ly",
-      "community": 38,
+      "community": 102,
       "norm_label": "ly()"
     },
     {
@@ -11295,7 +11295,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ti",
-      "community": 119,
+      "community": 102,
       "norm_label": "ti()"
     },
     {
@@ -11365,7 +11365,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_cy",
-      "community": 87,
+      "community": 38,
       "norm_label": "cy()"
     },
     {
@@ -11515,7 +11515,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_wd",
-      "community": 132,
+      "community": 16,
       "norm_label": "wd()"
     },
     {
@@ -11525,7 +11525,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_xy",
-      "community": 119,
+      "community": 102,
       "norm_label": "xy()"
     },
     {
@@ -11535,7 +11535,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_xi",
-      "community": 119,
+      "community": 102,
       "norm_label": "xi()"
     },
     {
@@ -11665,7 +11665,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_i",
-      "community": 113,
+      "community": 93,
       "norm_label": "_i()"
     },
     {
@@ -11675,7 +11675,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_m",
-      "community": 113,
+      "community": 93,
       "norm_label": "m_()"
     },
     {
@@ -11705,7 +11705,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_z",
-      "community": 16,
+      "community": 29,
       "norm_label": "z_()"
     },
     {
@@ -11715,7 +11715,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_k",
-      "community": 111,
+      "community": 86,
       "norm_label": "k_()"
     },
     {
@@ -11795,7 +11795,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_tc",
-      "community": 132,
+      "community": 16,
       "norm_label": "tc()"
     },
     {
@@ -11805,7 +11805,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_jc",
-      "community": 132,
+      "community": 16,
       "norm_label": "jc()"
     },
     {
@@ -11885,7 +11885,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ok",
-      "community": 140,
+      "community": 92,
       "norm_label": "ok()"
     },
     {
@@ -11895,7 +11895,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_lk",
-      "community": 140,
+      "community": 92,
       "norm_label": "lk()"
     },
     {
@@ -11915,7 +11915,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ck",
-      "community": 161,
+      "community": 93,
       "norm_label": "ck()"
     },
     {
@@ -11935,7 +11935,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_mk",
-      "community": 161,
+      "community": 93,
       "norm_label": "mk()"
     },
     {
@@ -11975,7 +11975,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_av",
-      "community": 161,
+      "community": 86,
       "norm_label": "av()"
     },
     {
@@ -11985,7 +11985,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_hr",
-      "community": 161,
+      "community": 86,
       "norm_label": "hr()"
     },
     {
@@ -11995,7 +11995,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_wk",
-      "community": 161,
+      "community": 86,
       "norm_label": "wk()"
     },
     {
@@ -12015,7 +12015,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_sk",
-      "community": 140,
+      "community": 92,
       "norm_label": "sk()"
     },
     {
@@ -12025,7 +12025,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ek",
-      "community": 161,
+      "community": 86,
       "norm_label": "ek()"
     },
     {
@@ -12085,7 +12085,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_uv",
-      "community": 111,
+      "community": 86,
       "norm_label": "uv()"
     },
     {
@@ -12095,7 +12095,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_rk",
-      "community": 161,
+      "community": 93,
       "norm_label": "rk()"
     },
     {
@@ -12125,7 +12125,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_fk",
-      "community": 161,
+      "community": 86,
       "norm_label": "fk()"
     },
     {
@@ -12145,7 +12145,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_uk_get",
-      "community": 92,
+      "community": 161,
       "norm_label": ".get()"
     },
     {
@@ -12315,7 +12315,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ze_add",
-      "community": 102,
+      "community": 161,
       "norm_label": ".add()"
     },
     {
@@ -12465,7 +12465,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_pv",
-      "community": 97,
+      "community": 16,
       "norm_label": "pv()"
     },
     {
@@ -12735,7 +12735,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ej",
-      "community": 161,
+      "community": 93,
       "norm_label": "ej()"
     },
     {
@@ -12755,7 +12755,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_j",
-      "community": 92,
+      "community": 161,
       "norm_label": "_j()"
     },
     {
@@ -12805,7 +12805,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_dj",
-      "community": 92,
+      "community": 161,
       "norm_label": "dj()"
     },
     {
@@ -12815,7 +12815,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_gg",
-      "community": 147,
+      "community": 133,
       "norm_label": "gg()"
     },
     {
@@ -12825,7 +12825,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nj",
-      "community": 147,
+      "community": 16,
       "norm_label": "nj()"
     },
     {
@@ -12835,7 +12835,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_rj",
-      "community": 147,
+      "community": 16,
       "norm_label": "rj()"
     },
     {
@@ -12845,7 +12845,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_lj",
-      "community": 147,
+      "community": 16,
       "norm_label": "lj()"
     },
     {
@@ -12855,7 +12855,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_rv",
-      "community": 147,
+      "community": 16,
       "norm_label": "rv()"
     },
     {
@@ -12865,7 +12865,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_zj",
-      "community": 147,
+      "community": 16,
       "norm_label": "zj()"
     },
     {
@@ -12905,7 +12905,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_nr",
-      "community": 161,
+      "community": 93,
       "norm_label": "nr()"
     },
     {
@@ -12925,7 +12925,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_dm",
-      "community": 140,
+      "community": 92,
       "norm_label": "dm()"
     },
     {
@@ -12945,7 +12945,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_sm",
-      "community": 161,
+      "community": 93,
       "norm_label": "sm()"
     },
     {
@@ -12975,7 +12975,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_tm",
-      "community": 161,
+      "community": 93,
       "norm_label": "tm()"
     },
     {
@@ -13035,7 +13035,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_kv",
-      "community": 16,
+      "community": 149,
       "norm_label": "kv()"
     },
     {
@@ -13075,7 +13075,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_qv",
-      "community": 38,
+      "community": 92,
       "norm_label": "qv()"
     },
     {
@@ -13085,7 +13085,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_jv",
-      "community": 16,
+      "community": 38,
       "norm_label": "jv()"
     },
     {
@@ -13125,7 +13125,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_c0",
-      "community": 161,
+      "community": 93,
       "norm_label": "c0()"
     },
     {
@@ -13135,7 +13135,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_p0",
-      "community": 161,
+      "community": 93,
       "norm_label": "p0()"
     },
     {
@@ -13195,7 +13195,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_pn",
-      "community": 161,
+      "community": 93,
       "norm_label": "pn"
     },
     {
@@ -13205,7 +13205,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_pn_render",
-      "community": 161,
+      "community": 93,
       "norm_label": ".render()"
     },
     {
@@ -13215,7 +13215,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_mn",
-      "community": 161,
+      "community": 93,
       "norm_label": "mn()"
     },
     {
@@ -13245,7 +13245,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ia",
-      "community": 16,
+      "community": 29,
       "norm_label": "ia()"
     },
     {
@@ -13275,7 +13275,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_gn_render",
-      "community": 161,
+      "community": 93,
       "norm_label": ".render()"
     },
     {
@@ -13305,7 +13305,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_zr",
-      "community": 132,
+      "community": 16,
       "norm_label": "zr()"
     },
     {
@@ -13325,7 +13325,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_xr",
-      "community": 132,
+      "community": 93,
       "norm_label": "xr()"
     },
     {
@@ -13335,7 +13335,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_qr_render",
-      "community": 132,
+      "community": 93,
       "norm_label": ".render()"
     },
     {
@@ -13405,7 +13405,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ch",
-      "community": 87,
+      "community": 141,
       "norm_label": "ch()"
     },
     {
@@ -13445,7 +13445,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_charts_gamp28bz_ph",
-      "community": 161,
+      "community": 93,
       "norm_label": "ph()"
     },
     {
@@ -13705,7 +13705,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_je",
-      "community": 86,
+      "community": 99,
       "norm_label": "je()"
     },
     {
@@ -13725,7 +13725,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_nt",
-      "community": 110,
+      "community": 19,
       "norm_label": "nt()"
     },
     {
@@ -13735,7 +13735,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ne",
-      "community": 86,
+      "community": 29,
       "norm_label": "ne()"
     },
     {
@@ -13795,7 +13795,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ke",
-      "community": 19,
+      "community": 122,
       "norm_label": "ke()"
     },
     {
@@ -13805,7 +13805,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_te",
-      "community": 166,
+      "community": 29,
       "norm_label": "te()"
     },
     {
@@ -13885,7 +13885,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_g",
-      "community": 166,
+      "community": 29,
       "norm_label": "g()"
     },
     {
@@ -13895,7 +13895,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_pi",
-      "community": 86,
+      "community": 99,
       "norm_label": "pi()"
     },
     {
@@ -13905,7 +13905,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_mi",
-      "community": 110,
+      "community": 19,
       "norm_label": "mi()"
     },
     {
@@ -13915,7 +13915,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_er",
-      "community": 110,
+      "community": 19,
       "norm_label": "er()"
     },
     {
@@ -13925,7 +13925,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_it",
-      "community": 110,
+      "community": 19,
       "norm_label": "it()"
     },
     {
@@ -13945,7 +13945,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_we",
-      "community": 166,
+      "community": 29,
       "norm_label": "we()"
     },
     {
@@ -13995,7 +13995,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_e",
-      "community": 110,
+      "community": 19,
       "norm_label": "$e()"
     },
     {
@@ -14055,7 +14055,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ii",
-      "community": 166,
+      "community": 29,
       "norm_label": "ii()"
     },
     {
@@ -14065,7 +14065,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_oi",
-      "community": 166,
+      "community": 29,
       "norm_label": "oi()"
     },
     {
@@ -14075,7 +14075,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ji",
-      "community": 166,
+      "community": 29,
       "norm_label": "ji()"
     },
     {
@@ -14105,7 +14105,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_gn",
-      "community": 166,
+      "community": 29,
       "norm_label": "gn()"
     },
     {
@@ -14125,7 +14125,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_or",
-      "community": 108,
+      "community": 114,
       "norm_label": "or()"
     },
     {
@@ -14135,7 +14135,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ni",
-      "community": 19,
+      "community": 114,
       "norm_label": "ni()"
     },
     {
@@ -14155,7 +14155,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_lr",
-      "community": 161,
+      "community": 92,
       "norm_label": "lr()"
     },
     {
@@ -14185,7 +14185,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ur",
-      "community": 110,
+      "community": 19,
       "norm_label": "ur"
     },
     {
@@ -14195,7 +14195,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_tn",
-      "community": 108,
+      "community": 112,
       "norm_label": "tn()"
     },
     {
@@ -14225,7 +14225,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ut",
-      "community": 86,
+      "community": 29,
       "norm_label": "ut"
     },
     {
@@ -14275,7 +14275,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_se",
-      "community": 86,
+      "community": 103,
       "norm_label": "se"
     },
     {
@@ -14305,7 +14305,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_et",
-      "community": 166,
+      "community": 29,
       "norm_label": "et"
     },
     {
@@ -14315,7 +14315,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_t",
-      "community": 119,
+      "community": 138,
       "norm_label": "t"
     },
     {
@@ -14335,7 +14335,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_yr",
-      "community": 110,
+      "community": 19,
       "norm_label": "yr"
     },
     {
@@ -14365,7 +14365,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_k",
-      "community": 86,
+      "community": 99,
       "norm_label": "k"
     },
     {
@@ -14425,7 +14425,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_h",
-      "community": 86,
+      "community": 99,
       "norm_label": "h"
     },
     {
@@ -14455,7 +14455,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_c",
-      "community": 86,
+      "community": 99,
       "norm_label": "c()"
     },
     {
@@ -14495,7 +14495,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ge",
-      "community": 86,
+      "community": 29,
       "norm_label": "ge"
     },
     {
@@ -14515,7 +14515,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_xi",
-      "community": 110,
+      "community": 92,
       "norm_label": "xi()"
     },
     {
@@ -14565,7 +14565,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_he",
-      "community": 166,
+      "community": 29,
       "norm_label": "he()"
     },
     {
@@ -14575,7 +14575,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_hi",
-      "community": 166,
+      "community": 29,
       "norm_label": "hi()"
     },
     {
@@ -14585,7 +14585,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_jr",
-      "community": 110,
+      "community": 19,
       "norm_label": "jr()"
     },
     {
@@ -14595,7 +14595,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_sn",
-      "community": 110,
+      "community": 19,
       "norm_label": "sn()"
     },
     {
@@ -14605,7 +14605,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_lt",
-      "community": 166,
+      "community": 29,
       "norm_label": "lt()"
     },
     {
@@ -14615,7 +14615,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_qi",
-      "community": 86,
+      "community": 99,
       "norm_label": "qi()"
     },
     {
@@ -14625,7 +14625,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ve",
-      "community": 86,
+      "community": 99,
       "norm_label": "ve()"
     },
     {
@@ -14635,7 +14635,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_zr",
-      "community": 19,
+      "community": 122,
       "norm_label": "zr()"
     },
     {
@@ -14645,7 +14645,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_r",
-      "community": 166,
+      "community": 29,
       "norm_label": "$r()"
     },
     {
@@ -14655,7 +14655,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_zi",
-      "community": 166,
+      "community": 29,
       "norm_label": "zi()"
     },
     {
@@ -14695,7 +14695,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_qe",
-      "community": 122,
+      "community": 106,
       "norm_label": "qe"
     },
     {
@@ -14705,7 +14705,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_qe_constructor",
-      "community": 122,
+      "community": 106,
       "norm_label": ".constructor()"
     },
     {
@@ -14715,7 +14715,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_qe_finished",
-      "community": 122,
+      "community": 106,
       "norm_label": ".finished()"
     },
     {
@@ -14725,7 +14725,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_qe_updatefinished",
-      "community": 122,
+      "community": 106,
       "norm_label": ".updatefinished()"
     },
     {
@@ -14735,7 +14735,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_qe_notifyfinished",
-      "community": 122,
+      "community": 106,
       "norm_label": ".notifyfinished()"
     },
     {
@@ -14745,7 +14745,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_qe_then",
-      "community": 122,
+      "community": 106,
       "norm_label": ".then()"
     },
     {
@@ -14885,7 +14885,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ht_complete",
-      "community": 114,
+      "community": 122,
       "norm_label": ".complete()"
     },
     {
@@ -14935,7 +14935,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ht_sample",
-      "community": 128,
+      "community": 122,
       "norm_label": ".sample()"
     },
     {
@@ -14955,7 +14955,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_qr",
-      "community": 120,
+      "community": 112,
       "norm_label": "qr()"
     },
     {
@@ -14965,7 +14965,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_xe",
-      "community": 86,
+      "community": 29,
       "norm_label": "xe()"
     },
     {
@@ -14975,7 +14975,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ae",
-      "community": 86,
+      "community": 29,
       "norm_label": "ae()"
     },
     {
@@ -15005,7 +15005,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_be",
-      "community": 86,
+      "community": 99,
       "norm_label": "be()"
     },
     {
@@ -15025,7 +15025,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_vt",
-      "community": 112,
+      "community": 15,
       "norm_label": "vt"
     },
     {
@@ -15045,7 +15045,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_pn",
-      "community": 108,
+      "community": 112,
       "norm_label": "pn()"
     },
     {
@@ -15075,7 +15075,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_io",
-      "community": 108,
+      "community": 112,
       "norm_label": "io()"
     },
     {
@@ -15105,7 +15105,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ts",
-      "community": 108,
+      "community": 120,
       "norm_label": "ts()"
     },
     {
@@ -15115,7 +15115,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_es",
-      "community": 108,
+      "community": 120,
       "norm_label": "es()"
     },
     {
@@ -15125,7 +15125,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so",
-      "community": 114,
+      "community": 120,
       "norm_label": "so()"
     },
     {
@@ -15145,7 +15145,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ze_scheduleresolve",
-      "community": 108,
+      "community": 120,
       "norm_label": ".scheduleresolve()"
     },
     {
@@ -15155,7 +15155,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ze_readkeyframes",
-      "community": 120,
+      "community": 112,
       "norm_label": ".readkeyframes()"
     },
     {
@@ -15355,7 +15355,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_os_play",
-      "community": 122,
+      "community": 106,
       "norm_label": ".play()"
     },
     {
@@ -15435,7 +15435,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_os_time",
-      "community": 166,
+      "community": 29,
       "norm_label": ".time()"
     },
     {
@@ -15495,7 +15495,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_co",
-      "community": 19,
+      "community": 106,
       "norm_label": "co()"
     },
     {
@@ -15505,7 +15505,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ho",
-      "community": 19,
+      "community": 106,
       "norm_label": "ho()"
     },
     {
@@ -15515,7 +15515,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_fo",
-      "community": 128,
+      "community": 106,
       "norm_label": "fo"
     },
     {
@@ -15525,7 +15525,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_fo_constructor",
-      "community": 128,
+      "community": 106,
       "norm_label": ".constructor()"
     },
     {
@@ -15535,7 +15535,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_fo_updatemotionvalue",
-      "community": 128,
+      "community": 106,
       "norm_label": ".updatemotionvalue()"
     },
     {
@@ -15575,7 +15575,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_pe",
-      "community": 86,
+      "community": 29,
       "norm_label": "pe()"
     },
     {
@@ -15665,7 +15665,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_bo_then",
-      "community": 127,
+      "community": 114,
       "norm_label": ".then()"
     },
     {
@@ -15745,7 +15745,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_bo_attachtimeline",
-      "community": 114,
+      "community": 128,
       "norm_label": ".attachtimeline()"
     },
     {
@@ -15795,7 +15795,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_constructor",
-      "community": 114,
+      "community": 120,
       "norm_label": ".constructor()"
     },
     {
@@ -15805,7 +15805,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_finished",
-      "community": 114,
+      "community": 120,
       "norm_label": ".finished()"
     },
     {
@@ -15815,7 +15815,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_getall",
-      "community": 114,
+      "community": 120,
       "norm_label": ".getall()"
     },
     {
@@ -15825,7 +15825,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_setall",
-      "community": 114,
+      "community": 120,
       "norm_label": ".setall()"
     },
     {
@@ -15845,7 +15845,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_time",
-      "community": 114,
+      "community": 120,
       "norm_label": ".time()"
     },
     {
@@ -15855,7 +15855,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_speed",
-      "community": 114,
+      "community": 120,
       "norm_label": ".speed()"
     },
     {
@@ -15865,7 +15865,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_state",
-      "community": 114,
+      "community": 120,
       "norm_label": ".state()"
     },
     {
@@ -15875,7 +15875,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_starttime",
-      "community": 114,
+      "community": 120,
       "norm_label": ".starttime()"
     },
     {
@@ -15885,7 +15885,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_duration",
-      "community": 114,
+      "community": 120,
       "norm_label": ".duration()"
     },
     {
@@ -15895,7 +15895,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_iterationduration",
-      "community": 114,
+      "community": 120,
       "norm_label": ".iterationduration()"
     },
     {
@@ -15905,7 +15905,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_runall",
-      "community": 114,
+      "community": 120,
       "norm_label": ".runall()"
     },
     {
@@ -15915,7 +15915,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_play",
-      "community": 114,
+      "community": 122,
       "norm_label": ".play()"
     },
     {
@@ -15925,7 +15925,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_pause",
-      "community": 122,
+      "community": 120,
       "norm_label": ".pause()"
     },
     {
@@ -15945,7 +15945,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_so_complete",
-      "community": 108,
+      "community": 120,
       "norm_label": ".complete()"
     },
     {
@@ -15955,7 +15955,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_cn",
-      "community": 114,
+      "community": 120,
       "norm_label": "cn()"
     },
     {
@@ -15975,7 +15975,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_us",
-      "community": 127,
+      "community": 108,
       "norm_label": "us()"
     },
     {
@@ -16035,7 +16035,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_do_onchange",
-      "community": 112,
+      "community": 149,
       "norm_label": ".onchange()"
     },
     {
@@ -16085,7 +16085,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_do_setwithvelocity",
-      "community": 128,
+      "community": 106,
       "norm_label": ".setwithvelocity()"
     },
     {
@@ -16095,7 +16095,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_do_jump",
-      "community": 108,
+      "community": 112,
       "norm_label": ".jump()"
     },
     {
@@ -16135,7 +16135,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_do_get",
-      "community": 108,
+      "community": 112,
       "norm_label": ".get()"
     },
     {
@@ -16155,7 +16155,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_do_getvelocity",
-      "community": 86,
+      "community": 99,
       "norm_label": ".getvelocity()"
     },
     {
@@ -16185,7 +16185,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_do_isanimating",
-      "community": 127,
+      "community": 128,
       "norm_label": ".isanimating()"
     },
     {
@@ -16215,7 +16215,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_pt",
-      "community": 86,
+      "community": 96,
       "norm_label": "pt()"
     },
     {
@@ -16225,7 +16225,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_cs",
-      "community": 122,
+      "community": 106,
       "norm_label": "cs()"
     },
     {
@@ -16235,7 +16235,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ko",
-      "community": 108,
+      "community": 112,
       "norm_label": "ko"
     },
     {
@@ -16245,7 +16245,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_hs",
-      "community": 86,
+      "community": 29,
       "norm_label": "hs()"
     },
     {
@@ -16265,7 +16265,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_kn",
-      "community": 108,
+      "community": 112,
       "norm_label": "kn()"
     },
     {
@@ -16305,7 +16305,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_me",
-      "community": 86,
+      "community": 87,
       "norm_label": "me()"
     },
     {
@@ -16325,7 +16325,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ms",
-      "community": 19,
+      "community": 127,
       "norm_label": "ms()"
     },
     {
@@ -16395,7 +16395,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ce",
-      "community": 86,
+      "community": 99,
       "norm_label": "ce"
     },
     {
@@ -16425,7 +16425,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_qo",
-      "community": 19,
+      "community": 112,
       "norm_label": "qo"
     },
     {
@@ -16435,7 +16435,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_vs",
-      "community": 19,
+      "community": 112,
       "norm_label": "vs()"
     },
     {
@@ -16455,7 +16455,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ea",
-      "community": 19,
+      "community": 112,
       "norm_label": "ea()"
     },
     {
@@ -16465,7 +16465,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_na",
-      "community": 108,
+      "community": 112,
       "norm_label": "na"
     },
     {
@@ -16475,7 +16475,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_na_constructor",
-      "community": 108,
+      "community": 112,
       "norm_label": ".constructor()"
     },
     {
@@ -16485,7 +16485,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_na_readkeyframes",
-      "community": 108,
+      "community": 112,
       "norm_label": ".readkeyframes()"
     },
     {
@@ -16495,7 +16495,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_na_resolvenonekeyframes",
-      "community": 108,
+      "community": 112,
       "norm_label": ".resolvenonekeyframes()"
     },
     {
@@ -16505,7 +16505,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_na_measureinitialstate",
-      "community": 108,
+      "community": 112,
       "norm_label": ".measureinitialstate()"
     },
     {
@@ -16515,7 +16515,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_na_measureendstate",
-      "community": 108,
+      "community": 112,
       "norm_label": ".measureendstate()"
     },
     {
@@ -16555,7 +16555,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_y",
-      "community": 86,
+      "community": 87,
       "norm_label": "y"
     },
     {
@@ -16575,7 +16575,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_bs",
-      "community": 19,
+      "community": 108,
       "norm_label": "bs()"
     },
     {
@@ -16585,7 +16585,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_sa",
-      "community": 19,
+      "community": 108,
       "norm_label": "sa()"
     },
     {
@@ -16595,7 +16595,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_eu",
-      "community": 19,
+      "community": 108,
       "norm_label": "eu()"
     },
     {
@@ -16605,7 +16605,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ra",
-      "community": 110,
+      "community": 108,
       "norm_label": "ra()"
     },
     {
@@ -16625,7 +16625,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_aa",
-      "community": 108,
+      "community": 112,
       "norm_label": "aa()"
     },
     {
@@ -16635,7 +16635,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_la",
-      "community": 110,
+      "community": 19,
       "norm_label": "la"
     },
     {
@@ -16665,7 +16665,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_fn",
-      "community": 141,
+      "community": 108,
       "norm_label": "fn()"
     },
     {
@@ -16675,7 +16675,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ua",
-      "community": 141,
+      "community": 108,
       "norm_label": "ua()"
     },
     {
@@ -16685,7 +16685,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_in",
-      "community": 110,
+      "community": 108,
       "norm_label": "in()"
     },
     {
@@ -16805,7 +16805,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ws",
-      "community": 112,
+      "community": 15,
       "norm_label": "ws()"
     },
     {
@@ -16825,7 +16825,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_jn",
-      "community": 112,
+      "community": 15,
       "norm_label": "jn()"
     },
     {
@@ -16835,7 +16835,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_b",
-      "community": 86,
+      "community": 29,
       "norm_label": "b()"
     },
     {
@@ -16845,7 +16845,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_xa",
-      "community": 112,
+      "community": 15,
       "norm_label": "xa()"
     },
     {
@@ -16855,7 +16855,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ru",
-      "community": 87,
+      "community": 141,
       "norm_label": "ru()"
     },
     {
@@ -16865,7 +16865,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ou",
-      "community": 87,
+      "community": 141,
       "norm_label": "ou()"
     },
     {
@@ -16885,7 +16885,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_rs_constructor",
-      "community": 112,
+      "community": 15,
       "norm_label": ".constructor()"
     },
     {
@@ -16945,7 +16945,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_rs_sortnodeposition",
-      "community": 127,
+      "community": 108,
       "norm_label": ".sortnodeposition()"
     },
     {
@@ -16955,7 +16955,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_rs_updatefeatures",
-      "community": 112,
+      "community": 15,
       "norm_label": ".updatefeatures()"
     },
     {
@@ -16965,7 +16965,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_rs_triggerbuild",
-      "community": 112,
+      "community": 15,
       "norm_label": ".triggerbuild()"
     },
     {
@@ -16975,7 +16975,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_rs_measureviewportbox",
-      "community": 108,
+      "community": 112,
       "norm_label": ".measureviewportbox()"
     },
     {
@@ -17005,7 +17005,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_rs_update",
-      "community": 112,
+      "community": 149,
       "norm_label": ".update()"
     },
     {
@@ -17075,7 +17075,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_rs_addvalue",
-      "community": 108,
+      "community": 112,
       "norm_label": ".addvalue()"
     },
     {
@@ -17085,7 +17085,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_rs_removevalue",
-      "community": 108,
+      "community": 112,
       "norm_label": ".removevalue()"
     },
     {
@@ -17095,7 +17095,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_rs_hasvalue",
-      "community": 108,
+      "community": 112,
       "norm_label": ".hasvalue()"
     },
     {
@@ -17105,7 +17105,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_rs_getvalue",
-      "community": 108,
+      "community": 112,
       "norm_label": ".getvalue()"
     },
     {
@@ -17145,7 +17145,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_rs_on",
-      "community": 112,
+      "community": 149,
       "norm_label": ".on()"
     },
     {
@@ -17175,7 +17175,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_cs_constructor",
-      "community": 122,
+      "community": 106,
       "norm_label": ".constructor()"
     },
     {
@@ -17185,7 +17185,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_cs_sortinstancenodeposition",
-      "community": 122,
+      "community": 106,
       "norm_label": ".sortinstancenodeposition()"
     },
     {
@@ -17195,7 +17195,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_cs_getbasetargetfromprops",
-      "community": 122,
+      "community": 106,
       "norm_label": ".getbasetargetfromprops()"
     },
     {
@@ -17205,7 +17205,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_cs_removevaluefromrenderstate",
-      "community": 122,
+      "community": 106,
       "norm_label": ".removevaluefromrenderstate()"
     },
     {
@@ -17215,7 +17215,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_cs_handlechildmotionvalue",
-      "community": 112,
+      "community": 149,
       "norm_label": ".handlechildmotionvalue()"
     },
     {
@@ -17225,7 +17225,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_au",
-      "community": 112,
+      "community": 15,
       "norm_label": "au"
     },
     {
@@ -17235,7 +17235,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_au_constructor",
-      "community": 112,
+      "community": 15,
       "norm_label": ".constructor()"
     },
     {
@@ -17245,7 +17245,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_au_update",
-      "community": 112,
+      "community": 15,
       "norm_label": ".update()"
     },
     {
@@ -17265,7 +17265,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_wa",
-      "community": 19,
+      "community": 108,
       "norm_label": "wa()"
     },
     {
@@ -17275,7 +17275,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_le",
-      "community": 86,
+      "community": 29,
       "norm_label": "le()"
     },
     {
@@ -17285,7 +17285,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_un",
-      "community": 108,
+      "community": 120,
       "norm_label": "un()"
     },
     {
@@ -17305,7 +17305,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_fe",
-      "community": 86,
+      "community": 29,
       "norm_label": "fe()"
     },
     {
@@ -17325,7 +17325,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_j",
-      "community": 86,
+      "community": 29,
       "norm_label": "j()"
     },
     {
@@ -17375,7 +17375,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ie",
-      "community": 86,
+      "community": 29,
       "norm_label": "ie"
     },
     {
@@ -17495,7 +17495,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_fa_measureinstanceviewportbox",
-      "community": 108,
+      "community": 112,
       "norm_label": ".measureinstanceviewportbox()"
     },
     {
@@ -17525,7 +17525,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_fa_sortinstancenodeposition",
-      "community": 127,
+      "community": 108,
       "norm_label": ".sortinstancenodeposition()"
     },
     {
@@ -17545,7 +17545,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_za",
-      "community": 112,
+      "community": 15,
       "norm_label": "za()"
     },
     {
@@ -17555,7 +17555,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_a",
-      "community": 112,
+      "community": 15,
       "norm_label": "$a"
     },
     {
@@ -17565,7 +17565,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_a_constructor",
-      "community": 112,
+      "community": 15,
       "norm_label": ".constructor()"
     },
     {
@@ -17585,7 +17585,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_a_readvaluefrominstance",
-      "community": 112,
+      "community": 15,
       "norm_label": ".readvaluefrominstance()"
     },
     {
@@ -17595,7 +17595,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_a_scrapemotionvaluesfromprops",
-      "community": 112,
+      "community": 15,
       "norm_label": ".scrapemotionvaluesfromprops()"
     },
     {
@@ -17605,7 +17605,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_a_build",
-      "community": 112,
+      "community": 15,
       "norm_label": ".build()"
     },
     {
@@ -17615,7 +17615,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_a_renderinstance",
-      "community": 112,
+      "community": 15,
       "norm_label": ".renderinstance()"
     },
     {
@@ -17625,7 +17625,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_a_mount",
-      "community": 112,
+      "community": 15,
       "norm_label": ".mount()"
     },
     {
@@ -17645,7 +17645,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_x",
-      "community": 86,
+      "community": 29,
       "norm_label": "x()"
     },
     {
@@ -17815,7 +17815,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_s",
-      "community": 86,
+      "community": 29,
       "norm_label": "$s()"
     },
     {
@@ -17825,7 +17825,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_hl",
-      "community": 150,
+      "community": 147,
       "norm_label": "hl()"
     },
     {
@@ -17925,7 +17925,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_ml_add",
-      "community": 108,
+      "community": 149,
       "norm_label": ".add()"
     },
     {
@@ -17995,7 +17995,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_de",
-      "community": 86,
+      "community": 99,
       "norm_label": "de"
     },
     {
@@ -18005,7 +18005,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_xs",
-      "community": 19,
+      "community": 127,
       "norm_label": "xs()"
     },
     {
@@ -18065,7 +18065,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_kl",
-      "community": 92,
+      "community": 19,
       "norm_label": "kl"
     },
     {
@@ -18085,7 +18085,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_du",
-      "community": 87,
+      "community": 19,
       "norm_label": "du()"
     },
     {
@@ -18095,7 +18095,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_jl",
-      "community": 166,
+      "community": 29,
       "norm_label": "jl()"
     },
     {
@@ -18105,7 +18105,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_zl",
-      "community": 166,
+      "community": 29,
       "norm_label": "zl()"
     },
     {
@@ -18115,7 +18115,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_l",
-      "community": 110,
+      "community": 29,
       "norm_label": "$l()"
     },
     {
@@ -18135,7 +18135,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_vendor_motion_b4dy8_cb_gl",
-      "community": 112,
+      "community": 15,
       "norm_label": "gl()"
     },
     {
@@ -18175,7 +18175,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_wallet_bmj_4wzg",
-      "community": 138,
+      "community": 96,
       "norm_label": "wallet-bmj-4wzg.js"
     },
     {
@@ -18185,7 +18185,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_wallet_bmj_4wzg_e",
-      "community": 138,
+      "community": 96,
       "norm_label": "e"
     },
     {
@@ -18195,7 +18195,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_wallet_bmj_4wzg_o",
-      "community": 138,
+      "community": 96,
       "norm_label": "o"
     },
     {
@@ -18205,7 +18205,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_web_bynl_nyp",
-      "community": 125,
+      "community": 124,
       "norm_label": "web-bynl-nyp.js"
     },
     {
@@ -18215,7 +18215,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_web_bynl_nyp_o",
-      "community": 125,
+      "community": 124,
       "norm_label": "o"
     },
     {
@@ -19295,7 +19295,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_x_cs1gtdzz",
-      "community": 163,
+      "community": 96,
       "norm_label": "x-cs1gtdzz.js"
     },
     {
@@ -19305,7 +19305,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_x_cs1gtdzz_c",
-      "community": 29,
+      "community": 138,
       "norm_label": "c"
     },
     {
@@ -19315,7 +19315,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_assets_x_cs1gtdzz_t",
-      "community": 163,
+      "community": 96,
       "norm_label": "t"
     },
     {
@@ -19855,7 +19855,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_workbox_0bb07689_b",
-      "community": 29,
+      "community": 87,
       "norm_label": "b"
     },
     {
@@ -19865,7 +19865,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "android_app_src_main_assets_public_workbox_0bb07689_b_constructor",
-      "community": 29,
+      "community": 87,
       "norm_label": ".constructor()"
     },
     {
@@ -24361,7 +24361,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "server_app",
-      "community": 151,
+      "community": 85,
       "norm_label": "app"
     },
     {
@@ -24701,7 +24701,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_betclicimport",
-      "community": 15,
+      "community": 115,
       "norm_label": "betclicimport.tsx"
     },
     {
@@ -24711,7 +24711,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_components_betclicimport_extension_bookie_keys",
-      "community": 15,
+      "community": 115,
       "norm_label": "extension_bookie_keys"
     },
     {
@@ -24721,7 +24721,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_components_betclicimport_extension_bookies",
-      "community": 15,
+      "community": 115,
       "norm_label": "extension_bookies"
     },
     {
@@ -24731,7 +24731,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_components_betclicimport_loadaccountchoices",
-      "community": 15,
+      "community": 115,
       "norm_label": "loadaccountchoices()"
     },
     {
@@ -24741,7 +24741,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_components_betclicimport_importsummary",
-      "community": 15,
+      "community": 115,
       "norm_label": "importsummary()"
     },
     {
@@ -24751,7 +24751,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_components_betclicimport_installsteps",
-      "community": 15,
+      "community": 115,
       "norm_label": "installsteps()"
     },
     {
@@ -24761,7 +24761,7 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "src_components_betclicimport_betclicimportprops",
-      "community": 15,
+      "community": 115,
       "norm_label": "betclicimportprops"
     },
     {
@@ -24771,7 +24771,7 @@
       "source_location": "L112",
       "_origin": "ast",
       "id": "src_components_betclicimport_betclicimport",
-      "community": 15,
+      "community": 115,
       "norm_label": "betclicimport()"
     },
     {
@@ -24941,7 +24941,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_enabledbookmakerscard",
-      "community": 15,
+      "community": 115,
       "norm_label": "enabledbookmakerscard.tsx"
     },
     {
@@ -24951,7 +24951,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_components_enabledbookmakerscard_enabledbookmakerscardprops",
-      "community": 15,
+      "community": 115,
       "norm_label": "enabledbookmakerscardprops"
     },
     {
@@ -24961,7 +24961,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_components_enabledbookmakerscard_enabledbookmakerscard",
-      "community": 15,
+      "community": 115,
       "norm_label": "enabledbookmakerscard()"
     },
     {
@@ -25471,7 +25471,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hooks_usebetclicextension",
-      "community": 15,
+      "community": 115,
       "norm_label": "usebetclicextension.ts"
     },
     {
@@ -25481,7 +25481,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_hooks_usebetclicextension_bookmakerimportresult",
-      "community": 15,
+      "community": 115,
       "norm_label": "bookmakerimportresult"
     },
     {
@@ -25491,7 +25491,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_hooks_usebetclicextension_allsourcesimportresult",
-      "community": 15,
+      "community": 115,
       "norm_label": "allsourcesimportresult"
     },
     {
@@ -25501,7 +25501,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_hooks_usebetclicextension_usebetclicextension",
-      "community": 15,
+      "community": 115,
       "norm_label": "usebetclicextension()"
     },
     {
@@ -25571,7 +25571,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_hooks_usetheme",
-      "community": 115,
+      "community": 109,
       "norm_label": "usetheme.ts"
     },
     {
@@ -25581,7 +25581,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_hooks_usetheme_systemprefersdark",
-      "community": 115,
+      "community": 109,
       "norm_label": "systemprefersdark()"
     },
     {
@@ -26241,7 +26241,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "src_lib_bookmakers_bookmakerlabel",
-      "community": 15,
+      "community": 115,
       "norm_label": "bookmakerlabel()"
     },
     {
@@ -26491,7 +26491,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "src_lib_i18n_translate",
-      "community": 109,
+      "community": 25,
       "norm_label": "translate()"
     },
     {
@@ -26821,7 +26821,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_mobile_accountsheet",
-      "community": 25,
+      "community": 85,
       "norm_label": "accountsheet.tsx"
     },
     {
@@ -26841,7 +26841,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_mobile_accountsheet_accountsheet",
-      "community": 25,
+      "community": 85,
       "norm_label": "accountsheet()"
     },
     {
@@ -26851,7 +26851,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_mobile_mobileapp",
-      "community": 151,
+      "community": 85,
       "norm_label": "mobileapp.tsx"
     },
     {
@@ -26861,7 +26861,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_mobile_mobileapp_mobiledashboard",
-      "community": 151,
+      "community": 85,
       "norm_label": "mobiledashboard"
     },
     {
@@ -26871,7 +26871,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_mobile_mobileapp_mobilebets",
-      "community": 151,
+      "community": 85,
       "norm_label": "mobilebets"
     },
     {
@@ -26881,7 +26881,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_mobile_mobileapp_mobileimport",
-      "community": 151,
+      "community": 85,
       "norm_label": "mobileimport"
     },
     {
@@ -26891,7 +26891,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_mobile_mobileapp_mobilesettings",
-      "community": 151,
+      "community": 85,
       "norm_label": "mobilesettings"
     },
     {
@@ -26901,7 +26901,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_mobile_mobileapp_mobilesocial",
-      "community": 151,
+      "community": 85,
       "norm_label": "mobilesocial"
     },
     {
@@ -26911,7 +26911,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_mobile_mobileapp_mobileinsights",
-      "community": 151,
+      "community": 85,
       "norm_label": "mobileinsights"
     },
     {
@@ -26921,7 +26921,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_mobile_mobileapp_mobileshell",
-      "community": 151,
+      "community": 85,
       "norm_label": "mobileshell()"
     },
     {
@@ -26931,7 +26931,7 @@
       "source_location": "L239",
       "_origin": "ast",
       "id": "src_mobile_mobileapp_mobileapp",
-      "community": 151,
+      "community": 85,
       "norm_label": "mobileapp()"
     },
     {
@@ -26941,7 +26941,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_mobile_lib_backstack",
-      "community": 151,
+      "community": 85,
       "norm_label": "backstack.ts"
     },
     {
@@ -26951,7 +26951,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_mobile_lib_backstack_backentry",
-      "community": 151,
+      "community": 85,
       "norm_label": "backentry"
     },
     {
@@ -26961,7 +26961,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_mobile_lib_backstack_stack",
-      "community": 151,
+      "community": 85,
       "norm_label": "stack"
     },
     {
@@ -26971,7 +26971,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_mobile_lib_backstack_runtopbackhandler",
-      "community": 151,
+      "community": 85,
       "norm_label": "runtopbackhandler()"
     },
     {
@@ -26981,7 +26981,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_mobile_lib_backstack_hasbackhandler",
-      "community": 151,
+      "community": 85,
       "norm_label": "hasbackhandler()"
     },
     {
@@ -26991,7 +26991,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_mobile_lib_backstack_push",
-      "community": 151,
+      "community": 85,
       "norm_label": "push()"
     },
     {
@@ -27001,7 +27001,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_mobile_lib_backstack_remove",
-      "community": 151,
+      "community": 85,
       "norm_label": "remove()"
     },
     {
@@ -27011,7 +27011,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_mobile_lib_backstack_usebackhandler",
-      "community": 151,
+      "community": 85,
       "norm_label": "usebackhandler()"
     },
     {
@@ -27021,7 +27021,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_mobile_lib_usenativechrome",
-      "community": 151,
+      "community": 85,
       "norm_label": "usenativechrome.ts"
     },
     {
@@ -27031,7 +27031,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_mobile_lib_usenativechrome_setthemecolormeta",
-      "community": 151,
+      "community": 85,
       "norm_label": "setthemecolormeta()"
     },
     {
@@ -27041,7 +27041,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_mobile_lib_usenativechrome_usenativechrome",
-      "community": 151,
+      "community": 85,
       "norm_label": "usenativechrome()"
     },
     {
@@ -27051,7 +27051,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "src_mobile_lib_usenativechrome_useandroidbackbutton",
-      "community": 151,
+      "community": 85,
       "norm_label": "useandroidbackbutton()"
     },
     {
@@ -27061,7 +27061,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "src_mobile_lib_usenativechrome_exitnativeapp",
-      "community": 151,
+      "community": 85,
       "norm_label": "exitnativeapp()"
     },
     {
@@ -27231,7 +27231,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard",
-      "community": 151,
+      "community": 101,
       "norm_label": "mobiledashboard.tsx"
     },
     {
@@ -27251,7 +27251,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard_timeframe",
-      "community": 151,
+      "community": 101,
       "norm_label": "timeframe"
     },
     {
@@ -27261,7 +27261,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard_timeframe_options",
-      "community": 151,
+      "community": 101,
       "norm_label": "timeframe_options"
     },
     {
@@ -27271,7 +27271,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard_type_options",
-      "community": 151,
+      "community": 101,
       "norm_label": "type_options"
     },
     {
@@ -27281,7 +27281,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard_money_options",
-      "community": 151,
+      "community": 101,
       "norm_label": "money_options"
     },
     {
@@ -27291,7 +27291,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard_months_pt",
-      "community": 151,
+      "community": 101,
       "norm_label": "months_pt"
     },
     {
@@ -27301,7 +27301,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard_status_meta",
-      "community": 151,
+      "community": 101,
       "norm_label": "status_meta"
     },
     {
@@ -27311,7 +27311,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard_tokey",
-      "community": 151,
+      "community": 101,
       "norm_label": "tokey()"
     },
     {
@@ -27321,7 +27321,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard_mobiledashboard",
-      "community": 151,
+      "community": 101,
       "norm_label": "mobiledashboard()"
     },
     {
@@ -27331,7 +27331,7 @@
       "source_location": "L668",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard_tones",
-      "community": 151,
+      "community": 101,
       "norm_label": "tones"
     },
     {
@@ -27341,7 +27341,7 @@
       "source_location": "L678",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard_kpicard",
-      "community": 151,
+      "community": 101,
       "norm_label": "kpicard()"
     },
     {
@@ -27351,7 +27351,7 @@
       "source_location": "L709",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard_row",
-      "community": 151,
+      "community": 101,
       "norm_label": "row()"
     },
     {
@@ -27361,7 +27361,7 @@
       "source_location": "L718",
       "_origin": "ast",
       "id": "src_mobile_screens_mobiledashboard_insight",
-      "community": 151,
+      "community": 101,
       "norm_label": "insight()"
     },
     {
@@ -27488,7 +27488,7 @@
       "label": "MobileSettingsProps",
       "file_type": "code",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L37",
+      "source_location": "L41",
       "_origin": "ast",
       "id": "src_mobile_screens_mobilesettings_mobilesettingsprops",
       "community": 109,
@@ -27498,7 +27498,7 @@
       "label": "MobileSettings()",
       "file_type": "code",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L57",
+      "source_location": "L61",
       "_origin": "ast",
       "id": "src_mobile_screens_mobilesettings_mobilesettings",
       "community": 115,
@@ -27571,7 +27571,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_mobile_ui_bottomsheet",
-      "community": 151,
+      "community": 85,
       "norm_label": "bottomsheet.tsx"
     },
     {
@@ -27581,7 +27581,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "src_mobile_ui_bottomsheet_bottomsheetprops",
-      "community": 151,
+      "community": 85,
       "norm_label": "bottomsheetprops"
     },
     {
@@ -27591,7 +27591,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_mobile_ui_bottomsheet_bottomsheet",
-      "community": 151,
+      "community": 85,
       "norm_label": "bottomsheet()"
     },
     {
@@ -27791,7 +27791,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_mobile_ui_list_listitem",
-      "community": 25,
+      "community": 85,
       "norm_label": "listitem()"
     },
     {
@@ -28381,7 +28381,7 @@
       "source_location": "L202",
       "_origin": "ast",
       "id": "src_utils_initial_bets",
-      "community": 85,
+      "community": 109,
       "norm_label": "initial_bets"
     },
     {
@@ -102437,7 +102437,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L25",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_lib_apibase",
@@ -102646,7 +102646,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L25",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_lib_apibase_isnativeapp",
@@ -102658,7 +102658,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L298",
+      "source_location": "L399",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings_mobilesettings",
       "target": "src_lib_apibase_isnativeapp"
@@ -104664,6 +104664,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/mobile/screens/MobileSettings.tsx",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "src_mobile_screens_mobilesettings",
+      "target": "src_lib_bookmakers",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "re_exports",
       "context": "export",
       "confidence": "EXTRACTED",
@@ -104756,7 +104767,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L22",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_lib_bookmakers_available_bookmakers",
@@ -104772,6 +104783,28 @@
       "source": "src_utils",
       "target": "src_lib_bookmakers_available_bookmakers",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/mobile/screens/MobileSettings.tsx",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "src_mobile_screens_mobilesettings",
+      "target": "src_lib_bookmakers_bookmakerlabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/mobile/screens/MobileSettings.tsx",
+      "source_location": "L329",
+      "weight": 1.0,
+      "source": "src_mobile_screens_mobilesettings_mobilesettings",
+      "target": "src_lib_bookmakers_bookmakerlabel"
     },
     {
       "relation": "calls",
@@ -105004,7 +105037,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L23",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_lib_datatransfer",
@@ -105048,7 +105081,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L23",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_lib_datatransfer_exportbetscsv",
@@ -105060,7 +105093,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L269",
+      "source_location": "L370",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings_mobilesettings",
       "target": "src_lib_datatransfer_exportbetscsv"
@@ -105070,7 +105103,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L23",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_lib_datatransfer_exportbackupjson",
@@ -105082,7 +105115,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L278",
+      "source_location": "L379",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings_mobilesettings",
       "target": "src_lib_datatransfer_exportbackupjson"
@@ -105114,7 +105147,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L23",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_lib_datatransfer_importbetsfromfile",
@@ -105126,7 +105159,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L127",
+      "source_location": "L177",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings_mobilesettings",
       "target": "src_lib_datatransfer_importbetsfromfile"
@@ -105678,7 +105711,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L24",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_lib_liveupdate",
@@ -105689,7 +105722,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L24",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_lib_liveupdate_getbundleversion",
@@ -105701,7 +105734,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L98",
+      "source_location": "L111",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings_mobilesettings",
       "target": "src_lib_liveupdate_getbundleversion"
@@ -105722,7 +105755,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L24",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_lib_liveupdate_initliveupdate",
@@ -105734,7 +105767,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L160",
+      "source_location": "L211",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings_mobilesettings",
       "target": "src_lib_liveupdate_initliveupdate"
@@ -105971,6 +106004,28 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/mobile/screens/MobileSettings.tsx",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "src_mobile_screens_mobilesettings",
+      "target": "src_lib_settingsapi",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/mobile/screens/MobileSettings.tsx",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "src_mobile_screens_mobilesettings",
+      "target": "src_lib_settingsapi_supported_bookmakers",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -105991,6 +106046,50 @@
       "source": "src_lib_settingsapi_updateenabledbookmakers",
       "target": "src_lib_settingsapi_normalizesettings",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/mobile/screens/MobileSettings.tsx",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "src_mobile_screens_mobilesettings",
+      "target": "src_lib_settingsapi_fetchsettings",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/mobile/screens/MobileSettings.tsx",
+      "source_location": "L117",
+      "weight": 1.0,
+      "source": "src_mobile_screens_mobilesettings_mobilesettings",
+      "target": "src_lib_settingsapi_fetchsettings"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/mobile/screens/MobileSettings.tsx",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "src_mobile_screens_mobilesettings",
+      "target": "src_lib_settingsapi_updateenabledbookmakers",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/mobile/screens/MobileSettings.tsx",
+      "source_location": "L141",
+      "weight": 1.0,
+      "source": "src_mobile_screens_mobilesettings_mobilesettings",
+      "target": "src_lib_settingsapi_updateenabledbookmakers"
     },
     {
       "relation": "contains",
@@ -108151,7 +108250,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L57",
+      "source_location": "L61",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_mobile_screens_mobilesettings_mobilesettings",
@@ -108161,7 +108260,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L37",
+      "source_location": "L41",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_mobile_screens_mobilesettings_mobilesettingsprops",
@@ -108172,7 +108271,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L26",
+      "source_location": "L30",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_mobile_ui_bottomsheet_bottomsheet",
@@ -108183,7 +108282,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L26",
+      "source_location": "L30",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_mobile_ui_chipgroup_chipgroup",
@@ -108194,7 +108293,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L26",
+      "source_location": "L30",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_mobile_ui_index",
@@ -108205,7 +108304,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L26",
+      "source_location": "L30",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_mobile_ui_list_listgroup",
@@ -108216,7 +108315,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L26",
+      "source_location": "L30",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_mobile_ui_list_listitem",
@@ -108227,7 +108326,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L26",
+      "source_location": "L30",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_mobile_ui_list_mobilecard",
@@ -108238,7 +108337,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L26",
+      "source_location": "L30",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_mobile_ui_list_sectionheader",
@@ -108249,7 +108348,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L26",
+      "source_location": "L30",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_mobile_ui_pressable_pressable",
@@ -108260,7 +108359,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L26",
+      "source_location": "L30",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_mobile_ui_toast_usetoast",
@@ -108271,7 +108370,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L21",
+      "source_location": "L23",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_types",
@@ -108282,7 +108381,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L21",
+      "source_location": "L23",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_types_auditlog",
@@ -108293,7 +108392,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L21",
+      "source_location": "L23",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_types_bet",
@@ -108304,7 +108403,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L21",
+      "source_location": "L23",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_types_bookieaccount",
@@ -108315,7 +108414,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L21",
+      "source_location": "L23",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_types_language",
@@ -108326,7 +108425,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L21",
+      "source_location": "L23",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_types_preferences",
@@ -108337,7 +108436,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L21",
+      "source_location": "L23",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_types_thememode",
@@ -108348,7 +108447,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L22",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings",
       "target": "src_utils",
@@ -108359,7 +108458,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L39",
+      "source_location": "L43",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings_mobilesettingsprops",
       "target": "src_types_auditlog",
@@ -108370,7 +108469,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L40",
+      "source_location": "L44",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings_mobilesettingsprops",
       "target": "src_types_bet",
@@ -108381,7 +108480,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L49",
+      "source_location": "L53",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings_mobilesettingsprops",
       "target": "src_types_bookieaccount",
@@ -108392,7 +108491,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L38",
+      "source_location": "L42",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings_mobilesettingsprops",
       "target": "src_types_preferences",
@@ -108404,7 +108503,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/mobile/screens/MobileSettings.tsx",
-      "source_location": "L73",
+      "source_location": "L77",
       "weight": 1.0,
       "source": "src_mobile_screens_mobilesettings_mobilesettings",
       "target": "src_mobile_ui_toast_usetoast"
@@ -111071,5 +111170,5 @@
       "source_file": "public/pwa-512x512.png"
     }
   ],
-  "built_at_commit": "11084bfc2350eeaf2ed8e918cae79024d0b4faab"
+  "built_at_commit": "2dd57e6fbc9726747cd38cd7465e3eada6497ad1"
 }
