@@ -1,5 +1,5 @@
 import {StrictMode} from 'react';
-import {createRoot, hydrateRoot} from 'react-dom/client';
+import {createRoot} from 'react-dom/client';
 import App from './App';
 import {ErrorBoundary} from './components/ErrorBoundary';
 import {initLiveUpdate} from './lib/liveUpdate';
@@ -31,18 +31,12 @@ initLiveUpdate();
 // shell) porque o primeiro ecrã pode ser o login — que vive fora dos shells.
 hideSplashScreen();
 
-const root = document.getElementById('root')!;
-const initialData = window.__BETTRACKR_INITIAL_DATA__;
-const app = (
+// SPA pura: sem SSR das páginas, o servidor devolve sempre o index.html vazio
+// e o React monta tudo no cliente (a App determina auth/dados no arranque).
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <App initialData={initialData} />
+      <App />
     </ErrorBoundary>
   </StrictMode>
 );
-
-if (root.hasChildNodes() && initialData) {
-  hydrateRoot(root, app);
-} else {
-  createRoot(root).render(app);
-}
