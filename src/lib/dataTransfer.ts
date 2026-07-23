@@ -55,7 +55,13 @@ async function deliverTextFile(filename: string, content: string, mime: string):
 export async function exportBetsCSV(bets: Bet[], accounts: BookieAccount[]): Promise<void> {
   const accountLabelById = new Map(accounts.map((a) => [a.id, a.label]));
 
-  let csvContent = "DATE;TIME;GAME;BET;STAKE;ODDS;STATUS;RETURN;SPORT;BOOKIE;BETTYPE;FREEBET;FREEBET_TYPE;RISK_FREE;ACCOUNT;COMMENT;TAGS\n";
+  // RETURN = finalReturn; NET_PROFIT = netProfit. Ambos são exportados já
+  // calculados para o import poder ser fiel (ver importBetsFromFile): sem o
+  // NET_PROFIT, o import tinha de RECALCULAR a partir da odd e do tipo de
+  // freebet, o que fazia o lucro divergir em meios-ganhos manuais e freebets
+  // sem tipo guardado. A leitura é por nome de coluna, por isso CSVs antigos
+  // (sem NET_PROFIT) continuam a importar.
+  let csvContent = "DATE;TIME;GAME;BET;STAKE;ODDS;STATUS;RETURN;NET_PROFIT;SPORT;BOOKIE;BETTYPE;FREEBET;FREEBET_TYPE;RISK_FREE;ACCOUNT;COMMENT;TAGS\n";
 
   bets.forEach((b) => {
     let dateVal = "";
@@ -81,6 +87,7 @@ export async function exportBetsCSV(bets: Bet[], accounts: BookieAccount[]): Pro
     else if (b.status === "POR_LIQUIDAR") statusVal = "POR_LIQUIDAR";
 
     const returnVal = safeNum(b.finalReturn).toFixed(2);
+    const netProfitVal = safeNum(b.netProfit).toFixed(2);
 
     // Desporto: usa o campo; sem ele, heurística por palavras-chave (legado).
     let sportVal = b.selections.map((s) => s.sport || "FUTEBOL").join(" + ");
@@ -114,7 +121,7 @@ export async function exportBetsCSV(bets: Bet[], accounts: BookieAccount[]): Pro
     const riskFreeVal = b.isRiskFree ? "SIM" : "NAO";
     const accountVal = b.accountId ? (accountLabelById.get(b.accountId) || "") : "";
 
-    csvContent += `${dateVal};${timeVal};${escapeField(gameVal)};${escapeField(betVal)};${stakeVal};${oddsVal};${statusVal};${returnVal};${sportVal};${bookieVal};${betTypeVal};${freebetVal};${freebetTypeVal};${riskFreeVal};${escapeField(accountVal)};${escapeField(commentVal)};${escapeField(tagsVal)}\n`;
+    csvContent += `${dateVal};${timeVal};${escapeField(gameVal)};${escapeField(betVal)};${stakeVal};${oddsVal};${statusVal};${returnVal};${netProfitVal};${sportVal};${bookieVal};${betTypeVal};${freebetVal};${freebetTypeVal};${riskFreeVal};${escapeField(accountVal)};${escapeField(commentVal)};${escapeField(tagsVal)}\n`;
   });
 
   await deliverTextFile("apostas_export.csv", csvContent, "text/csv;charset=utf-8;");
@@ -220,6 +227,7 @@ export function importBetsFromFile(
         const oddsIdx = idx("ODDS");
         const statusIdx = idx("STATUS");
         const returnIdx = headerRow.findIndex((h) => ["RETURN", "FINAL_RETURN", "CASHOUT_RETURN"].includes(h.toUpperCase()));
+        const netProfitIdx = headerRow.findIndex((h) => ["NET_PROFIT", "PROFIT", "NETPROFIT"].includes(h.toUpperCase()));
         const sportIdx = idx("SPORT");
         const bookieIdx = idx("BOOKIE");
         const betTypeIdx = idx("BETTYPE");
@@ -255,6 +263,8 @@ export function importBetsFromFile(
           const statusRaw = statusIdx !== -1 && row[statusIdx] ? row[statusIdx].toUpperCase() : "PENDING";
           const rawReturn = returnIdx !== -1 && row[returnIdx] ? row[returnIdx] : "";
           const returnVal = parseFloat(rawReturn.replace(",", "."));
+          const rawNetProfit = netProfitIdx !== -1 && row[netProfitIdx] ? row[netProfitIdx] : "";
+          const netProfitVal = parseFloat(rawNetProfit.replace(",", "."));
           const sportVal = sportIdx !== -1 && row[sportIdx] ? row[sportIdx] : "FUTEBOL";
           const bookieVal = bookieIdx !== -1 && row[bookieIdx] ? row[bookieIdx] : "Outro";
           const betTypeVal = betTypeIdx !== -1 && row[betTypeIdx] ? row[betTypeIdx] : "Simples";
@@ -324,15 +334,36 @@ export function importBetsFromFile(
 
           const stakeNumVal = isNaN(stakeVal) ? 1.0 : stakeVal;
 
-          const { potentialReturn, finalReturn, netProfit } = calculateBetReturnAndProfit(
-            stakeNumVal,
-            totalOdd,
-            status,
-            isFreebet,
-            status === "CASHOUT" && !isNaN(returnVal) ? returnVal : undefined,
-            freebetType,
-            isRiskFree,
-          );
+          // Fidelidade do round-trip: quando o CSV traz os valores já
+          // calculados (RETURN + NET_PROFIT, gerados pelo nosso export),
+          // confiamos neles em vez de recalcular. Recalcular a partir da odd e
+          // do tipo de freebet fazia o lucro divergir em meios-ganhos com
+          // retorno manual e em freebets sem tipo guardado (ver bug reportado).
+          // Só se recalcula quando faltam — CSVs antigos ou editados à mão.
+          let potentialReturn: number;
+          let finalReturn: number;
+          let netProfit: number;
+
+          const hasStoredResults =
+            status !== "POR_LIQUIDAR" && !isNaN(returnVal) && !isNaN(netProfitVal);
+
+          if (hasStoredResults) {
+            finalReturn = Number(returnVal.toFixed(2));
+            netProfit = Number(netProfitVal.toFixed(2));
+            // potentialReturn é sempre stake × odd (determinístico), não é
+            // exportado numa coluna própria.
+            potentialReturn = Number((stakeNumVal * totalOdd).toFixed(2));
+          } else {
+            ({ potentialReturn, finalReturn, netProfit } = calculateBetReturnAndProfit(
+              stakeNumVal,
+              totalOdd,
+              status,
+              isFreebet,
+              status === "CASHOUT" && !isNaN(returnVal) ? returnVal : undefined,
+              freebetType,
+              isRiskFree,
+            ));
+          }
 
           parsedBets.push({
             id: `csv_${Math.random().toString(36).substring(2, 9)}_${Date.now()}_${i}`,
