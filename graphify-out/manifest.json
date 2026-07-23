@@ -120,8 +120,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1784667293.3329456,
-    "ast_hash": "f11e113a248ee6fb5ca063e347320e55",
+    "mtime": 1784834936.5322187,
+    "ast_hash": "57fb7c468c64286211df1b872bf475e7",
     "semantic_hash": ""
   },
   "routes/authRoutes.ts": {
@@ -140,8 +140,8 @@
     "semantic_hash": ""
   },
   "server.ts": {
-    "mtime": 1784646271.2432127,
-    "ast_hash": "f0f4bb910a5d9a5032e29cd3d39e2b36",
+    "mtime": 1784834936.5343754,
+    "ast_hash": "738cfb8dea8c71d839e18b9822a91571",
     "semantic_hash": ""
   },
   "src/App.tsx": {
@@ -230,8 +230,8 @@
     "semantic_hash": ""
   },
   "src/main.tsx": {
-    "mtime": 1784667293.378863,
-    "ast_hash": "3b8e3b087f6789285e6d15d59ff10aa0",
+    "mtime": 1784834936.5363865,
+    "ast_hash": "7b76ed09389991f7e4b1d94134768669",
     "semantic_hash": ""
   },
   "src/types.ts": {
@@ -250,8 +250,8 @@
     "semantic_hash": ""
   },
   "vercel.json": {
-    "mtime": 1784730506.9464588,
-    "ast_hash": "5af9c1881a86c9d31a75a15c293dbc99",
+    "mtime": 1784834936.5386245,
+    "ast_hash": "e32bf0e5282caff0c6e464d66e34cd2e",
     "semantic_hash": ""
   },
   "vite.config.ts": {
@@ -507,11 +507,6 @@
   "src/components/TimeframeFilter.tsx": {
     "mtime": 1784646271.2566175,
     "ast_hash": "b94273e4fee6890b98bb8cbac25f58bc",
-    "semantic_hash": ""
-  },
-  "src/entry-server.tsx": {
-    "mtime": 1784646271.257632,
-    "ast_hash": "3606bf04d7619a4f1bac487063d51352",
     "semantic_hash": ""
   },
   "src/hooks/useAccounts.ts": {
@@ -882,11 +877,6 @@
   "scripts/migrate.mjs": {
     "mtime": 1784646271.2421072,
     "ast_hash": "184498452f7cd9d295aa87e367b57630",
-    "semantic_hash": ""
-  },
-  "vite.config.ssr.ts": {
-    "mtime": 1784646271.2796638,
-    "ast_hash": "f51939794720a5c94f7741e5cf89f059",
     "semantic_hash": ""
   },
   ".claude/settings.local.json": {
@@ -1442,6 +1432,11 @@
   "db/migrations/012_risk_free_real_money.sql": {
     "mtime": 1784730506.9180503,
     "ast_hash": "5f48b61b84bbb0e5db7c757986867392",
+    "semantic_hash": ""
+  },
+  "src/components/ErrorBoundary.tsx": {
+    "mtime": 1784834936.5353823,
+    "ast_hash": "0010513e919cc6bfc9945f761c48f56c",
     "semantic_hash": ""
   }
 }

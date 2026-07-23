@@ -1,16 +1,16 @@
 # Graph Report - gestão-de-apostas  (2026-07-23)
 
 ## Corpus Check
-- 221 files · ~206,838 words
+- 220 files · ~206,247 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2986 nodes · 7608 edges · 180 communities (98 shown, 82 thin omitted)
-- Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 725 edges (avg confidence: 0.68)
+- 2982 nodes · 7587 edges · 187 communities (105 shown, 82 thin omitted)
+- Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 723 edges (avg confidence: 0.68)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6505a83f`
+- Built from commit: `11084bfc`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -44,6 +44,7 @@
 - BetTrackr Token Bridge
 - Status Constraint Migration
 - Cashout Freebet Migration
+- vite.config.ssr.ts
 - Betclic Content Bridge
 - bet
 - Vite Configuration
@@ -176,8 +177,15 @@
 - bets
 - wg
 - express
+- h1
 - Test
 - Test
+- a2
+- ErrorBoundary
+- OA
+- web-C5gcm5_3.js
+- web-C_vhW8nL.js
+- @capacitor/android
 
 ## God Nodes (most connected - your core abstractions)
 1. `nd` - 85 edges
@@ -200,8 +208,8 @@
   src/mobile/screens/MobileBets.tsx → android/app/src/main/assets/public/workbox-0bb07689.js
 - `MobileDashboard()` --indirect_call--> `b`  [INFERRED]
   src/mobile/screens/MobileDashboard.tsx → android/app/src/main/assets/public/workbox-0bb07689.js
-- `useBets()` --indirect_call--> `bet()`  [INFERRED]
-  src/hooks/useBets.ts → extension/test/dashboard-stats.test.ts
+- `BetsManager()` --indirect_call--> `bet()`  [INFERRED]
+  src/components/BetsManager.tsx → extension/test/dashboard-stats.test.ts
 
 ## Import Cycles
 - None detected.
@@ -213,11 +221,11 @@
 - **Sports Betting Tracking Motif** — public_pwa_192x192_betting_slip, public_pwa_192x192_soccer_ball, public_pwa_192x192_performance_bar_chart [INFERRED 0.85]
 - **Sports Analytics Branding** — public_pwa_512x512_bettrackr_pwa_icon, public_pwa_512x512_football, public_pwa_512x512_performance_analytics, public_pwa_512x512_upward_trend, public_pwa_512x512_betting_ticket [INFERRED 0.95]
 
-## Communities (180 total, 82 thin omitted)
+## Communities (187 total, 82 thin omitted)
 
 ### Community 0 - "Bet Lifecycle UI"
-Cohesion: 0.12
-Nodes (40): response(), bet(), BetsManager(), BULK_MONEY_OPTIONS, BULK_STATUS_OPTIONS, SortDirection, SortField, ScreenshotImporter() (+32 more)
+Cohesion: 0.14
+Nodes (32): response(), ScreenshotImporter(), FormSelection, nowLocal(), useBetForm(), CASHOUT_TOKENS, compactStatusToken(), hasCashoutSignal() (+24 more)
 
 ### Community 1 - "Extension Import Orchestration"
 Cohesion: 0.10
@@ -229,15 +237,15 @@ Nodes (47): AIInsights(), Social(), SocialProps, statusMeta(), useAccounts(), us
 
 ### Community 3 - "Runtime Dependencies"
 Cohesion: 0.07
-Nodes (29): bcryptjs, @capacitor/android, @capacitor/app, @capacitor/camera, @capacitor/core, @capacitor/filesystem, @capacitor/keyboard, @capacitor/status-bar (+21 more)
+Nodes (29): bcryptjs, @capacitor/app, @capacitor/camera, @capacitor/core, @capacitor/filesystem, @capacitor/keyboard, @capacitor/status-bar, @capgo/capacitor-updater (+21 more)
 
 ### Community 4 - "Build Toolchain"
 Cohesion: 0.06
 Nodes (33): adm-zip, @capacitor/cli, esbuild, devDependencies, adm-zip, @capacitor/cli, esbuild, tailwindcss (+25 more)
 
 ### Community 5 - "API Security and Database"
-Cohesion: 0.05
-Nodes (47): connect(), getPool(), query(), extractJson(), getGeminiClient(), tryParse(), AuthenticatedRequest, authenticatedUserFromRequest() (+39 more)
+Cohesion: 0.06
+Nodes (37): connect(), getPool(), query(), extractJson(), getGeminiClient(), tryParse(), AuthenticatedRequest, authenticatedUserFromRequest() (+29 more)
 
 ### Community 6 - "History and Reconciliation"
 Cohesion: 0.28
@@ -261,7 +269,7 @@ Nodes (12): BetclicImport(), BetclicImportProps, EXTENSION_BOOKIE_KEYS, EXTENSIO
 
 ### Community 16 - "Vercel Deployment"
 Cohesion: 0.01
-Nodes (139): $2(), ak(), aw(), bb(), bj(), bv(), c2(), ch() (+131 more)
+Nodes (109): $2(), ak(), bb(), bj(), bv(), c2(), cI(), cj() (+101 more)
 
 ### Community 18 - "Betano Request Capture"
 Cohesion: 0.60
@@ -269,7 +277,7 @@ Nodes (3): headersToObject(), isBetanoRequest(), rememberHeaders()
 
 ### Community 19 - "Gemini Import Planning"
 Cohesion: 0.03
-Nodes (93): ai(), An(), as, Bi, bn(), bs(), ca, Ci (+85 more)
+Nodes (89): ai(), An(), as, Bi, bn(), bs(), ca, Ci (+81 more)
 
 ### Community 20 - "PWA Icon 192"
 Cohesion: 0.70
@@ -292,8 +300,8 @@ Cohesion: 0.57
 Nodes (5): cleanBaseUrl(), cleanUserId(), responseError(), runAfterBettrackrVerification(), verifyBettrackrIdentity()
 
 ### Community 25 - "Canonical Database Schema"
-Cohesion: 0.13
-Nodes (22): AccountPanel(), AccountPanelProps, AIInsightsProps, InsightsResponse, Pick, AuthPageProps, Mode, apiUrl() (+14 more)
+Cohesion: 0.07
+Nodes (36): AccountPanel(), AccountPanelProps, AIInsightsProps, InsightsResponse, Pick, AuthPageProps, Mode, BrandMark() (+28 more)
 
 ### Community 27 - "Status Constraint Migration"
 Cohesion: 0.40
@@ -303,41 +311,45 @@ Nodes (4): dir, files, isLocalDb, pool
 Cohesion: 0.83
 Nodes (3): gradlew script, die(), warn()
 
+### Community 29 - "vite.config.ssr.ts"
+Cohesion: 0.10
+Nodes (42): A(), F(), Ce(), Pe(), ge(), ue(), v(), ag (+34 more)
+
 ### Community 32 - "Betclic Content Bridge"
 Cohesion: 0.70
 Nodes (4): betclicLoggedIn(), captureBetclicUsername(), extensionAlive(), extractBetclicUsername()
 
 ### Community 34 - "bet"
-Cohesion: 0.14
-Nodes (17): betPayload(), fetchBetclicBets(), fetchBetclicBetsForImport(), fetchExistingBets(), fetchSolverdeBets(), importKey(), needsUpdate(), persistMapped() (+9 more)
+Cohesion: 0.16
+Nodes (18): betPayload(), fetchBetclicBets(), fetchBetclicBetsForImport(), fetchExistingBets(), fetchSolverdeBets(), importKey(), persistMapped(), postBulk() (+10 more)
 
 ### Community 36 - "betStatus.ts"
 Cohesion: 0.29
 Nodes (14): betanoRef(), CASHOUT_STATUS_TOKENS, dateTime(), flattenSelections(), isBetanoCashout(), mapBetanoBet(), mapBetanoBets(), mapBetanoSelectionResult() (+6 more)
 
 ### Community 37 - "importers.test.js"
-Cohesion: 0.50
-Nodes (7): comparableExisting(), importedBetChanged(), importKeyOf(), indexExistingBets(), metadataOf(), reconcileImportedBets(), stable()
+Cohesion: 0.20
+Nodes (15): createSixMonthWindows(), EARLIEST_HISTORY, fetchBetanoHistory(), fetchPages(), comparableExisting(), importedBetChanged(), importKeyOf(), indexExistingBets() (+7 more)
 
 ### Community 38 - "BetTrackr — Extensão de importação de apostas"
 Cohesion: 0.04
-Nodes (103): K(), Re, l(), ae(), AS(), ay(), Be(), bm() (+95 more)
+Nodes (80): hg, jg(), Re, an, AS(), Be(), bm(), Bt() (+72 more)
 
 ### Community 84 - "mapper-solverde.js"
-Cohesion: 0.17
-Nodes (19): createSixMonthWindows(), EARLIEST_HISTORY, fetchBetanoHistory(), fetchPages(), mapBetclicBet, flattenSelections(), formatDateTime(), isCashoutStatus() (+11 more)
+Cohesion: 0.33
+Nodes (11): flattenSelections(), formatDateTime(), isCashoutStatus(), mapSolverdeBet(), mapSolverdeBets(), mapStatus(), normalize(), num() (+3 more)
 
 ### Community 85 - "import-utils.js"
 Cohesion: 0.05
-Nodes (61): haptics(), ImpactWeight, NotificationKind, notifyHaptic(), selectionHaptic(), tapHaptic(), BackEntry, push() (+53 more)
+Nodes (54): haptics(), ImpactWeight, NotificationKind, notifyHaptic(), selectionHaptic(), tapHaptic(), BULK_MONEY_OPTIONS, BULK_STATUS_OPTIONS (+46 more)
 
 ### Community 86 - "rr"
-Cohesion: 0.08
-Nodes (52): vr(), fe(), Pe(), we, be, me, Dp(), qy() (+44 more)
+Cohesion: 0.11
+Nodes (53): vr(), Ve(), me, Dp(), fe(), Lp(), Op(), wy() (+45 more)
 
 ### Community 87 - "index-GUdJqaP1.js"
-Cohesion: 0.04
-Nodes (99): _1(), a1(), ag, ao, b1(), bg(), bh(), bi() (+91 more)
+Cohesion: 0.03
+Nodes (92): _1(), a1(), ao, b1(), bh(), bi(), Bm(), cg (+84 more)
 
 ### Community 88 - "bundle-app.mjs"
 Cohesion: 0.33
@@ -353,83 +365,83 @@ Nodes (13): C, d, f(), i, L, m, N(), o (+5 more)
 
 ### Community 92 - "ExampleUnitTest.java"
 Cohesion: 0.04
-Nodes (66): ad(), ah(), Al(), ap(), at(), b1(), bS(), Bu() (+58 more)
+Nodes (77): ad(), ah(), Ar(), Ax(), b1(), bS(), Bu(), bx() (+69 more)
 
 ### Community 93 - "concat"
-Cohesion: 0.04
-Nodes (84): er, rr, km(), pp, yo(), P(), _0(), _A() (+76 more)
+Cohesion: 0.06
+Nodes (46): pp, _0(), _A(), ab(), cancel(), cN(), concat(), copy() (+38 more)
 
 ### Community 96 - "CLAUDE.md"
 Cohesion: 0.10
-Nodes (43): D, G, H(), I, L, M(), O, R (+35 more)
+Nodes (42): D, G, H(), I, L, M(), O, R (+34 more)
 
 ### Community 97 - "build.gradle"
-Cohesion: 0.06
-Nodes (55): Lt, A0(), af(), an, applyPatches(), bp(), bw(), Cl() (+47 more)
+Cohesion: 0.07
+Nodes (41): Lt, af(), applyPatches(), at(), bp(), bw(), Cl(), constructor() (+33 more)
 
 ### Community 99 - "build.gradle"
 Cohesion: 0.06
-Nodes (51): A(), F(), ce, de, fe, ge(), he, ie (+43 more)
+Nodes (40): e, t, be, ce, de, fe, he, je (+32 more)
 
 ### Community 101 - "settings.gradle"
-Cohesion: 0.11
-Nodes (26): parse(), now, Dashboard(), FilterDropdownOption, FilterDropdownProps, FiltersBarProps, calendarDaysFor(), EMPTY_TIMEFRAME_FILTER (+18 more)
+Cohesion: 0.10
+Nodes (33): parse(), now, BetsManager(), BULK_MONEY_OPTIONS, BULK_STATUS_OPTIONS, SortDirection, SortField, Dashboard() (+25 more)
 
 ### Community 102 - "variables.gradle"
-Cohesion: 0.06
-Nodes (38): Aa(), Ar(), Ax(), bx(), Cg(), Dj(), dt(), dx() (+30 more)
+Cohesion: 0.12
+Nodes (15): Aa(), Cg(), dt(), ES(), fT(), Nu(), Or(), Qk() (+7 more)
 
 ### Community 103 - "v"
 Cohesion: 0.06
-Nodes (57): ar, Jt, or, sr, tr, Zt, o(), e (+49 more)
+Nodes (42): ar, er, Jt, or, rr, sr, tr, Zt (+34 more)
 
 ### Community 104 - "l"
-Cohesion: 0.10
-Nodes (45): e, t, Ah, Cp, Eh(), fp(), ip(), Jn() (+37 more)
+Cohesion: 0.11
+Nodes (36): ie, Ah, Eh(), fp(), g1, go(), ip(), Jn() (+28 more)
 
 ### Community 106 - "os"
-Cohesion: 0.06
-Nodes (14): lo, ao, co(), cs(), ee(), fo, ho(), lo() (+6 more)
+Cohesion: 0.11
+Nodes (8): ao, ee(), lo(), ns(), os, ro(), ss, uo()
 
 ### Community 107 - "Dashboard-CiJmES5V.js"
-Cohesion: 0.09
-Nodes (35): e, r, o, r, Ve(), e, o, fe() (+27 more)
+Cohesion: 0.12
+Nodes (23): e, r, ph(), ug, B(), De, Ie, M (+15 more)
 
 ### Community 108 - ".forEach"
-Cohesion: 0.08
-Nodes (22): aa(), da(), es(), fa(), fl(), ga(), io(), iu() (+14 more)
+Cohesion: 0.07
+Nodes (24): gm(), aa(), da(), es(), fa(), fl(), ga(), ia() (+16 more)
 
 ### Community 109 - "Settings-B3PiUVnh.js"
 Cohesion: 0.09
-Nodes (36): App(), AppProps, DesktopApp, Gallery, MobileApp, BetsManagerProps, BookieAccountsCardProps, DashboardBetsFilters (+28 more)
+Nodes (37): App(), AppProps, DesktopApp, Gallery, MobileApp, BetsManagerProps, BookieAccountsCardProps, DashboardBetsFilters (+29 more)
 
 ### Community 110 - "BetsManager-DThhK6Cx.js"
-Cohesion: 0.07
-Nodes (28): Gy(), Vy(), Df(), Gf(), jt(), qv(), X0(), Ba (+20 more)
+Cohesion: 0.12
+Nodes (19): Gy(), qy(), Vy(), Df(), X0(), $e(), er(), In() (+11 more)
 
 ### Community 111 - "MobileApp.tsx"
 Cohesion: 0.07
-Nodes (30): Aj(), cd(), copy(), cS(), dI(), displayable(), $f(), Fl() (+22 more)
+Nodes (30): A0(), Aj(), cd(), cS(), displayable(), $f(), Fl(), formatHsl() (+22 more)
 
 ### Community 112 - "rs"
-Cohesion: 0.05
-Nodes (19): Si(), $a, au, ds(), ea(), fs(), Gi(), Gl() (+11 more)
+Cohesion: 0.06
+Nodes (16): Si(), $a, au, ds(), fs(), Gi(), Gl(), jn() (+8 more)
 
 ### Community 113 - "Ct"
-Cohesion: 0.19
-Nodes (13): Ct(), cu(), Db(), jj(), lb(), mc(), Ox(), su() (+5 more)
+Cohesion: 0.07
+Nodes (35): Al(), ap(), by(), Ct(), cu(), Cx(), Db(), deref() (+27 more)
 
 ### Community 114 - "bo"
 Cohesion: 0.09
 Nodes (3): bo, Cn(), so()
 
 ### Community 115 - "N"
-Cohesion: 0.16
-Nodes (21): app, configured, isNativeApp(), deliverTextFile(), exportBackupJSON(), exportBetsCSV(), importBetsFromFile(), parseCSVRow() (+13 more)
+Cohesion: 0.14
+Nodes (23): Settings(), configured, isNativeApp(), deliverTextFile(), exportBackupJSON(), exportBetsCSV(), importBetsFromFile(), parseCSVRow() (+15 more)
 
 ### Community 119 - "Ze"
-Cohesion: 0.07
-Nodes (28): ne, c1(), e1(), gg(), Gm(), h1, Kn(), ks() (+20 more)
+Cohesion: 0.18
+Nodes (13): ne, c1(), n1(), o1, qg, r1(), wl(), yi() (+5 more)
 
 ### Community 120 - ".readValue"
 Cohesion: 0.15
@@ -440,40 +452,40 @@ Cohesion: 0.31
 Nodes (6): C(), d(), f(), g, m(), R()
 
 ### Community 122 - "Ht"
-Cohesion: 0.15
-Nodes (4): G(), Hi(), Ht, Yi()
+Cohesion: 0.09
+Nodes (4): cs(), Ht, qe, Yi()
 
 ### Community 123 - "Implementation Plan"
 Cohesion: 0.08
 Nodes (23): Appendix — freebet research sources (F3), Build Spec — Slice 1 (Cashout end-to-end + Dashboard fix), C1 — Language options (i18n), Configurations (TODO §5), Cross-cutting risks & notes, D1 — Fix "Distribuição de Resultados" count (confirmed bug), D2 — Dashboard filters (bookie, sport, bet type, …), Dashboard (TODO §4) (+15 more)
 
 ### Community 124 - "DesktopApp.tsx"
-Cohesion: 0.10
-Nodes (11): e, a, m, A, G(), I(), q(), V() (+3 more)
+Cohesion: 0.12
+Nodes (10): e, a, m, A, G(), I(), q(), V() (+2 more)
 
 ### Community 125 - "MobileSocial-BXwyEbj8.js"
-Cohesion: 0.13
-Nodes (4): j, z(), n, r
+Cohesion: 0.18
+Nodes (4): Yg(), j, z(), o
 
 ### Community 126 - "MobileImport-COK0PxdU.js"
 Cohesion: 0.25
 Nodes (7): builds, crons, test, git, deploymentEnabled, routes, version
 
 ### Community 127 - "en"
-Cohesion: 0.10
-Nodes (17): sg, cu(), en(), go(), jo(), $o(), pr(), ql() (+9 more)
+Cohesion: 0.09
+Nodes (19): Ch(), Oh(), sg, cu(), en(), go(), jo(), $o() (+11 more)
 
 ### Community 128 - "Do"
 Cohesion: 0.11
-Nodes (5): Do, Pi(), qi(), Ue, wo()
+Nodes (5): lo, Do, fo, Ue, wo()
 
 ### Community 132 - "qr"
-Cohesion: 0.10
-Nodes (19): bo(), cA(), dc(), EA(), Gg(), HA(), jC(), Kc() (+11 more)
+Cohesion: 0.12
+Nodes (15): cA(), dc(), EA(), HA(), jC(), Kc(), qr(), sA() (+7 more)
 
 ### Community 133 - "vn"
-Cohesion: 0.14
-Nodes (15): cO(), dO(), fO(), Fu(), gS(), hf(), LN(), mS() (+7 more)
+Cohesion: 0.10
+Nodes (21): cM(), cO(), dO(), dS(), fO(), Fu(), gS(), hf() (+13 more)
 
 ### Community 135 - "pb"
 Cohesion: 0.15
@@ -488,8 +500,12 @@ Cohesion: 0.18
 Nodes (11): scripts, android:open, android:sync, build, clean, dev, lint, preview (+3 more)
 
 ### Community 138 - "Ba"
-Cohesion: 0.12
-Nodes (36): Ce(), De(), he(), Le, Me, Ve, __vite__mapDeps(), xe (+28 more)
+Cohesion: 0.10
+Nodes (31): De(), fe(), he(), Le, Me, Ve, __vite__mapDeps(), we (+23 more)
+
+### Community 140 - "fg"
+Cohesion: 0.07
+Nodes (25): aw(), Bk(), c1(), deleteProperty(), dM(), dw(), Ec(), fm() (+17 more)
 
 ### Community 141 - "M"
 Cohesion: 0.50
@@ -500,8 +516,8 @@ Cohesion: 0.25
 Nodes (7): API, App Android (Capacitor), Arquitetura, BetTrackr, Configuração, Scripts, Stack
 
 ### Community 144 - "Nh"
-Cohesion: 0.22
-Nodes (3): cg, wm(), Nh
+Cohesion: 0.08
+Nodes (17): f(), Fm(), hp, J1(), k1(), nh(), o(), sp() (+9 more)
 
 ### Community 146 - "BetTrackr — Extensão de importação de apostas"
 Cohesion: 0.29
@@ -509,23 +525,23 @@ Nodes (6): BetTrackr — Extensão de importação de apostas, Como funciona, Fi
 
 ### Community 147 - "iO"
 Cohesion: 0.08
-Nodes (26): aO(), cf(), dS(), eO(), Fr(), fS(), iO(), lf() (+18 more)
+Nodes (24): aO(), cf(), eO(), Fr(), fS(), Gg(), iO(), lf() (+16 more)
 
 ### Community 148 - "MobileApp.tsx"
-Cohesion: 0.12
-Nodes (16): BrandMark(), AIInsights, BetsManager, Dashboard, DesktopApp(), ScreenshotImporter, Settings, Social (+8 more)
+Cohesion: 0.17
+Nodes (16): o, r, Be(), Ei, mg, og, _p, Rm() (+8 more)
 
 ### Community 149 - "ml"
 Cohesion: 0.14
 Nodes (6): ny(), At(), dl, ml, ol(), rl()
 
 ### Community 150 - "Settings.tsx"
-Cohesion: 0.23
-Nodes (12): Settings(), DICT, Entry, I18nContext, I18nProvider(), translate(), useI18n(), fetchSettings() (+4 more)
+Cohesion: 0.12
+Nodes (11): e1(), Gm(), ks(), m1, t1(), vi(), Xn(), zh (+3 more)
 
 ### Community 151 - "pg"
-Cohesion: 0.17
-Nodes (11): MobileDashboard(), MONEY_OPTIONS, MONTHS_PT, STATUS_META, Timeframe, TIMEFRAME_OPTIONS, toKey(), TONES (+3 more)
+Cohesion: 0.07
+Nodes (29): app, BackEntry, push(), remove(), runTopBackHandler(), stack, useBackHandler(), exitNativeApp() (+21 more)
 
 ### Community 152 - "package.json"
 Cohesion: 0.33
@@ -536,23 +552,47 @@ Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior, Source Nodes
 
 ### Community 161 - "Gn"
-Cohesion: 0.17
-Nodes (13): eb(), Gn(), jb(), jx(), kx(), lp(), mb(), mN() (+5 more)
+Cohesion: 0.07
+Nodes (41): km(), yo(), av(), ay(), c0(), ck(), De(), eb() (+33 more)
+
+### Community 163 - "g1"
+Cohesion: 0.14
+Nodes (16): e, r, le, zp, ce, Fe, Me, Oe (+8 more)
+
+### Community 166 - "wg"
+Cohesion: 0.14
+Nodes (18): u1(), Am(), et, G(), gn(), He(), Hi(), Ii() (+10 more)
+
+### Community 167 - "express"
+Cohesion: 0.20
+Nodes (5): Ba, ja(), ka(), ls, Ui
+
+### Community 181 - "a2"
+Cohesion: 0.25
+Nodes (8): a2(), e2(), i2(), n2(), P2(), r2(), t2(), yh()
+
+### Community 182 - "ErrorBoundary"
+Cohesion: 0.25
+Nodes (3): ErrorBoundary, Props, State
+
+### Community 183 - "OA"
+Cohesion: 0.33
+Nodes (6): ed(), j1(), OA(), Pi(), T1(), oa
 
 ## Knowledge Gaps
-- **505 isolated node(s):** `Jt`, `Zt`, `tr`, `ar`, `sr` (+500 more)
+- **506 isolated node(s):** `Jt`, `Zt`, `tr`, `ar`, `sr` (+501 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **82 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `b` connect `index-GUdJqaP1.js` to `CLAUDE.md`, `build.gradle`, `Bet Lifecycle UI`, `build.gradle`, `BetTrackr — Extensão de importação de apostas`, `l`, `Ba`, `iO`, `lk`, `I`, `rr`, `pg`, `Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior`, `DesktopApp.tsx`, `concat`?**
-  _High betweenness centrality (0.237) - this node is a cross-community bridge._
-- **Why does `BetsManager()` connect `Bet Lifecycle UI` to `pg`, `settings.gradle`, `index-GUdJqaP1.js`?**
-  _High betweenness centrality (0.123) - this node is a cross-community bridge._
-- **Why does `MobileBets()` connect `Bet Lifecycle UI` to `pg`, `import-utils.js`, `index-GUdJqaP1.js`?**
-  _High betweenness centrality (0.083) - this node is a cross-community bridge._
+- **Why does `b` connect `vite.config.ssr.ts` to `fg`, `Nh`, `iO`, `pg`, `Gn`, `BetTrackr — Extensão de importação de apostas`, `wg`, `import-utils.js`, `rr`, `index-GUdJqaP1.js`, `Q: Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior`, `concat`, `CLAUDE.md`, `build.gradle`, `settings.gradle`, `l`, `lk`, `I`, `Ze`, `DesktopApp.tsx`?**
+  _High betweenness centrality (0.242) - this node is a cross-community bridge._
+- **Why does `BetsManager()` connect `settings.gradle` to `Bet Lifecycle UI`, `vite.config.ssr.ts`, `bet`, `import-utils.js`?**
+  _High betweenness centrality (0.131) - this node is a cross-community bridge._
+- **Why does `MobileBets()` connect `import-utils.js` to `Bet Lifecycle UI`, `bet`, `settings.gradle`, `vite.config.ssr.ts`?**
+  _High betweenness centrality (0.081) - this node is a cross-community bridge._
 - **Are the 38 inferred relationships involving `t()` (e.g. with `Gy()` and `ad()`) actually correct?**
   _`t()` has 38 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 57 inferred relationships involving `l()` (e.g. with `H()` and `Gy()`) actually correct?**
