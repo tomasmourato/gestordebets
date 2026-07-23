@@ -160,6 +160,205 @@ async function generateInsights(dateLisbon: string) {
   throw lastError;
 }
 
+// ============================================================
+// Avaliação de apostas (print e/ou texto) -> Valor Esperado
+// O modelo pesquisa e estima a PROBABILIDADE justa; os números (EV, prob.
+// implícita, edge, odd justa, Kelly) são calculados AQUI, deterministicamente,
+// porque os modelos erram aritmética. Sem cache — cada aposta é única.
+// ============================================================
+const EVAL_MAX_ATTEMPTS = 2;
+const EVAL_TIME_BUDGET_MS = 45_000;
+const EVAL_MAX_BETS = 8;
+
+interface EvaluatedLeg {
+  event: string;
+  selection: string;
+  estimatedProbability: number;
+}
+
+function buildEvalPrompt(dateLisbon: string, userText: string, hasImage: boolean, insistOnJson: boolean): string {
+  const insist = insistOnJson
+    ? `\n\nATENÇÃO: a resposta anterior não continha JSON válido. Responde SÓ com o objeto JSON, a começar em { e a terminar em }. Sem texto antes ou depois, sem blocos de código.`
+    : "";
+
+  const sources =
+    hasImage && userText
+      ? "no print do boletim (imagem) e na descrição escrita abaixo"
+      : hasImage
+        ? "no print do boletim fornecido (imagem)"
+        : "na descrição escrita abaixo";
+
+  const textBlock = userText ? `\n\nDescrição do utilizador:\n"""\n${userText}\n"""` : "";
+
+  return `Hoje é ${dateLisbon} (fuso Europe/Lisbon). És um analista quantitativo de apostas desportivas — rigoroso, calibrado e prudente — a escrever em português de Portugal.
+
+TAREFA: avaliar a(s) aposta(s) descrita(s) ${sources} e determinar se têm VALOR ESPERADO positivo (se a odd oferecida é generosa face à probabilidade real).${textBlock}
+
+PASSO 1 — IDENTIFICAR. Para cada aposta extrai: desporto, competição, evento (equipas/atletas), mercado, a seleção escolhida, a casa de apostas e a ODD DECIMAL oferecida.${hasImage ? " Lê estes dados diretamente do boletim na imagem." : ""} Se a odd não estiver indicada, estima a odd de mercado atual a partir da pesquisa. Se a aposta juntar várias seleções (acumulador/múltipla), classifica-a como "MULTIPLA" e lista cada perna em "legs".
+
+PASSO 2 — PESQUISAR (USA A PESQUISA GOOGLE, obrigatório). Para cada evento, reúne informação ATUAL e factual: se o jogo ainda não começou (data/hora); forma recente; confrontos diretos (H2H); lesões, castigos e ausências; onze/rotação provável; casa vs fora; motivação (classificação, objetivos, calendário/fadiga); condições relevantes (piso, clima); e as ODDS DE MERCADO atuais em várias casas europeias para aferires o consenso. Usa apenas o que confirmares na pesquisa — NÃO inventes jogos, equipas, lesões nem odds. Se o evento já terminou ou não existe, di-lo na justificação e baixa a confiança.
+
+PASSO 3 — ESTIMAR A PROBABILIDADE justa da seleção ("estimatedProbability", decimal entre 0.02 e 0.98), com honestidade e calibração:
+- Ancora na probabilidade implícita do consenso de mercado (a odd de mercado, já descontada a margem da casa) e ajusta com a tua análise. Afasta-te do mercado apenas quando a pesquisa o justificar claramente.
+- Quando a informação é escassa, aproxima-te da probabilidade implícita e baixa a confiança.
+- Evita excesso de confiança. Para múltiplas, estima a probabilidade combinada tendo em conta a correlação entre pernas.
+
+NÃO calcules o Valor Esperado, a probabilidade implícita nem a odd justa — só preciso da "offeredOdd" e da tua "estimatedProbability"; os cálculos são feitos à parte.
+
+Para cada aposta escreve ainda: uma "justification" clara e honesta (2 a 4 frases), 2 a 5 "keyFactors" (os fatores que mais pesam) e 1 a 4 "risks" (incertezas ou cenários adversos).
+
+Responde SÓ com JSON válido, a começar em { e a terminar em }, sem texto à volta nem blocos de código, neste formato:
+{
+  "summary": "avaliação geral em 1 a 2 frases",
+  "bets": [
+    {
+      "type": "SIMPLES",
+      "sport": "Futebol",
+      "competition": "Liga Portugal",
+      "event": "Equipa A vs Equipa B",
+      "market": "Resultado Final",
+      "selection": "Equipa A",
+      "bookmaker": "Betano",
+      "offeredOdd": 2.10,
+      "estimatedProbability": 0.50,
+      "confidence": 3,
+      "justification": "...",
+      "keyFactors": ["...", "..."],
+      "risks": ["..."],
+      "legs": [{ "event": "Equipa A vs Equipa B", "selection": "Equipa A", "estimatedProbability": 0.50 }]
+    }
+  ]
+}
+"confidence" é um inteiro de 1 (muito incerto) a 5 (muito seguro). Inclui "legs" apenas em múltiplas.${insist}`;
+}
+
+async function callEvalModel(prompt: string, imageBase64?: string): Promise<string> {
+  const ai = getGeminiClient();
+  const parts: any[] = [];
+  if (imageBase64) {
+    const match = imageBase64.match(/^data:(image\/\w+);base64,(.+)$/);
+    parts.push({
+      inlineData: {
+        mimeType: match ? match[1] : "image/png",
+        data: match ? match[2] : imageBase64,
+      },
+    });
+  }
+  parts.push({ text: prompt });
+
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: [{ role: "user", parts }],
+    config: {
+      tools: [{ googleSearch: {} }],
+      temperature: 0.3,
+      thinkingConfig: { thinkingBudget: 0 },
+    },
+  });
+  return String((response as any).text ?? "");
+}
+
+const clampProb = (p: number) => Math.min(0.98, Math.max(0.02, p));
+
+/**
+ * Normaliza o JSON do modelo e calcula os números no servidor a partir de
+ * (offeredOdd, estimatedProbability): EV por unidade, prob. implícita, edge,
+ * odd justa, Kelly e um veredito. Nada de aritmética confiada ao modelo.
+ */
+function sanitizeEvaluation(raw: any): { summary: string; bets: any[] } {
+  const clip = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
+  const clipArr = (v: unknown, maxItems: number, maxLen: number) =>
+    (Array.isArray(v) ? v : [])
+      .map((x) => clip(x, maxLen))
+      .filter(Boolean)
+      .slice(0, maxItems);
+
+  const bets = (Array.isArray(raw?.bets) ? raw.bets : [])
+    .map((b: any) => {
+      const offeredOdd = Number(b?.offeredOdd);
+      const prob = clampProb(Number(b?.estimatedProbability));
+      if (!Number.isFinite(offeredOdd) || offeredOdd <= 1 || !Number.isFinite(prob)) return null;
+
+      const impliedProbability = 1 / offeredOdd;
+      const fairOdd = 1 / prob;
+      const expectedValue = prob * offeredOdd - 1; // lucro médio por 1 unidade apostada
+      const edge = prob - impliedProbability; // vantagem sobre o mercado
+      // Kelly completo: fração do banco que maximiza o crescimento (só se +EV).
+      const kelly = offeredOdd > 1 ? (prob * offeredOdd - 1) / (offeredOdd - 1) : 0;
+
+      let verdict: "VALOR" | "JUSTA" | "SEM_VALOR";
+      let verdictLabel: string;
+      if (expectedValue >= 0.05) {
+        verdict = "VALOR";
+        verdictLabel = "Valor esperado positivo";
+      } else if (expectedValue >= -0.02) {
+        verdict = "JUSTA";
+        verdictLabel = "Perto do valor justo";
+      } else {
+        verdict = "SEM_VALOR";
+        verdictLabel = "Valor esperado negativo";
+      }
+
+      const legs: EvaluatedLeg[] = (Array.isArray(b?.legs) ? b.legs : [])
+        .map((l: any) => ({
+          event: clip(l?.event, 120),
+          selection: clip(l?.selection, 120),
+          estimatedProbability: clampProb(Number(l?.estimatedProbability)),
+        }))
+        .filter((l: EvaluatedLeg) => l.event || l.selection)
+        .slice(0, 12);
+
+      return {
+        type: b?.type === "MULTIPLA" ? "MULTIPLA" : "SIMPLES",
+        sport: clip(b?.sport, 40),
+        competition: clip(b?.competition, 90),
+        event: clip(b?.event, 140),
+        market: clip(b?.market, 90),
+        selection: clip(b?.selection, 140),
+        bookmaker: clip(b?.bookmaker, 40),
+        offeredOdd: Number(offeredOdd.toFixed(2)),
+        estimatedProbability: Number(prob.toFixed(4)),
+        impliedProbability: Number(impliedProbability.toFixed(4)),
+        fairOdd: Number(fairOdd.toFixed(2)),
+        expectedValue: Number(expectedValue.toFixed(4)),
+        expectedValuePct: Number((expectedValue * 100).toFixed(1)),
+        edgePct: Number((edge * 100).toFixed(1)),
+        kellyFraction: Number(Math.max(0, kelly).toFixed(3)),
+        verdict,
+        verdictLabel,
+        confidence: Math.min(5, Math.max(1, Math.round(Number(b?.confidence) || 3))),
+        justification: clip(b?.justification, 700),
+        keyFactors: clipArr(b?.keyFactors, 5, 200),
+        risks: clipArr(b?.risks, 4, 200),
+        legs: legs.length > 0 ? legs : undefined,
+      };
+    })
+    .filter((b: any) => b && b.selection && b.event)
+    .slice(0, EVAL_MAX_BETS);
+
+  if (bets.length === 0) throw new Error("O modelo não conseguiu avaliar nenhuma aposta.");
+  return { summary: clip(raw?.summary, 600), bets };
+}
+
+async function evaluateBet(input: { imageBase64?: string; text: string }) {
+  const started = Date.now();
+  let lastError: unknown = new Error("Falha desconhecida ao avaliar a aposta.");
+
+  for (let attempt = 1; attempt <= EVAL_MAX_ATTEMPTS; attempt++) {
+    if (attempt > 1 && Date.now() - started > EVAL_TIME_BUDGET_MS) break;
+    try {
+      const prompt = buildEvalPrompt(todayInLisbon(), input.text, Boolean(input.imageBase64), attempt > 1);
+      const text = await callEvalModel(prompt, input.imageBase64);
+      return sanitizeEvaluation(extractJson(text));
+    } catch (err) {
+      lastError = err;
+      console.warn(`[insights] avaliação tentativa ${attempt}/${EVAL_MAX_ATTEMPTS} falhou:`, (err as Error)?.message);
+      if (attempt < EVAL_MAX_ATTEMPTS) await new Promise((r) => setTimeout(r, 1500 * attempt));
+    }
+  }
+  throw lastError;
+}
+
 /**
  * Devolve a linha de hoje, gerando-a se ainda não existir. Partilhada pelo
  * pedido do utilizador e pelo cron — o cron aquece a cache de madrugada e o
@@ -234,6 +433,31 @@ router.get("/", async (_req: AuthenticatedRequest, res) => {
     console.error("Erro ao gerar insights:", error);
     res.status(503).json({
       error: "Não foi possível gerar as dicas de hoje. Tenta novamente dentro de momentos.",
+    });
+  }
+});
+
+// ============================================================
+// POST /api/insights/evaluate -> avalia uma aposta (print e/ou texto)
+// Sem cache: cada aposta é única. Rate limit herdado de /api/insights.
+// ============================================================
+router.post("/evaluate", async (req: AuthenticatedRequest, res) => {
+  const { imageBase64, text } = req.body ?? {};
+  const hasImage = typeof imageBase64 === "string" && imageBase64.trim().length > 0;
+  const cleanText = typeof text === "string" ? text.trim().slice(0, 2000) : "";
+
+  if (!hasImage && !cleanText) {
+    res.status(400).json({ error: "Fornece um print do boletim ou uma descrição da aposta." });
+    return;
+  }
+
+  try {
+    const result = await evaluateBet({ imageBase64: hasImage ? imageBase64 : undefined, text: cleanText });
+    res.json({ evaluatedAt: new Date().toISOString(), ...result });
+  } catch (error: any) {
+    console.error("[insights] avaliação falhou:", error?.message);
+    res.status(503).json({
+      error: "Não foi possível avaliar a aposta agora. Tenta novamente dentro de momentos.",
     });
   }
 });
