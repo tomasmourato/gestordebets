@@ -2,6 +2,8 @@ import { Router } from "express";
 import pool from "../db/pool.js";
 import { authenticateToken, AuthenticatedRequest } from "../middleware/authMiddleware.js";
 import { normalizeBetStatus } from "../src/lib/betStatus.js";
+import { calculateBetReturnAndProfit } from "../src/utils.js";
+import { BetStatus } from "../src/types.js";
 import { BET_SELECT_COLUMNS } from "../db/betColumns.js";
 
 const router = Router();
@@ -97,6 +99,22 @@ function parseBetPayload(body: any): ParsedPayload {
   // Freebet e "sem risco" são mutuamente exclusivos; sem risco tem prioridade.
   const isFreebet = !isRiskFree && (b.isFreebet === true || b.isFreebet === "true");
 
+  // --- Fonte de verdade do servidor para apostas SEM RISCO --------------------
+  // Uma aposta sem risco usa dinheiro REAL: o lucro conta como o de uma aposta
+  // normal (uma derrota perde a stake). Recalculamos aqui e ignoramos o
+  // final_return/net_profit enviados para que um cliente desatualizado (ex.: uma
+  // extensão antiga a re-sincronizar) não consiga repor o antigo break-even
+  // (net 0). O CASHOUT mantém o valor de encerramento enviado pela casa.
+  let finalReturnOut = finalReturn as number | null;
+  let netProfitOut = netProfit as number | null;
+  if (isRiskFree && status !== "CASHOUT") {
+    const calc = calculateBetReturnAndProfit(
+      stake, odd, status as BetStatus, false, undefined, undefined, true
+    );
+    finalReturnOut = calc.finalReturn;
+    netProfitOut = calc.netProfit;
+  }
+
   // freebetType: SNR | SR, ou null (não-freebet ou desconhecido)
   let freebetType: string | null =
     typeof b.freebetType === "string" ? b.freebetType.trim().toUpperCase() : null;
@@ -139,8 +157,8 @@ function parseBetPayload(body: any): ParsedPayload {
       odd,
       isFreebet,
       potentialReturn as number | null,
-      finalReturn as number | null,
-      netProfit as number | null,
+      finalReturnOut,
+      netProfitOut,
       bookmaker,
       dateTime,
       notes,
