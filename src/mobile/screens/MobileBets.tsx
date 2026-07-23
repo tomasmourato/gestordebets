@@ -397,6 +397,19 @@ export default function MobileBets({
     });
   };
 
+  // Selecionar/desmarcar todas as apostas atualmente filtradas (não só as
+  // visíveis num grupo) — como no desktop.
+  const toggleAllFiltered = () => {
+    setConfirmBulkDelete(false);
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      const allSelected = filteredBets.length > 0 && filteredBets.every((b) => next.has(b.id));
+      if (allSelected) filteredBets.forEach((b) => next.delete(b.id));
+      else filteredBets.forEach((b) => next.add(b.id));
+      return next;
+    });
+  };
+
   const finishBulk = () => {
     setSelectedIds(new Set());
     setConfirmBulkDelete(false);
@@ -566,6 +579,7 @@ export default function MobileBets({
 
   const selectedList = bets.filter((b) => selectedIds.has(b.id));
   const allSelectedIgnored = selectedList.length > 0 && selectedList.every((b) => b.isIgnored);
+  const allFilteredSelected = filteredBets.length > 0 && filteredBets.every((b) => selectedIds.has(b.id));
   const noSelection = selectedIds.size === 0 || bulkRunning;
 
   return (
@@ -609,9 +623,21 @@ export default function MobileBets({
         </Pressable>
       </div>
 
-      <p className="text-[11px] text-zinc-400 dark:text-zinc-500 font-mono px-1">
-        {filteredBets.length} de {bets.length} apostas
-      </p>
+      <div className="flex items-center justify-between gap-2 px-1 min-h-6">
+        <p className="text-[11px] text-zinc-400 dark:text-zinc-500 font-mono">
+          {filteredBets.length} de {bets.length} apostas
+        </p>
+        {isSelecting && (
+          <Pressable
+            as="button"
+            onClick={toggleAllFiltered}
+            disabled={filteredBets.length === 0}
+            className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 disabled:opacity-40 px-2 py-1 rounded-full"
+          >
+            {allFilteredSelected ? "Desmarcar filtradas" : `Selecionar filtradas (${filteredBets.length})`}
+          </Pressable>
+        )}
+      </div>
 
       {/* Lista agrupada por dia */}
       {groups.map(({ day, bets: dayBets }) => (

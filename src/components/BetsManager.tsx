@@ -48,6 +48,29 @@ interface BetsManagerProps {
 type SortField = "date" | "stake" | "odd" | "profit";
 type SortDirection = "asc" | "desc";
 
+// Edição em massa: só se aplicam os campos alterados. "Manter" (KEEP) deixa
+// cada aposta como está. Ficam de fora os campos únicos por aposta — montante,
+// odd e seleções. CASHOUT não entra no bulk (exige valor recebido próprio).
+const KEEP = "__KEEP__";
+const NO_ACCOUNT = "__NONE__";
+
+const BULK_STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: KEEP, label: "Manter estado" },
+  { value: "POR_LIQUIDAR", label: "Por liquidar" },
+  { value: "GANHA", label: "Ganha" },
+  { value: "PERDIDA", label: "Perdida" },
+  { value: "MEIO_GANHA", label: "Meio ganha" },
+  { value: "MEIO_PERDIDA", label: "Meio perdida" },
+  { value: "ANULADA", label: "Anulada" },
+];
+
+const BULK_MONEY_OPTIONS: { value: string; label: string }[] = [
+  { value: KEEP, label: "Manter tipo" },
+  { value: "NORMAL", label: "Dinheiro real" },
+  { value: "FREEBET", label: "Freebet" },
+  { value: "RISK_FREE", label: "Sem risco" },
+];
+
 export default function BetsManager({ 
   bets, 
   currency, 
@@ -110,6 +133,16 @@ export default function BetsManager({
   const [selectedBetIds, setSelectedBetIds] = useState<Set<string>>(new Set());
   const [isConfirmingBulkDelete, setIsConfirmingBulkDelete] = useState(false);
   const [isBulkActionRunning, setIsBulkActionRunning] = useState(false);
+  // Editar em massa (só campos comuns) e ignorar/repor em massa.
+  const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
+  const [isBulkIgnoreOpen, setIsBulkIgnoreOpen] = useState(false);
+  const [bulkIgnoreComment, setBulkIgnoreComment] = useState("");
+  const [bulkStatus, setBulkStatus] = useState(KEEP);
+  const [bulkSport, setBulkSport] = useState("");
+  const [bulkBookmaker, setBulkBookmaker] = useState(KEEP);
+  const [bulkAccount, setBulkAccount] = useState(KEEP);
+  const [bulkMoney, setBulkMoney] = useState(KEEP);
+  const [bulkNote, setBulkNote] = useState("");
 
   // Form / Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -283,11 +316,24 @@ export default function BetsManager({
     setSortDirection("desc");
   };
 
+  const resetBulkEdit = () => {
+    setIsBulkEditOpen(false);
+    setIsBulkIgnoreOpen(false);
+    setBulkIgnoreComment("");
+    setBulkStatus(KEEP);
+    setBulkSport("");
+    setBulkBookmaker(KEEP);
+    setBulkAccount(KEEP);
+    setBulkMoney(KEEP);
+    setBulkNote("");
+  };
+
   const toggleSelectionMode = () => {
     setIsSelecting(current => {
       if (current) {
         setSelectedBetIds(new Set());
         setIsConfirmingBulkDelete(false);
+        resetBulkEdit();
       }
       return !current;
     });
@@ -304,6 +350,12 @@ export default function BetsManager({
   };
 
   const allFilteredBetsSelected = filteredBets.length > 0 && filteredBets.every(bet => selectedBetIds.has(bet.id));
+  const selectedBetsList = bets.filter(bet => selectedBetIds.has(bet.id));
+  const allSelectedIgnored = selectedBetsList.length > 0 && selectedBetsList.every(b => b.isIgnored);
+  const bulkFieldClass =
+    "w-full h-9 px-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500";
+  const bulkLabelClass =
+    "block text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1";
 
   const toggleAllFilteredBets = () => {
     setIsConfirmingBulkDelete(false);
@@ -320,6 +372,112 @@ export default function BetsManager({
     setIsConfirmingBulkDelete(false);
     setIsSelecting(false);
     setIsBulkActionRunning(false);
+    resetBulkEdit();
+  };
+
+  // Editar em massa: aplica só os campos alterados; os únicos por aposta
+  // (montante, odd, seleções) ficam intactos. Recalcula retorno/lucro só
+  // quando muda o estado ou o tipo de dinheiro — os cálculos dependem deles.
+  const applyBulkEdit = async () => {
+    const selected = bets.filter(bet => selectedBetIds.has(bet.id));
+    if (selected.length === 0) return;
+
+    const changesStatus = bulkStatus !== KEEP;
+    const changesBookmaker = bulkBookmaker !== KEEP;
+    const changesAccount = bulkAccount !== KEEP;
+    const changesSport = bulkSport.trim() !== "";
+    const changesMoney = bulkMoney !== KEEP;
+    const noteToAppend = bulkNote.trim();
+    const changesNote = noteToAppend !== "";
+
+    if (!changesStatus && !changesBookmaker && !changesAccount && !changesSport && !changesMoney && !changesNote) {
+      return;
+    }
+
+    setIsBulkActionRunning(true);
+    for (const bet of selected) {
+      const next: Bet = { ...bet, selections: bet.selections.map(s => ({ ...s })) };
+
+      if (changesBookmaker) {
+        next.bookmaker = bulkBookmaker;
+        if (next.accountId && accounts.find(a => a.id === next.accountId)?.bookmaker !== bulkBookmaker) {
+          next.accountId = undefined;
+        }
+      }
+      if (changesAccount) {
+        if (bulkAccount === NO_ACCOUNT) {
+          next.accountId = undefined;
+        } else {
+          const acc = accounts.find(a => a.id === bulkAccount);
+          if (acc) {
+            next.accountId = acc.id;
+            next.bookmaker = acc.bookmaker;
+          }
+        }
+      }
+      if (changesSport) {
+        next.selections = next.selections.map(s => ({ ...s, sport: bulkSport.trim() }));
+      }
+      if (changesMoney) {
+        next.isFreebet = bulkMoney === "FREEBET";
+        next.isRiskFree = bulkMoney === "RISK_FREE";
+        if (!next.isFreebet) next.freebetType = undefined;
+      }
+      if (changesStatus) {
+        next.status = bulkStatus as BetStatus;
+      }
+      if (changesNote) {
+        next.notes = next.notes ? `${next.notes}\n${noteToAppend}` : noteToAppend;
+      }
+
+      if (changesStatus || changesMoney) {
+        const calc = calculateBetReturnAndProfit(
+          safeNum(next.stake),
+          safeNum(next.odd),
+          next.status,
+          !!next.isFreebet,
+          safeNum(next.finalReturn),
+          next.freebetType,
+          next.isRiskFree,
+        );
+        next.potentialReturn = calc.potentialReturn;
+        next.finalReturn = calc.finalReturn;
+        next.netProfit = calc.netProfit;
+      }
+
+      await onUpdateBet(next);
+    }
+    finishBulkAction();
+  };
+
+  // Ignorar/repor em massa. Se todas as selecionadas já estão ignoradas, o
+  // botão repõe-nas de imediato; senão abre o painel com o motivo opcional.
+  const bulkSetIgnored = async (ignored: boolean, comment?: string | null) => {
+    const targets = bets
+      .filter(bet => selectedBetIds.has(bet.id))
+      .filter(b => (ignored ? !b.isIgnored : b.isIgnored));
+    if (targets.length === 0) {
+      finishBulkAction();
+      return;
+    }
+    setIsBulkActionRunning(true);
+    for (const b of targets) {
+      await onIgnoreBet(b.id, ignored, ignored ? comment : undefined);
+    }
+    finishBulkAction();
+  };
+
+  const startBulkIgnore = () => {
+    const selected = bets.filter(bet => selectedBetIds.has(bet.id));
+    if (selected.length === 0) return;
+    if (selected.every(b => b.isIgnored)) {
+      void bulkSetIgnored(false);
+    } else {
+      setBulkIgnoreComment("");
+      setIsBulkEditOpen(false);
+      setIsConfirmingBulkDelete(false);
+      setIsBulkIgnoreOpen(true);
+    }
   };
 
   const handleBulkDuplicate = async () => {
@@ -855,6 +1013,26 @@ export default function BetsManager({
               <>
                 <button
                   type="button"
+                  onClick={() => { setIsBulkEditOpen(open => !open); setIsBulkIgnoreOpen(false); setIsConfirmingBulkDelete(false); }}
+                  disabled={isBulkActionRunning}
+                  className={`px-3 py-1.5 rounded-sm border font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isBulkEditOpen
+                      ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
+                      : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300"
+                  }`}
+                >
+                  <Edit size={13} /> Editar
+                </button>
+                <button
+                  type="button"
+                  onClick={startBulkIgnore}
+                  disabled={isBulkActionRunning}
+                  className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                >
+                  {allSelectedIgnored ? <><Eye size={13} /> Repor</> : <><EyeOff size={13} /> Ignorar</>}
+                </button>
+                <button
+                  type="button"
                   onClick={handleBulkDuplicate}
                   disabled={isBulkActionRunning}
                   className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
@@ -863,7 +1041,7 @@ export default function BetsManager({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsConfirmingBulkDelete(true)}
+                  onClick={() => { setIsConfirmingBulkDelete(true); setIsBulkEditOpen(false); setIsBulkIgnoreOpen(false); }}
                   disabled={isBulkActionRunning}
                   className="px-3 py-1.5 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
                 >
@@ -871,6 +1049,148 @@ export default function BetsManager({
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Painel: editar em massa — só campos comuns */}
+      {isSelecting && selectedBetIds.size > 0 && isBulkEditOpen && (
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm px-3 py-3 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+              Editar {selectedBetIds.size} {selectedBetIds.size === 1 ? "aposta" : "apostas"} — só campos comuns
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsBulkEditOpen(false)}
+              className="p-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+              aria-label="Fechar edição em massa"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+            Só os campos que alterares são aplicados. O montante, a odd e as seleções de cada aposta ficam intactos.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <div>
+              <label className={bulkLabelClass}>Estado</label>
+              <select className={`${bulkFieldClass} cursor-pointer`} value={bulkStatus} onChange={e => setBulkStatus(e.target.value)}>
+                {BULK_STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={bulkLabelClass}>Desporto (vazio = manter)</label>
+              <input
+                type="text"
+                list="bulk-sports-desktop"
+                className={bulkFieldClass}
+                value={bulkSport}
+                onChange={e => setBulkSport(e.target.value)}
+                placeholder="Manter"
+              />
+              <datalist id="bulk-sports-desktop">
+                {sportOptions.map(s => <option key={s} value={s} />)}
+              </datalist>
+            </div>
+            <div>
+              <label className={bulkLabelClass}>Casa de apostas</label>
+              <select className={`${bulkFieldClass} cursor-pointer`} value={bulkBookmaker} onChange={e => setBulkBookmaker(e.target.value)}>
+                <option value={KEEP}>Manter casa</option>
+                {bookmakerOptions.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+            {accounts.length > 0 && (
+              <div>
+                <label className={bulkLabelClass}>Conta</label>
+                <select className={`${bulkFieldClass} cursor-pointer`} value={bulkAccount} onChange={e => setBulkAccount(e.target.value)}>
+                  <option value={KEEP}>Manter conta</option>
+                  <option value={NO_ACCOUNT}>Sem conta</option>
+                  {accounts.map(a => <option key={a.id} value={a.id}>{a.bookmaker} · {a.label}</option>)}
+                </select>
+              </div>
+            )}
+            <div>
+              <label className={bulkLabelClass}>Tipo de dinheiro</label>
+              <select className={`${bulkFieldClass} cursor-pointer`} value={bulkMoney} onChange={e => setBulkMoney(e.target.value)}>
+                {BULK_MONEY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <div className="col-span-2 md:col-span-3">
+              <label className={bulkLabelClass}>Acrescentar nota (opcional)</label>
+              <textarea
+                className={`${bulkFieldClass} h-auto py-2`}
+                rows={2}
+                value={bulkNote}
+                onChange={e => setBulkNote(e.target.value)}
+                placeholder="Fica anexada às notas de cada aposta selecionada"
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsBulkEditOpen(false)}
+              disabled={isBulkActionRunning}
+              className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold text-zinc-600 dark:text-zinc-300 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => void applyBulkEdit()}
+              disabled={isBulkActionRunning}
+              className="px-3 py-1.5 rounded-sm bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+            >
+              Aplicar a {selectedBetIds.size}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Painel: ignorar em massa — exclui as selecionadas das estatísticas */}
+      {isSelecting && selectedBetIds.size > 0 && isBulkIgnoreOpen && (
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm px-3 py-3 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+              Ignorar {selectedBetIds.size} {selectedBetIds.size === 1 ? "aposta" : "apostas"} — fora das estatísticas
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsBulkIgnoreOpen(false)}
+              className="p-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+              aria-label="Fechar ignorar em massa"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          <div>
+            <label className={bulkLabelClass}>Motivo (opcional, aplicado a todas)</label>
+            <textarea
+              className={`${bulkFieldClass} h-auto py-2`}
+              rows={2}
+              value={bulkIgnoreComment}
+              onChange={e => setBulkIgnoreComment(e.target.value)}
+              placeholder="Ex.: apostas de teste, erro de registo…"
+            />
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsBulkIgnoreOpen(false)}
+              disabled={isBulkActionRunning}
+              className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold text-zinc-600 dark:text-zinc-300 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => void bulkSetIgnored(true, bulkIgnoreComment.trim() || null)}
+              disabled={isBulkActionRunning}
+              className="px-3 py-1.5 rounded-sm bg-zinc-800 hover:bg-zinc-900 dark:bg-zinc-200 dark:hover:bg-white text-white dark:text-zinc-900 text-xs font-semibold disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+            >
+              Ignorar {selectedBetIds.size}
+            </button>
           </div>
         </div>
       )}
