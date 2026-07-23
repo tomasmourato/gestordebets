@@ -2,8 +2,9 @@
 // Gestão de apostas mobile touch-first: pesquisa + sheet de filtros (mesma
 // semântica do BetsManager desktop, incluindo drill-down por URL), lista de
 // cards agrupada por dia com swipe para editar/apagar, sheet de detalhe,
-// modo de seleção com ações em massa (duplicar/apagar) e formulário em
-// página-folha (FAB) suportado pelo hook partilhado useBetForm.
+// modo de seleção com ações em massa (editar campos comuns, ignorar/repor,
+// duplicar, apagar) e formulário em página-folha (FAB) suportado pelo hook
+// partilhado useBetForm.
 
 import { useMemo, useState, type ReactNode } from "react";
 import {
@@ -23,7 +24,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { Bet, BookieAccount, BetStatus } from "../../types";
-import { AVAILABLE_BOOKMAKERS, safeNum } from "../../utils";
+import { AVAILABLE_BOOKMAKERS, safeNum, calculateBetReturnAndProfit } from "../../utils";
 import { useBetForm } from "../../hooks/useBetForm";
 import {
   BottomSheet,
@@ -83,6 +84,31 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
   { value: "stake", label: "Stake" },
   { value: "odd", label: "Odd" },
   { value: "profit", label: "Lucro" },
+];
+
+// Edição em massa: só se aplicam os campos que o utilizador altera. "Manter"
+// (KEEP) deixa cada aposta como está. Ficam DE FORA os campos únicos por
+// aposta — montante, odd e seleções — como pedido.
+const KEEP = "__KEEP__";
+const NO_ACCOUNT = "__NONE__";
+
+// Estados aplicáveis em massa. CASHOUT fica de fora: exige um valor recebido
+// próprio de cada aposta, que não faz sentido definir em bloco.
+const BULK_STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: KEEP, label: "Manter" },
+  { value: "POR_LIQUIDAR", label: "Por liquidar" },
+  { value: "GANHA", label: "Ganha" },
+  { value: "PERDIDA", label: "Perdida" },
+  { value: "MEIO_GANHA", label: "Meio ganha" },
+  { value: "MEIO_PERDIDA", label: "Meio perdida" },
+  { value: "ANULADA", label: "Anulada" },
+];
+
+const BULK_MONEY_OPTIONS: { value: string; label: string }[] = [
+  { value: KEEP, label: "Manter" },
+  { value: "NORMAL", label: "Dinheiro real" },
+  { value: "FREEBET", label: "Freebet" },
+  { value: "RISK_FREE", label: "Sem risco" },
 ];
 
 // Estilo dos badges de estado (espelha getStatusBadge do desktop).
@@ -161,6 +187,17 @@ export default function MobileBets({
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [bulkRunning, setBulkRunning] = useState(false);
 
+  // Editar em massa (só campos comuns) e ignorar/repor em massa.
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [beStatus, setBeStatus] = useState(KEEP);
+  const [beSport, setBeSport] = useState("");
+  const [beBookmaker, setBeBookmaker] = useState(KEEP);
+  const [beAccount, setBeAccount] = useState(KEEP);
+  const [beMoney, setBeMoney] = useState(KEEP);
+  const [beNote, setBeNote] = useState("");
+  const [bulkIgnoreOpen, setBulkIgnoreOpen] = useState(false);
+  const [bulkIgnoreComment, setBulkIgnoreComment] = useState("");
+
   const form = useBetForm(accounts);
 
   const sportOptions = useMemo(
@@ -180,6 +217,7 @@ export default function MobileBets({
     [bets],
   );
   const accountLabelById = useMemo(() => new Map(accounts.map((a) => [a.id, a.label])), [accounts]);
+  const accountById = useMemo(() => new Map(accounts.map((a) => [a.id, a])), [accounts]);
 
   // Filtragem + ordenação — mesma semântica do desktop.
   const filteredBets = useMemo(() => {
@@ -329,11 +367,21 @@ export default function MobileBets({
   };
 
   // Seleção em massa.
+  const resetBulkEdit = () => {
+    setBeStatus(KEEP);
+    setBeSport("");
+    setBeBookmaker(KEEP);
+    setBeAccount(KEEP);
+    setBeMoney(KEEP);
+    setBeNote("");
+  };
+
   const toggleSelecting = () => {
     setIsSelecting((current) => {
       if (current) {
         setSelectedIds(new Set());
         setConfirmBulkDelete(false);
+        resetBulkEdit();
       }
       return !current;
     });
@@ -354,6 +402,126 @@ export default function MobileBets({
     setConfirmBulkDelete(false);
     setIsSelecting(false);
     setBulkRunning(false);
+    resetBulkEdit();
+  };
+
+  // Apostas atualmente selecionadas (ordem da lista visível é irrelevante aqui).
+  const selectedBets = () => bets.filter((b) => selectedIds.has(b.id));
+
+  // Editar em massa: aplica só os campos alterados; os únicos por aposta
+  // (montante, odd, seleções) ficam intactos. Recalcula retorno/lucro apenas
+  // quando o estado ou o tipo de dinheiro muda — os cálculos dependem deles.
+  const applyBulkEdit = async () => {
+    const selected = selectedBets();
+    if (selected.length === 0) return;
+
+    const changesStatus = beStatus !== KEEP;
+    const changesBookmaker = beBookmaker !== KEEP;
+    const changesAccount = beAccount !== KEEP;
+    const changesSport = beSport.trim() !== "";
+    const changesMoney = beMoney !== KEEP;
+    const noteToAppend = beNote.trim();
+    const changesNote = noteToAppend !== "";
+
+    if (!changesStatus && !changesBookmaker && !changesAccount && !changesSport && !changesMoney && !changesNote) {
+      toast.show("Escolhe pelo menos um campo para alterar", "info");
+      return;
+    }
+
+    setBulkRunning(true);
+    let count = 0;
+    for (const bet of selected) {
+      const next: Bet = { ...bet, selections: bet.selections.map((s) => ({ ...s })) };
+
+      if (changesBookmaker) {
+        next.bookmaker = beBookmaker;
+        // Se a conta atual pertence a outra casa, deixa de fazer sentido.
+        if (next.accountId && accountById.get(next.accountId)?.bookmaker !== beBookmaker) {
+          next.accountId = undefined;
+        }
+      }
+      if (changesAccount) {
+        if (beAccount === NO_ACCOUNT) {
+          next.accountId = undefined;
+        } else {
+          const acc = accountById.get(beAccount);
+          if (acc) {
+            next.accountId = acc.id;
+            next.bookmaker = acc.bookmaker; // conta implica a sua casa
+          }
+        }
+      }
+      if (changesSport) {
+        next.selections = next.selections.map((s) => ({ ...s, sport: beSport.trim() }));
+      }
+      if (changesMoney) {
+        next.isFreebet = beMoney === "FREEBET";
+        next.isRiskFree = beMoney === "RISK_FREE";
+        if (!next.isFreebet) next.freebetType = undefined;
+      }
+      if (changesStatus) {
+        next.status = beStatus as BetStatus;
+      }
+      if (changesNote) {
+        next.notes = next.notes ? `${next.notes}\n${noteToAppend}` : noteToAppend;
+      }
+
+      if (changesStatus || changesMoney) {
+        const calc = calculateBetReturnAndProfit(
+          safeNum(next.stake),
+          safeNum(next.odd),
+          next.status,
+          !!next.isFreebet,
+          safeNum(next.finalReturn), // só usado se CASHOUT — mantém consistência
+          next.freebetType,
+          next.isRiskFree,
+        );
+        next.potentialReturn = calc.potentialReturn;
+        next.finalReturn = calc.finalReturn;
+        next.netProfit = calc.netProfit;
+      }
+
+      await onUpdateBet(next);
+      count++;
+    }
+
+    setBulkEditOpen(false);
+    finishBulk();
+    toast.show(`${count} ${count === 1 ? "aposta atualizada" : "apostas atualizadas"}`, "success");
+  };
+
+  // Ignorar/repor em massa. Se TODAS as selecionadas já estão ignoradas, o
+  // botão repõe-nas de imediato; caso contrário abre a folha do motivo.
+  const bulkSetIgnored = async (ignored: boolean, comment?: string | null) => {
+    const targets = selectedBets().filter((b) => (ignored ? !b.isIgnored : b.isIgnored));
+    if (targets.length === 0) {
+      finishBulk();
+      return;
+    }
+    setBulkRunning(true);
+    for (const b of targets) {
+      await onIgnoreBet(b.id, ignored, ignored ? comment : undefined);
+    }
+    setBulkIgnoreOpen(false);
+    setBulkIgnoreComment("");
+    finishBulk();
+    toast.show(
+      ignored
+        ? `${targets.length} ${targets.length === 1 ? "aposta ignorada" : "apostas ignoradas"}`
+        : `${targets.length} ${targets.length === 1 ? "aposta reposta" : "apostas repostas"}`,
+      "success",
+    );
+  };
+
+  const startBulkIgnore = () => {
+    const selected = selectedBets();
+    if (selected.length === 0) return;
+    if (selected.every((b) => b.isIgnored)) {
+      void bulkSetIgnored(false);
+    } else {
+      setBulkIgnoreComment("");
+      setBulkIgnoreOpen(true);
+    }
   };
 
   const bulkDuplicate = async () => {
@@ -395,6 +563,10 @@ export default function MobileBets({
   const accountOptions = accounts.filter(
     (a) => a.bookmaker === (form.bookmaker === "Outra" ? form.customBookmaker.trim() : form.bookmaker),
   );
+
+  const selectedList = bets.filter((b) => selectedIds.has(b.id));
+  const allSelectedIgnored = selectedList.length > 0 && selectedList.every((b) => b.isIgnored);
+  const noSelection = selectedIds.size === 0 || bulkRunning;
 
   return (
     <div className="space-y-3">
@@ -539,40 +711,33 @@ export default function MobileBets({
         </div>
       )}
 
-      {/* Barra de ações em massa */}
+      {/* Barra de ações em massa: editar/ignorar/duplicar/apagar as selecionadas */}
       {isSelecting && (
         <div className="fixed bottom-[calc(4rem+var(--safe-bottom))] inset-x-0 z-40 px-4 pb-2">
-          <div className="max-w-lg mx-auto rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 shadow-xl px-4 py-3 flex items-center gap-3">
-            <span className="text-xs font-bold font-mono">{selectedIds.size}</span>
-            <span className="text-xs">selecionadas</span>
-            <div className="ml-auto flex items-center gap-2">
-              <Pressable
-                as="button"
-                disabled={selectedIds.size === 0 || bulkRunning}
-                onClick={bulkDuplicate}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-zinc-700 dark:bg-zinc-300 text-xs font-semibold"
-              >
-                <Copy size={12} /> Duplicar
-              </Pressable>
-              {confirmBulkDelete ? (
-                <Pressable
-                  as="button"
-                  disabled={bulkRunning}
-                  onClick={bulkDelete}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-rose-600 text-white text-xs font-semibold"
-                >
-                  <Trash2 size={12} /> Confirmar?
-                </Pressable>
-              ) : (
-                <Pressable
-                  as="button"
-                  disabled={selectedIds.size === 0 || bulkRunning}
-                  onClick={() => setConfirmBulkDelete(true)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-rose-600/90 text-white text-xs font-semibold"
-                >
-                  <Trash2 size={12} /> Apagar
-                </Pressable>
-              )}
+          <div className="max-w-lg mx-auto rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 shadow-xl px-3 py-2.5 flex items-center gap-2">
+            <span className="text-sm font-bold font-mono pl-1 tabular-nums">{selectedIds.size}</span>
+            <span className="text-[11px] text-zinc-400 dark:text-zinc-500">sel.</span>
+            <div className="ml-auto flex items-center gap-1.5">
+              <BulkAction
+                icon={Pencil}
+                label="Editar selecionadas"
+                disabled={noSelection}
+                onClick={() => setBulkEditOpen(true)}
+              />
+              <BulkAction
+                icon={allSelectedIgnored ? Eye : EyeOff}
+                label={allSelectedIgnored ? "Repor selecionadas" : "Ignorar selecionadas"}
+                disabled={noSelection}
+                onClick={startBulkIgnore}
+              />
+              <BulkAction icon={Copy} label="Duplicar selecionadas" disabled={noSelection} onClick={bulkDuplicate} />
+              <BulkAction
+                icon={Trash2}
+                label="Apagar selecionadas"
+                danger
+                disabled={noSelection}
+                onClick={() => setConfirmBulkDelete(true)}
+              />
             </div>
           </div>
         </div>
@@ -767,6 +932,145 @@ export default function MobileBets({
           </div>
         </div>
       </BottomSheet>
+
+      {/* Confirmar apagar em massa */}
+      <BottomSheet open={confirmBulkDelete} onClose={() => setConfirmBulkDelete(false)} title={`Apagar ${selectedIds.size} apostas?`}>
+        <div className="space-y-3 pb-2">
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            As <strong>{selectedIds.size}</strong> apostas selecionadas serão apagadas definitivamente.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <Pressable
+              as="button"
+              onClick={() => setConfirmBulkDelete(false)}
+              className="py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-700 dark:text-zinc-200 text-center"
+            >
+              Cancelar
+            </Pressable>
+            <Pressable
+              as="button"
+              disabled={bulkRunning}
+              onClick={() => void bulkDelete()}
+              className="py-3 rounded-xl bg-rose-600 text-white text-sm font-semibold text-center disabled:opacity-60"
+            >
+              Apagar {selectedIds.size}
+            </Pressable>
+          </div>
+        </div>
+      </BottomSheet>
+
+      {/* Ignorar em massa: exclui as selecionadas das estatísticas */}
+      <BottomSheet open={bulkIgnoreOpen} onClose={() => setBulkIgnoreOpen(false)} title={`Ignorar ${selectedIds.size} apostas?`}>
+        <div className="space-y-3 pb-2">
+          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+            As selecionadas deixam de contar para as estatísticas e gráficos. Continuam na lista e podes
+            repô-las quando quiseres.
+          </p>
+          <label className="block">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+              Motivo (opcional, aplicado a todas)
+            </span>
+            <textarea
+              value={bulkIgnoreComment}
+              onChange={(e) => setBulkIgnoreComment(e.target.value)}
+              rows={2}
+              placeholder="Ex.: apostas de teste, erro de registo…"
+              className={`mt-1 ${inputClasses} h-auto py-2.5`}
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <Pressable
+              as="button"
+              onClick={() => setBulkIgnoreOpen(false)}
+              className="py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 text-sm font-semibold text-zinc-700 dark:text-zinc-200 text-center"
+            >
+              Cancelar
+            </Pressable>
+            <Pressable
+              as="button"
+              disabled={bulkRunning}
+              onClick={() => void bulkSetIgnored(true, bulkIgnoreComment.trim() || null)}
+              className="py-3 rounded-xl bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 text-sm font-semibold text-center disabled:opacity-60"
+            >
+              Ignorar
+            </Pressable>
+          </div>
+        </div>
+      </BottomSheet>
+
+      {/* Editar em massa: só os campos comuns; montante/odd/seleções ficam intactos */}
+      <SheetPage
+        open={bulkEditOpen}
+        onClose={() => setBulkEditOpen(false)}
+        title={`Editar ${selectedIds.size} apostas`}
+        footer={
+          <Pressable
+            as="button"
+            disabled={bulkRunning}
+            onClick={() => void applyBulkEdit()}
+            className="w-full py-3 rounded-xl bg-emerald-600 text-white text-sm font-semibold text-center disabled:opacity-60"
+          >
+            Aplicar a {selectedIds.size} {selectedIds.size === 1 ? "aposta" : "apostas"}
+          </Pressable>
+        }
+      >
+        <div className="space-y-5">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Só os campos que alterares são aplicados. O montante, a odd e as seleções de cada aposta
+            ficam intactos.
+          </p>
+
+          <ChipGroup label="Estado" options={BULK_STATUS_OPTIONS} value={beStatus} onChange={setBeStatus} />
+
+          <FormField label="Desporto (vazio = manter)">
+            <input
+              type="text"
+              list="bulk-sports"
+              value={beSport}
+              onChange={(e) => setBeSport(e.target.value)}
+              placeholder="Manter"
+              className={inputClasses}
+            />
+            <datalist id="bulk-sports">
+              {sportOptions.map((s) => (
+                <option key={s} value={s} />
+              ))}
+            </datalist>
+          </FormField>
+
+          <ChipGroup
+            label="Casa de apostas"
+            options={[{ value: KEEP, label: "Manter" }, ...bookmakerOptions.map((b) => ({ value: b, label: b }))]}
+            value={beBookmaker}
+            onChange={setBeBookmaker}
+          />
+
+          {accounts.length > 0 && (
+            <ChipGroup
+              label="Conta"
+              options={[
+                { value: KEEP, label: "Manter" },
+                { value: NO_ACCOUNT, label: "Sem conta" },
+                ...accounts.map((a) => ({ value: a.id, label: `${a.bookmaker} · ${a.label}` })),
+              ]}
+              value={beAccount}
+              onChange={setBeAccount}
+            />
+          )}
+
+          <ChipGroup label="Tipo de dinheiro" options={BULK_MONEY_OPTIONS} value={beMoney} onChange={setBeMoney} />
+
+          <FormField label="Acrescentar nota (opcional)">
+            <textarea
+              value={beNote}
+              onChange={(e) => setBeNote(e.target.value)}
+              rows={2}
+              placeholder="Fica anexada às notas de cada aposta selecionada"
+              className={`${inputClasses} h-auto py-2.5`}
+            />
+          </FormField>
+        </div>
+      </SheetPage>
 
       {/* Sheet de filtros */}
       <BottomSheet
@@ -1139,6 +1443,38 @@ function FormField({ label, children }: { label: string; children: ReactNode }) 
       </span>
       <div className="mt-1">{children}</div>
     </label>
+  );
+}
+
+// Botão de ação em massa na barra escura — só ícone (poupa espaço em ecrãs
+// estreitos), com aria-label para acessibilidade.
+function BulkAction({
+  icon: Icon,
+  label,
+  onClick,
+  disabled,
+  danger,
+}: {
+  icon: typeof Copy;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+}) {
+  return (
+    <Pressable
+      as="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      className={`flex items-center justify-center w-9 h-9 rounded-full disabled:opacity-40 ${
+        danger
+          ? "bg-rose-600 text-white"
+          : "bg-white/10 dark:bg-zinc-900/10 text-zinc-100 dark:text-zinc-900"
+      }`}
+    >
+      <Icon size={16} />
+    </Pressable>
   );
 }
 
