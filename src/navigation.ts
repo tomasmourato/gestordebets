@@ -114,8 +114,8 @@ export interface ShellProps {
   accounts: BookieAccount[];
   accountsError: string | null;
   clearAccountsError: () => void;
-  onAddAccount: (bookmaker: string, label: string) => Promise<BookieAccount | null>;
-  onRenameAccount: (id: string, label: string) => Promise<BookieAccount | null>;
+  onAddAccount: (bookmaker: string, label: string, username?: string | null) => Promise<BookieAccount | null>;
+  onRenameAccount: (id: string, label: string, username?: string | null) => Promise<BookieAccount | null>;
   onDeleteAccount: (id: string) => Promise<boolean>;
 
   // Auditoria

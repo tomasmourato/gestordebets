@@ -17,12 +17,16 @@ import {
   Pencil,
   X,
   Info,
+  Building2,
+  Check,
 } from "lucide-react";
 import { Preferences, AuditLog, Bet, BookieAccount, ThemeMode, Language } from "../../types";
 import { AVAILABLE_BOOKMAKERS } from "../../utils";
 import { exportBetsCSV, exportBackupJSON, importBetsFromFile } from "../../lib/dataTransfer";
 import { getBundleVersion, initLiveUpdate } from "../../lib/liveUpdate";
 import { isNativeApp } from "../../lib/apiBase";
+import { fetchSettings, updateEnabledBookmakers, SUPPORTED_BOOKMAKERS } from "../../lib/settingsApi";
+import { bookmakerLabel } from "../../lib/bookmakers";
 import {
   SectionHeader,
   ListGroup,
@@ -46,8 +50,8 @@ interface MobileSettingsProps {
   accounts: BookieAccount[];
   accountsError: string | null;
   clearAccountsError: () => void;
-  onAddAccount: (bookmaker: string, label: string) => Promise<BookieAccount | null>;
-  onRenameAccount: (id: string, label: string) => Promise<BookieAccount | null>;
+  onAddAccount: (bookmaker: string, label: string, username?: string | null) => Promise<BookieAccount | null>;
+  onRenameAccount: (id: string, label: string, username?: string | null) => Promise<BookieAccount | null>;
   onDeleteAccount: (id: string) => Promise<boolean>;
 }
 
@@ -87,8 +91,17 @@ export default function MobileSettings({
   // Gestão de contas (dentro da sheet).
   const [newAccountBookmaker, setNewAccountBookmaker] = useState(AVAILABLE_BOOKMAKERS[0] || "Betano");
   const [newAccountLabel, setNewAccountLabel] = useState("");
+  const [newAccountUsername, setNewAccountUsername] = useState("");
   const [renamingAccount, setRenamingAccount] = useState<BookieAccount | null>(null);
   const [renameLabel, setRenameLabel] = useState("");
+  const [renameUsername, setRenameUsername] = useState("");
+
+  // Casas de apostas ativas (partilhadas com a extensão via /api/settings) —
+  // paridade com o EnabledBookmakersCard do desktop.
+  const [supportedBookmakers, setSupportedBookmakers] = useState<string[]>([...SUPPORTED_BOOKMAKERS]);
+  const [enabledBookmakers, setEnabledBookmakers] = useState<string[]>([]);
+  const [bookmakersLoading, setBookmakersLoading] = useState(true);
+  const [bookmakersSaving, setBookmakersSaving] = useState(false);
 
   // Sobre / live update.
   const [bundleVersion, setBundleVersion] = useState<string | null>(null);
@@ -97,6 +110,43 @@ export default function MobileSettings({
   useEffect(() => {
     void getBundleVersion().then(setBundleVersion);
   }, []);
+
+  // Casas ativas: fallback local aparece já; substitui pela lista do servidor.
+  useEffect(() => {
+    let alive = true;
+    fetchSettings()
+      .then((s) => {
+        if (!alive) return;
+        if (s.supportedBookmakers.length > 0) setSupportedBookmakers(s.supportedBookmakers);
+        setEnabledBookmakers(s.enabledBookmakers);
+      })
+      .catch((err) => {
+        if (alive) toast.show(err?.message || "Erro ao obter as casas ativas.", "error");
+      })
+      .finally(() => {
+        if (alive) setBookmakersLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggleBookmaker = async (key: string, next: boolean) => {
+    const previous = enabledBookmakers;
+    const updated = next ? [...enabledBookmakers, key] : enabledBookmakers.filter((k) => k !== key);
+    setEnabledBookmakers(updated); // otimista
+    setBookmakersSaving(true);
+    try {
+      const saved = await updateEnabledBookmakers(updated);
+      setEnabledBookmakers(saved.enabledBookmakers);
+    } catch (err) {
+      setEnabledBookmakers(previous); // reverte
+      toast.show((err as Error)?.message || "Erro ao guardar as casas ativas.", "error");
+    } finally {
+      setBookmakersSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (accountsError) {
@@ -136,9 +186,10 @@ export default function MobileSettings({
       toast.show("Dá um nome à conta.", "error");
       return;
     }
-    const created = await onAddAccount(newAccountBookmaker, label);
+    const created = await onAddAccount(newAccountBookmaker, label, newAccountUsername.trim() || null);
     if (created) {
       setNewAccountLabel("");
+      setNewAccountUsername("");
       toast.show("Conta adicionada", "success");
     }
   };
@@ -147,10 +198,10 @@ export default function MobileSettings({
     if (!renamingAccount) return;
     const label = renameLabel.trim();
     if (!label) return;
-    const updated = await onRenameAccount(renamingAccount.id, label);
+    const updated = await onRenameAccount(renamingAccount.id, label, renameUsername.trim() || null);
     if (updated) {
       setRenamingAccount(null);
-      toast.show("Conta renomeada", "success");
+      toast.show("Conta atualizada", "success");
     }
   };
 
@@ -238,6 +289,56 @@ export default function MobileSettings({
         />
       </MobileCard>
 
+      {/* Casas de apostas ativas (partilhadas com a extensão) */}
+      <SectionHeader>Casas de apostas</SectionHeader>
+      <MobileCard className="space-y-3">
+        <div className="flex items-start gap-2">
+          <Building2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            Escolhe as casas que usas. Só as selecionadas aparecem — e são importadas — no site e na extensão de browser.
+          </p>
+        </div>
+        {bookmakersLoading ? (
+          <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-500 py-2">
+            <RefreshCw size={14} className="animate-spin" /> A carregar…
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {supportedBookmakers.map((key) => {
+              const checked = enabledBookmakers.includes(key);
+              return (
+                <button
+                  key={key}
+                  onClick={() => void toggleBookmaker(key, !checked)}
+                  disabled={bookmakersSaving}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition-colors disabled:opacity-60 ${
+                    checked
+                      ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900"
+                      : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700"
+                  }`}
+                >
+                  <span
+                    className={`flex items-center justify-center w-5 h-5 rounded-md border shrink-0 ${
+                      checked
+                        ? "bg-emerald-600 border-emerald-600 text-white"
+                        : "bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-600"
+                    }`}
+                  >
+                    {checked && <Check size={13} strokeWidth={3} />}
+                  </span>
+                  <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{bookmakerLabel(key)}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {!bookmakersLoading && enabledBookmakers.length === 0 && (
+          <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+            Nenhuma casa selecionada — não vais conseguir importar apostas até escolheres pelo menos uma.
+          </p>
+        )}
+      </MobileCard>
+
       {/* Contas + auditoria */}
       <SectionHeader>Gestão</SectionHeader>
       <ListGroup>
@@ -316,7 +417,7 @@ export default function MobileSettings({
                 <ListItem
                   key={a.id}
                   title={a.label}
-                  subtitle={a.bookmaker}
+                  subtitle={a.username ? `${a.bookmaker} · @${a.username}` : a.bookmaker}
                   trailing={
                     <span className="flex items-center gap-1">
                       <Pressable
@@ -324,6 +425,7 @@ export default function MobileSettings({
                         onClick={() => {
                           setRenamingAccount(a);
                           setRenameLabel(a.label);
+                          setRenameUsername(a.username ?? "");
                         }}
                         aria-label={`Renomear ${a.label}`}
                         className="p-2 text-zinc-400"
@@ -366,10 +468,24 @@ export default function MobileSettings({
                 type="text"
                 value={renameLabel}
                 onChange={(e) => setRenameLabel(e.target.value)}
+                placeholder="Nome da conta"
                 className={inputClasses}
               />
+              <input
+                type="text"
+                value={renameUsername}
+                onChange={(e) => setRenameUsername(e.target.value)}
+                placeholder="Username na casa (opcional)"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                className={inputClasses}
+              />
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                O username com que inicias sessão na casa. A extensão usa-o para encaminhar as apostas importadas.
+              </p>
               <Pressable as="button" onClick={handleRename} className="w-full py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold text-center">
-                Guardar nome
+                Guardar
               </Pressable>
             </MobileCard>
           ) : (
@@ -393,6 +509,19 @@ export default function MobileSettings({
                 placeholder="Etiqueta (ex.: Conta principal)"
                 className={inputClasses}
               />
+              <input
+                type="text"
+                value={newAccountUsername}
+                onChange={(e) => setNewAccountUsername(e.target.value)}
+                placeholder="Username na casa (opcional)"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                className={inputClasses}
+              />
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                O username com que inicias sessão na casa. A extensão usa-o para encaminhar as apostas importadas.
+              </p>
               <Pressable
                 as="button"
                 onClick={() => void handleAddAccount()}
