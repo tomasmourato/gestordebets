@@ -21,8 +21,10 @@ import {
   TrendingDown,
   Minus,
   ListChecks,
+  Check,
 } from "lucide-react";
 import { authFetch, parseJsonResponse, SessionExpiredError } from "../../lib/authApi";
+import { useLoadingSteps, evalStepsFor, PICKS_STEPS, type LoadingStep } from "../../hooks/useLoadingSteps";
 import { isNativeApp } from "../../lib/apiBase";
 import {
   requestBetEvaluation,
@@ -103,6 +105,42 @@ async function pickNativePhoto(source: "camera" | "photos"): Promise<string | nu
     correctOrientation: true,
   });
   return photo.dataUrl ?? null;
+}
+
+// Cartão de espera com os passos da IA (mesmo texto do desktop).
+function AiProgress({ active, steps, hint }: { active: boolean; steps: LoadingStep[]; hint: string }) {
+  const { index, elapsed, label } = useLoadingSteps(active, steps);
+
+  return (
+    <MobileCard className="!p-6 flex flex-col items-center gap-4 text-center">
+      <div className="w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+
+      <div>
+        <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">{label}</p>
+        <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">{hint}</p>
+      </div>
+
+      <ul className="space-y-1.5 text-left w-full">
+        {steps.slice(0, index + 1).map((step, i) => {
+          const done = i < index;
+          return (
+            <li key={i} className="flex items-center gap-2 text-[11px]">
+              {done ? (
+                <Check size={12} className="text-emerald-500 shrink-0" strokeWidth={3} />
+              ) : (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 mx-[3px]"></span>
+              )}
+              <span className={done ? "text-zinc-400 dark:text-zinc-500" : "text-zinc-700 dark:text-zinc-200 font-medium"}>
+                {step.label}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+
+      <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 tabular-nums">{elapsed}s decorridos</p>
+    </MobileCard>
+  );
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -280,13 +318,11 @@ export default function MobileInsights({ onSessionExpired }: MobileInsightsProps
           {header}
 
           {loading && (
-            <MobileCard className="!p-8 flex flex-col items-center gap-3 text-center">
-              <div className="w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">A analisar os jogos de hoje…</p>
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                Na primeira visita do dia a análise é gerada na hora — pode demorar até um minuto.
-              </p>
-            </MobileCard>
+            <AiProgress
+              active={loading}
+              steps={PICKS_STEPS}
+              hint="Na primeira visita do dia a análise é gerada na hora — pode demorar até um minuto."
+            />
           )}
 
           {!loading && error && (
@@ -460,13 +496,11 @@ export default function MobileInsights({ onSessionExpired }: MobileInsightsProps
       </MobileCard>
 
       {evalLoading && (
-        <MobileCard className="!p-8 flex flex-col items-center gap-3 text-center">
-          <div className="w-7 h-7 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">A pesquisar e a calcular o Valor Esperado…</p>
-          <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-            A IA pesquisa forma, lesões e odds de mercado — pode demorar até um minuto.
-          </p>
-        </MobileCard>
+        <AiProgress
+          active={evalLoading}
+          steps={evalStepsFor(Boolean(evalImage))}
+          hint="A IA pesquisa no Google e calcula o Valor Esperado — pode demorar até um minuto."
+        />
       )}
 
       {!evalLoading && evaluation && (

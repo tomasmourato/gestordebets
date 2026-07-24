@@ -24,8 +24,10 @@ import {
   Scale,
   ListChecks,
   ClipboardPaste,
+  Check,
 } from "lucide-react";
 import { authFetch, parseJsonResponse, SessionExpiredError } from "../lib/authApi";
+import { useLoadingSteps, evalStepsFor, PICKS_STEPS, type LoadingStep } from "../hooks/useLoadingSteps";
 import {
   requestBetEvaluation,
   verdictTone,
@@ -277,13 +279,11 @@ export default function AIInsights({ onSessionExpired }: AIInsightsProps) {
       {mode === "picks" && (
         <>
           {loading && (
-            <div className="bg-white dark:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 p-10 flex flex-col items-center gap-3 text-center">
-              <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">A analisar os jogos de hoje…</p>
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                Na primeira visita do dia a análise é gerada na hora — pode demorar até um minuto.
-              </p>
-            </div>
+            <AiProgress
+              active={loading}
+              steps={PICKS_STEPS}
+              hint="Na primeira visita do dia a análise é gerada na hora — pode demorar até um minuto."
+            />
           )}
 
           {!loading && error && (
@@ -440,15 +440,11 @@ export default function AIInsights({ onSessionExpired }: AIInsightsProps) {
           </div>
 
           {evalLoading && (
-            <div className="bg-white dark:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 p-10 flex flex-col items-center gap-3 text-center">
-              <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                A pesquisar e a calcular o Valor Esperado…
-              </p>
-              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                A IA pesquisa forma, lesões e odds de mercado — pode demorar até um minuto.
-              </p>
-            </div>
+            <AiProgress
+              active={evalLoading}
+              steps={evalStepsFor(Boolean(evalImage))}
+              hint="A IA pesquisa no Google e calcula o Valor Esperado — pode demorar até um minuto."
+            />
           )}
 
           {!evalLoading && evaluation && (
@@ -591,6 +587,43 @@ export default function AIInsights({ onSessionExpired }: AIInsightsProps) {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+// Cartão de espera com os passos da IA: o passo atual em destaque, os
+// anteriores marcados como feitos e o tempo decorrido.
+function AiProgress({ active, steps, hint }: { active: boolean; steps: LoadingStep[]; hint: string }) {
+  const { index, elapsed, label } = useLoadingSteps(active, steps);
+
+  return (
+    <div className="bg-white dark:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 p-8 flex flex-col items-center gap-4 text-center">
+      <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+
+      <div>
+        <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">{label}</p>
+        <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">{hint}</p>
+      </div>
+
+      <ul className="space-y-1.5 text-left w-full max-w-sm">
+        {steps.slice(0, index + 1).map((step, i) => {
+          const done = i < index;
+          return (
+            <li key={i} className="flex items-center gap-2 text-[11px]">
+              {done ? (
+                <Check size={12} className="text-emerald-500 shrink-0" strokeWidth={3} />
+              ) : (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 mx-[3px]"></span>
+              )}
+              <span className={done ? "text-zinc-400 dark:text-zinc-500" : "text-zinc-700 dark:text-zinc-200 font-medium"}>
+                {step.label}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+
+      <p className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 tabular-nums">{elapsed}s decorridos</p>
     </div>
   );
 }
