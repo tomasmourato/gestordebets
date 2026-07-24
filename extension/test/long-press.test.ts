@@ -6,11 +6,13 @@ import { createLongPressController } from "../../src/lib/longPress";
 describe("long-press controller", () => {
   it("fires once and consumes only the release click", () => {
     let scheduled: (() => void) | undefined;
+    let scheduledDelay: number | undefined;
     let fired = 0;
     const controller = createLongPressController({
       delay: 500,
-      schedule: (callback) => {
+      schedule: (callback, delay) => {
         scheduled = callback;
+        scheduledDelay = delay;
         return 1;
       },
       cancelScheduled: () => {},
@@ -20,6 +22,7 @@ describe("long-press controller", () => {
     scheduled?.();
     scheduled?.();
 
+    assert.equal(scheduledDelay, 500);
     assert.equal(fired, 1);
     assert.equal(controller.consumeClick(), true);
     assert.equal(controller.consumeClick(), false);

@@ -164,3 +164,15 @@ describe("desktop bet-card focus", () => {
     assert.doesNotMatch(cardClass, /\bfocus:ring-2\b/);
   });
 });
+
+describe("desktop selection footer", () => {
+  it("keeps the fixed-height desktop footer on one compact action row", () => {
+    const source = readFileSync(new URL("../../src/components/BetsManager.tsx", import.meta.url), "utf8");
+
+    assert.match(source, /flex flex-wrap items-center justify-between gap-2[^`]*md:flex-nowrap md:gap-1 md:h-full/);
+    assert.match(source, /<span className="md:shrink-0 md:whitespace-nowrap">/);
+    assert.match(source, /flex flex-wrap items-center gap-2[^`]*md:flex-nowrap md:shrink-0 md:gap-1/);
+    assert.match(source, /px-3 py-1\.5[^`]*md:px-2 md:py-1 md:text-\[11px\] md:gap-1/);
+    assert.match(source, /inline-flex items-center gap-2[^`]*md:gap-1 md:shrink-0 md:text-\[11px\]/);
+  });
+});

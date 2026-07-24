@@ -1057,15 +1057,15 @@ export default function BetsManager({
         reserveFooterSpace
         footer={
           isSelecting && selectedBetIds.size > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-          <span>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400 md:flex-nowrap md:gap-1 md:h-full">
+          <span className="md:shrink-0 md:whitespace-nowrap">
             <strong className="text-emerald-600 dark:text-emerald-300">{selectedBetIds.size}</strong>{" "}
             {selectedBetIds.size === 1 ? "aposta selecionada" : "apostas selecionadas"}
           </span>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:shrink-0 md:gap-1">
             {isConfirmingBulkDelete ? (
-              <div className="inline-flex items-center gap-2 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 px-2 py-1">
+              <div className="inline-flex items-center gap-2 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 px-2 py-1 md:gap-1 md:shrink-0 md:text-[11px]">
                 <span className="font-semibold text-rose-700 dark:text-rose-300">
                   Apagar {selectedBetIds.size} {selectedBetIds.size === 1 ? "aposta" : "apostas"}?
                 </span>
@@ -1073,7 +1073,7 @@ export default function BetsManager({
                   type="button"
                   onClick={handleBulkDelete}
                   disabled={isBulkActionRunning}
-                  className="px-2.5 py-1 rounded-sm bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="px-2.5 py-1 rounded-sm bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed md:px-2 md:py-0.5"
                 >
                   Confirmar
                 </button>
@@ -1081,7 +1081,7 @@ export default function BetsManager({
                   type="button"
                   onClick={() => setIsConfirmingBulkDelete(false)}
                   disabled={isBulkActionRunning}
-                  className="p-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="p-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed md:p-0.5"
                   aria-label="Cancelar eliminação"
                 >
                   <X size={14} />
@@ -1093,7 +1093,7 @@ export default function BetsManager({
                   type="button"
                   onClick={() => { setIsBulkEditOpen(open => !open); setIsBulkIgnoreOpen(false); setIsConfirmingBulkDelete(false); }}
                   disabled={isBulkActionRunning}
-                  className={`px-3 py-1.5 rounded-sm border font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`px-3 py-1.5 rounded-sm border font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed md:px-2 md:py-1 md:text-[11px] md:gap-1 ${
                     isBulkEditOpen
                       ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
                       : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300"
@@ -1105,7 +1105,7 @@ export default function BetsManager({
                   type="button"
                   onClick={startBulkIgnore}
                   disabled={isBulkActionRunning}
-                  className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed md:px-2 md:py-1 md:text-[11px] md:gap-1"
                 >
                   {allSelectedIgnored ? <><Eye size={13} /> Repor</> : <><EyeOff size={13} /> Ignorar</>}
                 </button>
@@ -1113,7 +1113,7 @@ export default function BetsManager({
                   type="button"
                   onClick={handleBulkDuplicate}
                   disabled={isBulkActionRunning}
-                  className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed md:px-2 md:py-1 md:text-[11px] md:gap-1"
                 >
                   <Copy size={13} /> Duplicar
                 </button>
@@ -1121,7 +1121,7 @@ export default function BetsManager({
                   type="button"
                   onClick={() => { setIsConfirmingBulkDelete(true); setIsBulkEditOpen(false); setIsBulkIgnoreOpen(false); }}
                   disabled={isBulkActionRunning}
-                  className="px-3 py-1.5 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed md:px-2 md:py-1 md:text-[11px] md:gap-1"
                 >
                   <Trash2 size={13} /> Apagar
                 </button>
