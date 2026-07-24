@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "routes/insightsRoutes.ts": {
-    "mtime": 1784850176.4535408,
-    "ast_hash": "c0384de23871918016d7e8b710121f59",
+    "mtime": 1784877911.341098,
+    "ast_hash": "4af1d43103110a1ddf42331aba75dbbe",
     "semantic_hash": ""
   },
   "routes/socialRoutes.ts": {
@@ -475,8 +475,8 @@
     "semantic_hash": ""
   },
   "src/components/AIInsights.tsx": {
-    "mtime": 1784850330.5960295,
-    "ast_hash": "c8874abe16fda57e3e14bd672afaa50c",
+    "mtime": 1784877871.1064405,
+    "ast_hash": "0e85428da57ad593918749bc445e4f7f",
     "semantic_hash": ""
   },
   "src/components/AccountPanel.tsx": {
