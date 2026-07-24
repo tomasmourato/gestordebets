@@ -24,6 +24,20 @@ describe("betSelectionReducer", () => {
     assert.deepEqual([...stopped.selectedIds], []);
   });
 
+  it("preserves manually enabled empty selection mode when no filtered bets exist", () => {
+    const manuallyEnabled = betSelectionReducer(INITIAL_BET_SELECTION_STATE, {
+      type: "toggle-mode",
+    });
+    const result = betSelectionReducer(manuallyEnabled, {
+      type: "toggle-filtered",
+      filteredIds: [],
+    });
+
+    assert.equal(result, manuallyEnabled);
+    assert.equal(result.isSelecting, true);
+    assert.deepEqual([...result.selectedIds], []);
+  });
+
   it("starts selection when an individual bet is added", () => {
     const result = betSelectionReducer(INITIAL_BET_SELECTION_STATE, {
       type: "toggle-one",
