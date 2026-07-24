@@ -23,6 +23,7 @@ import {
   Target,
   Scale,
   ListChecks,
+  ClipboardPaste,
 } from "lucide-react";
 import { authFetch, parseJsonResponse, SessionExpiredError } from "../lib/authApi";
 import {
@@ -174,6 +175,31 @@ export default function AIInsights({ onSessionExpired }: AIInsightsProps) {
       setEvalLoading(false);
     }
   };
+
+  // Colar print com Ctrl+V (só no modo de avaliação). Só intercetamos quando a
+  // área de transferência traz mesmo uma imagem — colar texto continua a ir
+  // normalmente para a caixa de descrição.
+  useEffect(() => {
+    if (mode !== "evaluate") return;
+
+    const onPaste = (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (!items[i].type.startsWith("image/")) continue;
+        const file = items[i].getAsFile();
+        if (file) {
+          event.preventDefault();
+          handleEvalFile(file);
+        }
+        return;
+      }
+    };
+
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   // Agrupa picks por desporto mantendo a ordem de chegada.
   const groups = new Map<string, Pick[]>();
@@ -349,7 +375,7 @@ export default function AIInsights({ onSessionExpired }: AIInsightsProps) {
               onChange={(e) => setEvalText(e.target.value)}
               rows={3}
               maxLength={2000}
-              placeholder="Descreve a aposta: evento, mercado, seleção, odd e casa. Ex.: Benfica vencer o Porto @2.10 na Betano. (podes também, ou em vez disso, colar um print do boletim)"
+              placeholder="Descreve a aposta: evento, mercado, seleção, odd e casa. Ex.: Benfica vencer o Porto @2.10 na Betano. (podes também colar um print do boletim com Ctrl+V)"
               className="w-full px-3 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-600 resize-y"
             />
 
@@ -371,6 +397,9 @@ export default function AIInsights({ onSessionExpired }: AIInsightsProps) {
                   e.target.value = "";
                 }}
               />
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500 inline-flex items-center gap-1">
+                <ClipboardPaste size={12} /> ou cola com <kbd className="px-1 py-0.5 rounded-sm border border-zinc-300 dark:border-zinc-600 font-mono text-[9px]">Ctrl+V</kbd>
+              </span>
               <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">Máx. 3MB · PNG, JPG, WEBP</span>
               <button
                 onClick={runEvaluation}
