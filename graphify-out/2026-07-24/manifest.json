@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "extension/popup.js": {
-    "mtime": 1784917629.223763,
-    "ast_hash": "34016e9271547d00d2fe91f07fe8efb8",
+    "mtime": 1784920865.2434483,
+    "ast_hash": "f98729e38aaba8d0d721b4978d6859a6",
     "semantic_hash": ""
   },
   "extension/src/background.js": {
@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "extension/src/inject-betano.js": {
-    "mtime": 1784917707.1917567,
-    "ast_hash": "332ebc57c32bdfe2933ede3341245b64",
+    "mtime": 1784920877.003447,
+    "ast_hash": "e9fa97bb5cdab00037fe728d4737e9d9",
     "semantic_hash": ""
   },
   "extension/src/inject.js": {
