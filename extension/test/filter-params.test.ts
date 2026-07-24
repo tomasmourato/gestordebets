@@ -15,7 +15,7 @@ describe("filter params", () => {
   });
 
   test("round-trips the full drill-down param set", () => {
-    const search = "?status=GANHA&bookmaker=Betano&account=acc-1&sport=Futebol&type=SIMPLES&money=FREEBET&timeframe=30_DAYS";
+    const search = "?status=GANHA&bookmaker=Betano&account=acc-1&sport=Futebol&type=SIMPLES&money=FREEBET&timeframe=30_DAYS&search=Arbitragem Portugal";
     const filters = parse(search);
 
     expect(filters.status).toBe("GANHA");
@@ -24,6 +24,7 @@ describe("filter params", () => {
     expect(filters.sport).toBe("Futebol");
     expect(filters.type).toBe("SIMPLES");
     expect(filters.money).toBe("FREEBET");
+    expect(filters.search).toBe("Arbitragem Portugal");
     expect(filters.timeframe.timeframe).toBe("30_DAYS");
 
     // Reserializar tem de reproduzir exatamente os mesmos filtros.
@@ -55,6 +56,13 @@ describe("filter params", () => {
     expect(filters.timeframe.timeframe).toBe("ALL");
     expect(filters.sport).toBe("Ténis");
     expect(serializeFilters(filters)).toBe("?sport=T%C3%A9nis");
+  });
+
+  test("omits an empty search and preserves a committed search", () => {
+    expect(serializeFilters({ ...EMPTY_BET_FILTERS, search: "" })).toBe("");
+    const filters = parse("?search=Portugal%20Cro%C3%A1cia");
+    expect(filters.search).toBe("Portugal Croácia");
+    expect(serializeFilters(filters)).toBe("?search=Portugal+Cro%C3%A1cia");
   });
 
   test("omits filters left at ALL", () => {

@@ -171,7 +171,7 @@ export default function BetclicImport({ accounts = [], enabledBookmakers }: Betc
       </div>
 
       <p className="text-xs text-zinc-400 dark:text-zinc-500">
-        Com a extensão de browser instalada, importas as tuas apostas do Betclic e Betano com um
+        Com a extensão de browser instalada, importas as tuas apostas da Betclic e da Betano com um
         clique — sem exportações manuais. Cada casa é lida da tua própria sessão.
       </p>
 

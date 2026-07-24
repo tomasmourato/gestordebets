@@ -4,8 +4,8 @@
 // IMPORTANTE (ver PLAN.md §F3): os tipos de freebet por casa são DEFAULTS,
 // não verdades absolutas — vieram de fontes de afiliados pouco fiáveis e
 // misturadas PT/BR. SNR (Stake Not Returned) é o padrão da indústria e o
-// fallback seguro; o Betclic é SR por decisão/dados reais. O utilizador pode
-// sempre corrigir o tipo em cada aposta.
+// fallback seguro; a Betclic e a Betano são SR por decisão/dados reais. O
+// utilizador pode sempre corrigir o tipo em cada aposta.
 
 import { FreebetType } from "../types";
 
@@ -19,7 +19,7 @@ export interface Bookmaker {
 }
 
 export const BOOKMAKERS: Bookmaker[] = [
-  { id: "betano", name: "Betano", defaultFreebetType: "SNR", allowsFreebetCashout: true },
+  { id: "betano", name: "Betano", defaultFreebetType: "SR", allowsFreebetCashout: true },
   { id: "betclic", name: "Betclic", defaultFreebetType: "SR", allowsFreebetCashout: true },
   { id: "placard", name: "Placard", defaultFreebetType: "SNR", allowsFreebetCashout: false },
   { id: "bwin", name: "Bwin", defaultFreebetType: "SNR", allowsFreebetCashout: true },

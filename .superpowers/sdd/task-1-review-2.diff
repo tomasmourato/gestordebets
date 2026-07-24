@@ -1,0 +1,219 @@
+# Review package: 1b22e84..66f38e1
+
+## Commits
+66f38e1 test: cover empty filtered selection toggle
+2ac8bba feat: centralize bet selection state
+
+## Files changed
+ .superpowers/sdd/task-1-report.md    |  19 +++++++
+ extension/test/bet-selection.test.ts | 107 +++++++++++++++++++++++++++++++++++
+ src/lib/betSelection.ts              |  62 ++++++++++++++++++++
+ 3 files changed, 188 insertions(+)
+
+## Diff
+diff --git a/.superpowers/sdd/task-1-report.md b/.superpowers/sdd/task-1-report.md
+new file mode 100644
+index 0000000..fa2544a
+--- /dev/null
++++ b/.superpowers/sdd/task-1-report.md
+@@ -0,0 +1,19 @@
++# Task 1 Report: Shared Selection-State Reducer
++
++Status: completed
++
++Commit: `2ac8bba feat: centralize bet selection state`
++
++Implemented `src/lib/betSelection.ts` with the shared immutable selection reducer and its state/action exports. Added focused reducer coverage in `extension/test/bet-selection.test.ts`.
++
++TDD evidence:
++
++- RED: `bun test extension/test/bet-selection.test.ts` failed because `../../src/lib/betSelection` was missing.
++- GREEN: `bun test extension/test/bet-selection.test.ts` passed: 8 tests, 0 failures.
++
++Review edge-case follow-up:
++
++- Added coverage that `toggle-filtered` with no filtered IDs preserves the manually enabled empty selection state by returning the original state.
++- Focused verification: `bun test extension/test/bet-selection.test.ts` — expected 9 tests, 0 failures.
++
++Concerns: none. The pre-existing unrelated worktree changes were not staged or modified.
+diff --git a/extension/test/bet-selection.test.ts b/extension/test/bet-selection.test.ts
+new file mode 100644
+index 0000000..798fe5f
+--- /dev/null
++++ b/extension/test/bet-selection.test.ts
+@@ -0,0 +1,107 @@
++import assert from "node:assert/strict";
++import { describe, it } from "node:test";
++
++import {
++  INITIAL_BET_SELECTION_STATE,
++  betSelectionReducer,
++  type BetSelectionState,
++} from "../../src/lib/betSelection";
++
++const selected = (...ids: string[]): BetSelectionState => ({
++  isSelecting: true,
++  selectedIds: new Set(ids),
++});
++
++describe("betSelectionReducer", () => {
++  it("allows manual selection mode to start with no selected bets", () => {
++    const started = betSelectionReducer(INITIAL_BET_SELECTION_STATE, { type: "toggle-mode" });
++
++    assert.equal(started.isSelecting, true);
++    assert.deepEqual([...started.selectedIds], []);
++
++    const stopped = betSelectionReducer(started, { type: "toggle-mode" });
++    assert.equal(stopped.isSelecting, false);
++    assert.deepEqual([...stopped.selectedIds], []);
++  });
++
++  it("preserves manually enabled empty selection mode when no filtered bets exist", () => {
++    const manuallyEnabled = betSelectionReducer(INITIAL_BET_SELECTION_STATE, {
++      type: "toggle-mode",
++    });
++    const result = betSelectionReducer(manuallyEnabled, {
++      type: "toggle-filtered",
++      filteredIds: [],
++    });
++
++    assert.equal(result, manuallyEnabled);
++    assert.equal(result.isSelecting, true);
++    assert.deepEqual([...result.selectedIds], []);
++  });
++
++  it("starts selection when an individual bet is added", () => {
++    const result = betSelectionReducer(INITIAL_BET_SELECTION_STATE, {
++      type: "toggle-one",
++      betId: "a",
++    });
++
++    assert.equal(result.isSelecting, true);
++    assert.deepEqual([...result.selectedIds], ["a"]);
++  });
++
++  it("exits selection mode when the final selected bet is removed", () => {
++    const result = betSelectionReducer(selected("a"), {
++      type: "toggle-one",
++      betId: "a",
++    });
++
++    assert.equal(result.isSelecting, false);
++    assert.deepEqual([...result.selectedIds], []);
++  });
++
++  it("keeps selection mode active when one of several selected bets is removed", () => {
++    const result = betSelectionReducer(selected("a", "b"), {
++      type: "toggle-one",
++      betId: "a",
++    });
++
++    assert.equal(result.isSelecting, true);
++    assert.deepEqual([...result.selectedIds], ["b"]);
++  });
++
++  it("exits when deselecting all filtered bets empties the selection", () => {
++    const result = betSelectionReducer(selected("a", "b"), {
++      type: "toggle-filtered",
++      filteredIds: ["a", "b"],
++    });
++
++    assert.equal(result.isSelecting, false);
++    assert.deepEqual([...result.selectedIds], []);
++  });
++
++  it("keeps selection active when deselecting filtered bets leaves a hidden selection", () => {
++    const result = betSelectionReducer(selected("a", "b", "hidden"), {
++      type: "toggle-filtered",
++      filteredIds: ["a", "b"],
++    });
++
++    assert.equal(result.isSelecting, true);
++    assert.deepEqual([...result.selectedIds], ["hidden"]);
++  });
++
++  it("selects every filtered bet when the filtered set is not fully selected", () => {
++    const result = betSelectionReducer(selected("a"), {
++      type: "toggle-filtered",
++      filteredIds: ["a", "b"],
++    });
++
++    assert.equal(result.isSelecting, true);
++    assert.deepEqual([...result.selectedIds], ["a", "b"]);
++  });
++
++  it("clears selection and mode explicitly after a completed bulk action", () => {
++    const result = betSelectionReducer(selected("a", "b"), { type: "clear" });
++
++    assert.equal(result.isSelecting, false);
++    assert.deepEqual([...result.selectedIds], []);
++  });
++});
+diff --git a/src/lib/betSelection.ts b/src/lib/betSelection.ts
+new file mode 100644
+index 0000000..f3cf487
+--- /dev/null
++++ b/src/lib/betSelection.ts
+@@ -0,0 +1,62 @@
++export interface BetSelectionState {
++  isSelecting: boolean;
++  selectedIds: Set<string>;
++}
++
++export type BetSelectionAction =
++  | { type: "toggle-mode" }
++  | { type: "toggle-one"; betId: string }
++  | { type: "toggle-filtered"; filteredIds: readonly string[] }
++  | { type: "clear" };
++
++export const INITIAL_BET_SELECTION_STATE: BetSelectionState = {
++  isSelecting: false,
++  selectedIds: new Set<string>(),
++};
++
++export function betSelectionReducer(
++  state: BetSelectionState,
++  action: BetSelectionAction,
++): BetSelectionState {
++  if (action.type === "clear") {
++    return {
++      isSelecting: false,
++      selectedIds: new Set<string>(),
++    };
++  }
++
++  if (action.type === "toggle-mode") {
++    return state.isSelecting
++      ? {
++          isSelecting: false,
++          selectedIds: new Set<string>(),
++        }
++      : {
++          isSelecting: true,
++          selectedIds: new Set<string>(),
++        };
++  }
++
++  const next = new Set(state.selectedIds);
++
++  if (action.type === "toggle-one") {
++    if (next.has(action.betId)) next.delete(action.betId);
++    else next.add(action.betId);
++
++    return {
++      isSelecting: next.size > 0,
++      selectedIds: next,
++    };
++  }
++
++  if (action.filteredIds.length === 0) return state;
++
++  const allFilteredSelected = action.filteredIds.every((id) => next.has(id));
++  if (allFilteredSelected) action.filteredIds.forEach((id) => next.delete(id));
++  else action.filteredIds.forEach((id) => next.add(id));
++
++  return {
++    isSelecting: next.size > 0,
++    selectedIds: next,
++  };
++}

@@ -1,4 +1,4 @@
-import { Bet, BetStatus, DashboardStats, FreebetType, Selection } from "./types";
+import { Bet, BetStatus, DashboardStats, FilteredBetsSummary, FreebetType, Selection } from "./types";
 
 // Safe number converter to prevent crashes from undefined/null/non-numeric properties
 export function safeNum(value: any, defaultValue = 0): number {
@@ -196,6 +196,51 @@ export function calculateDashboardStats(bets: Bet[]): DashboardStats {
     yield: Number(yieldVal.toFixed(2)),
     winRate: Number(winRate.toFixed(2)),
   };
+}
+
+export function calculateFilteredBetsSummary(bets: Bet[]): FilteredBetsSummary {
+  let settledStake = 0;
+  let pendingStake = 0;
+  let freebetStake = 0;
+  let totalReturn = 0;
+  let netProfit = 0;
+  let betCount = 0;
+
+  for (const bet of bets) {
+    if (bet.isIgnored) continue;
+
+    betCount++;
+
+    if (bet.isFreebet) freebetStake += safeNum(bet.stake);
+
+    if (bet.status === "POR_LIQUIDAR") {
+      if (!bet.isFreebet) pendingStake += safeNum(bet.stake);
+      continue;
+    }
+
+    if (!bet.isFreebet) settledStake += safeNum(bet.stake);
+    totalReturn += safeNum(bet.finalReturn);
+    netProfit += safeNum(bet.netProfit);
+  }
+
+  return {
+    settledStake: Number(settledStake.toFixed(2)),
+    pendingStake: Number(pendingStake.toFixed(2)),
+    freebetStake: Number(freebetStake.toFixed(2)),
+    totalReturn: Number(totalReturn.toFixed(2)),
+    netProfit: Number(netProfit.toFixed(2)),
+    betCount,
+  };
+}
+
+export function selectBetsForFinancialSummary(
+  visibleBets: Bet[],
+  selectedBetIds: ReadonlySet<string>,
+  isSelecting: boolean,
+): Bet[] {
+  if (!isSelecting || selectedBetIds.size === 0) return visibleBets;
+
+  return visibleBets.filter((bet) => selectedBetIds.has(bet.id));
 }
 
 // Mock Data generators

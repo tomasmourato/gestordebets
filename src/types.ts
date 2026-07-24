@@ -4,7 +4,7 @@ export type SelectionResult = Exclude<BetStatus, 'CASHOUT'>;
 
 // Regra de pagamento de uma freebet:
 //  SNR = Stake Not Returned (ganho = (odd-1) * stake) — padrão da indústria
-//  SR  = Stake Returned     (ganho = odd * stake)     — variante do Betclic
+//  SR  = Stake Returned     (ganho = odd * stake)     — variante da Betclic
 export type FreebetType = 'SNR' | 'SR';
 
 export interface Selection {
@@ -141,4 +141,13 @@ export interface DashboardStats {
   roi: number; // Return on Investment (netProfit / totalStake) * 100
   yield: number; // (netProfit / totalStake) * 100 or yield formula (lucro liquido / stake total) * 100. Actually ROI and Yield are often used interchangeably or slightly differently. Yield is typically net profit / total stakes. ROI is typically profit / total risk or capital. Let's use standard definitions.
   winRate: number; // (won + 0.5 * halfWon) / settled bets * 100
+}
+
+export interface FilteredBetsSummary {
+  settledStake: number;
+  pendingStake: number;
+  freebetStake: number;
+  totalReturn: number;
+  netProfit: number;
+  betCount: number;
 }

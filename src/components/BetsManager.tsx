@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useReducer, useRef, type PointerEvent as ReactPointerEvent } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { 
   Plus, 
   Search, 
@@ -20,10 +21,11 @@ import {
   CheckSquare
 } from "lucide-react";
 import { Bet, BookieAccount, Selection, BetStatus, BetType, FreebetType, SelectionResult } from "../types";
-import { calculateBetReturnAndProfit, AVAILABLE_BOOKMAKERS, safeNum } from "../utils";
+import { calculateBetReturnAndProfit, AVAILABLE_BOOKMAKERS, safeNum, selectBetsForFinancialSummary } from "../utils";
 import { defaultFreebetTypeFor } from "../lib/bookmakers";
 import { hasCashoutSignal } from "../lib/betStatus";
 import FilterDropdown from "./FilterDropdown";
+import FilteredBetsSummary from "./FilteredBetsSummary";
 import FiltersBar from "./FiltersBar";
 import TimeframeFilter, {
   EMPTY_TIMEFRAME_FILTER,
@@ -32,6 +34,16 @@ import TimeframeFilter, {
 } from "./TimeframeFilter";
 import { readFilters, serializeFilters } from "../lib/filterParams";
 import { useUrlFilterSync } from "../hooks/useUrlFilterSync";
+import { createLongPressController } from "../lib/longPress";
+import {
+  INITIAL_BET_SELECTION_STATE,
+  betSelectionReducer,
+  type BetSelectionAction,
+} from "../lib/betSelection";
+import {
+  resolveSelectionDisplayResult,
+  type SelectionDisplayResult,
+} from "../lib/selectionDisplayResult";
 
 interface BetsManagerProps {
   bets: Bet[];
@@ -88,7 +100,8 @@ export default function BetsManager({
   );
 
   // Search & Filter state
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialFilters.search);
+  const [committedSearch, setCommittedSearch] = useState(initialFilters.search);
   const [statusFilter, setStatusFilter] = useState<string>(initialFilters.status);
   const [typeFilter, setTypeFilter] = useState<string>(initialFilters.type);
   const [freebetFilter, setFreebetFilter] = useState<string>(initialFilters.money);
@@ -98,8 +111,8 @@ export default function BetsManager({
   const [sportFilter, setSportFilter] = useState<string>(initialFilters.sport);
   const [timeframeFilter, setTimeframeFilter] = useState<TimeframeFilterValue>(initialFilters.timeframe);
 
-  // Filtros <-> URL. A pesquisa por texto fica de fora de propósito: cada tecla
-  // criaria uma entrada no histórico do browser.
+  // Filtros <-> URL. A pesquisa só entra no URL quando é confirmada por Enter
+  // ou ao sair do campo, para cada tecla não criar uma entrada no histórico.
   const filterSearch = useMemo(
     () => serializeFilters({
       status: statusFilter,
@@ -108,10 +121,17 @@ export default function BetsManager({
       sport: sportFilter,
       type: typeFilter,
       money: freebetFilter,
+      search: committedSearch,
       timeframe: timeframeFilter,
     }),
-    [statusFilter, bookmakerFilter, accountFilter, sportFilter, typeFilter, freebetFilter, timeframeFilter]
+    [statusFilter, bookmakerFilter, accountFilter, sportFilter, typeFilter, freebetFilter, committedSearch, timeframeFilter]
   );
+
+  const commitSearch = () => {
+    const next = search.trim();
+    setSearch(next);
+    setCommittedSearch(next);
+  };
 
   useUrlFilterSync({
     path: "/bets",
@@ -124,13 +144,25 @@ export default function BetsManager({
       setSportFilter(next.sport);
       setTypeFilter(next.type);
       setFreebetFilter(next.money);
+      setSearch(next.search);
+      setCommittedSearch(next.search);
       setTimeframeFilter(next.timeframe);
     },
   });
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selectedBetIds, setSelectedBetIds] = useState<Set<string>>(new Set());
+  const [selectionState, dispatchSelection] = useReducer(
+    betSelectionReducer,
+    INITIAL_BET_SELECTION_STATE,
+  );
+  const { isSelecting } = selectionState;
+  const selectedBetIds = selectionState.selectedIds;
+  const reduceMotion = useReducedMotion();
+  const longPressControllerRef = useRef<ReturnType<typeof createLongPressController> | null>(null);
+  const longPressOriginRef = useRef<{ x: number; y: number } | null>(null);
+  if (longPressControllerRef.current === null) {
+    longPressControllerRef.current = createLongPressController();
+  }
   const [isConfirmingBulkDelete, setIsConfirmingBulkDelete] = useState(false);
   const [isBulkActionRunning, setIsBulkActionRunning] = useState(false);
   // Editar em massa (só campos comuns) e ignorar/repor em massa.
@@ -328,28 +360,67 @@ export default function BetsManager({
     setBulkNote("");
   };
 
+  const applySelectionAction = (action: BetSelectionAction) => {
+    const next = betSelectionReducer(selectionState, action);
+    dispatchSelection(action);
+    setIsConfirmingBulkDelete(false);
+    if (!next.isSelecting) resetBulkEdit();
+  };
+
   const toggleSelectionMode = () => {
-    setIsSelecting(current => {
-      if (current) {
-        setSelectedBetIds(new Set());
-        setIsConfirmingBulkDelete(false);
-        resetBulkEdit();
-      }
-      return !current;
-    });
+    applySelectionAction({ type: "toggle-mode" });
   };
 
   const toggleBetSelection = (id: string) => {
-    setIsConfirmingBulkDelete(false);
-    setSelectedBetIds(current => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    applySelectionAction({ type: "toggle-one", betId: id });
   };
 
+  const toggleBetSelectionFromLongPress = (id: string) => {
+    toggleBetSelection(id);
+  };
+
+  const startBetLongPress = (event: ReactPointerEvent<HTMLDivElement>, id: string) => {
+    if (!event.isPrimary || event.button !== 0) return;
+    if (
+      event.target instanceof Element
+      && event.target.closest("button, input, label, a, textarea, select")
+    ) return;
+
+    longPressOriginRef.current = { x: event.clientX, y: event.clientY };
+    longPressControllerRef.current?.start(() => toggleBetSelectionFromLongPress(id));
+  };
+
+  const moveBetLongPress = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const origin = longPressOriginRef.current;
+    if (!origin) return;
+    if (Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 10) {
+      longPressOriginRef.current = null;
+      longPressControllerRef.current?.cancel();
+    }
+  };
+
+  const finishBetLongPress = () => {
+    longPressOriginRef.current = null;
+    longPressControllerRef.current?.finish();
+  };
+
+  const cancelBetLongPress = () => {
+    longPressOriginRef.current = null;
+    longPressControllerRef.current?.cancel();
+  };
+
+  useEffect(
+    () => () => {
+      longPressControllerRef.current?.dispose();
+    },
+    [],
+  );
+
   const allFilteredBetsSelected = filteredBets.length > 0 && filteredBets.every(bet => selectedBetIds.has(bet.id));
+  const summaryBets = useMemo(
+    () => selectBetsForFinancialSummary(filteredBets, selectedBetIds, isSelecting),
+    [filteredBets, selectedBetIds, isSelecting],
+  );
   const selectedBetsList = bets.filter(bet => selectedBetIds.has(bet.id));
   const allSelectedIgnored = selectedBetsList.length > 0 && selectedBetsList.every(b => b.isIgnored);
   const bulkFieldClass =
@@ -358,21 +429,15 @@ export default function BetsManager({
     "block text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1";
 
   const toggleAllFilteredBets = () => {
-    setIsConfirmingBulkDelete(false);
-    setSelectedBetIds(current => {
-      const next = new Set(current);
-      if (allFilteredBetsSelected) filteredBets.forEach(bet => next.delete(bet.id));
-      else filteredBets.forEach(bet => next.add(bet.id));
-      return next;
+    applySelectionAction({
+      type: "toggle-filtered",
+      filteredIds: filteredBets.map((bet) => bet.id),
     });
   };
 
   const finishBulkAction = () => {
-    setSelectedBetIds(new Set());
-    setIsConfirmingBulkDelete(false);
-    setIsSelecting(false);
+    applySelectionAction({ type: "clear" });
     setIsBulkActionRunning(false);
-    resetBulkEdit();
   };
 
   // Editar em massa: aplica só os campos alterados; os únicos por aposta
@@ -782,27 +847,17 @@ export default function BetsManager({
     }
   };
 
-  const getSelectionResultBadge = (result?: SelectionResult) => {
+  const getSelectionResultBadge = (result?: SelectionDisplayResult) => {
     const base = "inline-flex w-max items-center gap-1 rounded-sm border px-2 py-1 text-[9px] font-bold uppercase tracking-wider";
     switch (result) {
-      case "GANHA":
-        return <span className={`${base} border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300`}><Check size={10} /> Ganha</span>;
-      case "PERDIDA":
-        return <span className={`${base} border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-200`}><X size={10} /> Perdida</span>;
-      case "ANULADA":
-        return <span className={`${base} border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300`}><MinusCircle size={10} /> Anulada</span>;
-      case "POR_LIQUIDAR":
-        return <span className={`${base} border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300`}><Clock size={10} /> Pendente</span>;
-      case "MEIO_GANHA":
-        return <span className={`${base} border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300`}><Check size={10} /> Meio ganha</span>;
-      case "MEIO_PERDIDA":
-        return <span className={`${base} border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300`}><X size={10} /> Meio perdida</span>;
+      case "DESCONHECIDO":
+        return <span className={`${base} border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300`}><HelpCircle size={10} /> Desconhecido</span>;
       default:
         return null;
     }
   };
 
-  const selectionDetailClass = (result?: SelectionResult) => {
+  const selectionDetailClass = (result?: SelectionDisplayResult) => {
     if (result === "PERDIDA" || result === "MEIO_PERDIDA") {
       return "border-rose-200 bg-rose-50/70 dark:border-rose-900 dark:bg-rose-950/25";
     }
@@ -846,6 +901,13 @@ export default function BetsManager({
               className="h-10 w-full rounded-sm border border-zinc-200 bg-zinc-50 pl-9 pr-4 text-xs text-zinc-800 outline-none transition-all placeholder:text-zinc-400 hover:border-zinc-300 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:hover:border-zinc-600 dark:focus:border-emerald-500 dark:focus:bg-zinc-800"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onBlur={commitSearch}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitSearch();
+                }
+              }}
             />
           </div>
 
@@ -871,18 +933,16 @@ export default function BetsManager({
           trailing={
             <div className="flex shrink-0 flex-wrap items-center gap-2">
               {/* Multiple selection */}
-              <button
-                type="button"
-                onClick={toggleSelectionMode}
-                className={`inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-sm border px-3 text-xs font-semibold transition-colors cursor-pointer ${
-                  isSelecting
-                    ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300"
-                    : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-emerald-300 hover:text-emerald-600 dark:hover:border-emerald-700 dark:hover:text-emerald-300"
-                }`}
-              >
-                <CheckSquare size={14} />
-                {isSelecting ? "Cancelar seleção" : "Selecionar várias"}
-              </button>
+              {!isSelecting && (
+                <button
+                  type="button"
+                  onClick={toggleSelectionMode}
+                  className="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-600 transition-colors hover:border-emerald-300 hover:text-emerald-600 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:border-emerald-700 dark:hover:text-emerald-300"
+                >
+                  <CheckSquare size={14} />
+                  Selecionar várias
+                </button>
+              )}
 
               {isSelecting && (
                 <button
@@ -978,16 +1038,32 @@ export default function BetsManager({
         </FiltersBar>
       </div>
 
-      {isSelecting && selectedBetIds.size > 0 && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm px-3 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-          <span>
+      <FilteredBetsSummary
+        bets={summaryBets}
+        currency={currency}
+        freebetOnly={freebetFilter === "FREEBET"}
+        fixedSelectionHeight
+        footer={
+          isSelecting ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400 md:flex-nowrap md:gap-1">
+          <span className="md:whitespace-nowrap">
             <strong className="text-emerald-600 dark:text-emerald-300">{selectedBetIds.size}</strong>{" "}
             {selectedBetIds.size === 1 ? "aposta selecionada" : "apostas selecionadas"}
           </span>
+          <div className="flex items-center gap-2 md:shrink-0 md:gap-1">
+            <button
+              type="button"
+              onClick={toggleSelectionMode}
+              className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-zinc-200 bg-white px-3 py-1.5 font-semibold text-zinc-700 transition-colors hover:border-emerald-300 hover:text-emerald-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-emerald-700 dark:hover:text-emerald-300 md:gap-1 md:px-2 md:py-1 md:text-[11px]"
+            >
+              <CheckSquare size={13} />
+              Cancelar seleção
+            </button>
 
-          <div className="flex flex-wrap items-center gap-2">
+            {selectedBetIds.size > 0 && (
+            <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:shrink-0 md:gap-1">
             {isConfirmingBulkDelete ? (
-              <div className="inline-flex items-center gap-2 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 px-2 py-1">
+              <div className="inline-flex items-center gap-2 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 px-2 py-1 md:gap-1 md:shrink-0 md:text-[11px]">
                 <span className="font-semibold text-rose-700 dark:text-rose-300">
                   Apagar {selectedBetIds.size} {selectedBetIds.size === 1 ? "aposta" : "apostas"}?
                 </span>
@@ -995,7 +1071,7 @@ export default function BetsManager({
                   type="button"
                   onClick={handleBulkDelete}
                   disabled={isBulkActionRunning}
-                  className="px-2.5 py-1 rounded-sm bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="px-2.5 py-1 rounded-sm bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed md:px-2 md:py-0.5"
                 >
                   Confirmar
                 </button>
@@ -1003,7 +1079,7 @@ export default function BetsManager({
                   type="button"
                   onClick={() => setIsConfirmingBulkDelete(false)}
                   disabled={isBulkActionRunning}
-                  className="p-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="p-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed md:p-0.5"
                   aria-label="Cancelar eliminação"
                 >
                   <X size={14} />
@@ -1015,7 +1091,7 @@ export default function BetsManager({
                   type="button"
                   onClick={() => { setIsBulkEditOpen(open => !open); setIsBulkIgnoreOpen(false); setIsConfirmingBulkDelete(false); }}
                   disabled={isBulkActionRunning}
-                  className={`px-3 py-1.5 rounded-sm border font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`px-3 py-1.5 rounded-sm border font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed md:px-2 md:py-1 md:text-[11px] md:gap-1 ${
                     isBulkEditOpen
                       ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
                       : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300"
@@ -1027,7 +1103,7 @@ export default function BetsManager({
                   type="button"
                   onClick={startBulkIgnore}
                   disabled={isBulkActionRunning}
-                  className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed md:px-2 md:py-1 md:text-[11px] md:gap-1"
                 >
                   {allSelectedIgnored ? <><Eye size={13} /> Repor</> : <><EyeOff size={13} /> Ignorar</>}
                 </button>
@@ -1035,7 +1111,7 @@ export default function BetsManager({
                   type="button"
                   onClick={handleBulkDuplicate}
                   disabled={isBulkActionRunning}
-                  className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-300 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed md:px-2 md:py-1 md:text-[11px] md:gap-1"
                 >
                   <Copy size={13} /> Duplicar
                 </button>
@@ -1043,15 +1119,19 @@ export default function BetsManager({
                   type="button"
                   onClick={() => { setIsConfirmingBulkDelete(true); setIsBulkEditOpen(false); setIsBulkIgnoreOpen(false); }}
                   disabled={isBulkActionRunning}
-                  className="px-3 py-1.5 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed md:px-2 md:py-1 md:text-[11px] md:gap-1"
                 >
                   <Trash2 size={13} /> Apagar
                 </button>
               </>
             )}
+            </div>
+            )}
           </div>
         </div>
-      )}
+          ) : undefined
+        }
+      />
 
       {/* Painel: editar em massa — só campos comuns */}
       {isSelecting && selectedBetIds.size > 0 && isBulkEditOpen && (
@@ -1205,7 +1285,13 @@ export default function BetsManager({
               role="button"
               tabIndex={0}
               aria-label={`${isSelecting ? "Selecionar" : "Ver detalhes da"} aposta de ${bet.dateTime}`}
+              onPointerDown={(event) => startBetLongPress(event, bet.id)}
+              onPointerMove={moveBetLongPress}
+              onPointerUp={finishBetLongPress}
+              onPointerCancel={cancelBetLongPress}
+              onPointerLeave={cancelBetLongPress}
               onClick={() => {
+                if (longPressControllerRef.current?.consumeClick()) return;
                 if (isSelecting) toggleBetSelection(bet.id);
                 else setDetailBet(bet);
               }}
@@ -1216,7 +1302,7 @@ export default function BetsManager({
                 if (isSelecting) toggleBetSelection(bet.id);
                 else setDetailBet(bet);
               }}
-              className={`bg-white dark:bg-zinc-900 rounded-sm border p-4 md:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${
+              className={`relative bg-white dark:bg-zinc-900 rounded-sm border p-4 md:p-5 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
                 selectedBetIds.has(bet.id)
                   ? "border-emerald-300 dark:border-emerald-700 ring-1 ring-emerald-100 dark:ring-emerald-950"
                   : "border-zinc-200 dark:border-zinc-800"
@@ -1225,7 +1311,7 @@ export default function BetsManager({
 
               {isSelecting && (
                 <label
-                  className="flex items-center self-start md:self-center cursor-pointer"
+                  className="absolute left-4 top-1/2 z-10 hidden -translate-y-1/2 md:flex items-center cursor-pointer"
                   title="Selecionar aposta"
                   onClick={(event) => event.stopPropagation()}
                   onKeyDown={(event) => event.stopPropagation()}
@@ -1240,6 +1326,11 @@ export default function BetsManager({
                 </label>
               )}
 
+              <motion.div
+                animate={{ paddingLeft: isSelecting ? "44px" : "0px" }}
+                transition={{ duration: reduceMotion ? 0 : 0.18, ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center"
+              >
               {/* Left Column: Selections and Details */}
               <div className="space-y-2 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -1442,6 +1533,7 @@ export default function BetsManager({
 
               </div>
 
+              </motion.div>
             </div>
           );
         })}
@@ -1463,7 +1555,7 @@ export default function BetsManager({
       {/* Read-only bet details */}
       {detailBet && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-950/75 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-zinc-950/70 p-0 backdrop-blur-xs sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="bet-details-title"
@@ -1471,19 +1563,19 @@ export default function BetsManager({
             if (event.target === event.currentTarget) setDetailBet(null);
           }}
         >
-          <div className="flex h-[96vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:h-auto sm:max-h-[90vh] sm:rounded-2xl">
-            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 dark:border-slate-800 sm:px-6">
+          <div className="flex h-[96vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-md border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:h-auto sm:max-h-[90vh] sm:rounded-md">
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800 sm:px-6">
               <div className="min-w-0">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   {getStatusBadge(detailBet.status)}
-                  <span className="rounded-sm border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-300">
+                  <span className="rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
                     {detailBet.type}
                   </span>
                 </div>
-                <h2 id="bet-details-title" className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
-                  <Eye size={19} className="text-indigo-500" /> Detalhes da aposta
+                <h2 id="bet-details-title" className="flex items-center gap-2 text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                  <Eye size={19} className="text-emerald-500" /> Detalhes da aposta
                 </h2>
-                <p className="mt-1 truncate font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                <p className="mt-1 truncate font-mono text-[10px] text-zinc-400 dark:text-zinc-500">
                   ID {detailBet.id}
                   {detailBet.metadata?.ref ? ` · Ref. ${detailBet.metadata.ref}` : ""}
                 </p>
@@ -1492,7 +1584,7 @@ export default function BetsManager({
                 type="button"
                 autoFocus
                 onClick={() => setDetailBet(null)}
-                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:hover:bg-slate-800 dark:hover:text-white cursor-pointer"
+                className="cursor-pointer rounded-sm p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                 aria-label="Fechar detalhes da aposta"
               >
                 <X size={18} />
@@ -1508,37 +1600,37 @@ export default function BetsManager({
                   ["Dinheiro", detailBet.isFreebet ? `Freebet ${detailBet.freebetType || ""}`.trim() : "Dinheiro real"],
                   ...(detailBet.isIgnored ? [["Estatísticas", "Ignorada (excluída)"]] : []),
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/40">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{label}</p>
-                    <p className="mt-1 break-words text-xs font-semibold text-slate-800 dark:text-slate-100">{value}</p>
+                  <div key={label} className="rounded-sm border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">{label}</p>
+                    <p className="mt-1 break-words text-xs font-semibold text-zinc-800 dark:text-zinc-100">{value}</p>
                   </div>
                 ))}
               </section>
 
               <section>
-                <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
                   Resumo financeiro
                 </h3>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                    <p className="text-[9px] font-bold uppercase text-slate-400">Stake</p>
-                    <p className="mt-1 font-mono text-sm font-bold text-slate-800 dark:text-slate-100" style={detailBet.isFreebet ? { color: "#a855f7" } : undefined}>{safeNum(detailBet.stake).toFixed(2)}{currency}</p>
+                  <div className="rounded-sm border border-zinc-200 p-3 dark:border-zinc-800">
+                    <p className="text-[9px] font-bold uppercase text-zinc-400">Stake</p>
+                    <p className={`mt-1 font-mono text-sm font-bold tabular-nums ${detailBet.isFreebet ? "text-purple-600 dark:text-purple-300" : "text-zinc-800 dark:text-zinc-100"}`}>{safeNum(detailBet.stake).toFixed(2)}{currency}</p>
                   </div>
-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                    <p className="text-[9px] font-bold uppercase text-slate-400">Odd total</p>
-                    <p className="mt-1 font-mono text-sm font-bold text-indigo-600 dark:text-indigo-300">{safeNum(detailBet.odd).toFixed(2)}</p>
+                  <div className="rounded-sm border border-zinc-200 p-3 dark:border-zinc-800">
+                    <p className="text-[9px] font-bold uppercase text-zinc-400">Odd total</p>
+                    <p className="mt-1 font-mono text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-300">{safeNum(detailBet.odd).toFixed(2)}</p>
                   </div>
-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                    <p className="text-[9px] font-bold uppercase text-slate-400">Potencial</p>
-                    <p className="mt-1 font-mono text-sm font-bold text-slate-800 dark:text-slate-100">{safeNum(detailBet.potentialReturn).toFixed(2)}{currency}</p>
+                  <div className="rounded-sm border border-zinc-200 p-3 dark:border-zinc-800">
+                    <p className="text-[9px] font-bold uppercase text-zinc-400">Potencial</p>
+                    <p className="mt-1 font-mono text-sm font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{safeNum(detailBet.potentialReturn).toFixed(2)}{currency}</p>
                   </div>
-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-                    <p className="text-[9px] font-bold uppercase text-slate-400">Retorno</p>
-                    <p className="mt-1 font-mono text-sm font-bold text-slate-800 dark:text-slate-100">{safeNum(detailBet.finalReturn).toFixed(2)}{currency}</p>
+                  <div className="rounded-sm border border-zinc-200 p-3 dark:border-zinc-800">
+                    <p className="text-[9px] font-bold uppercase text-zinc-400">Retorno</p>
+                    <p className="mt-1 font-mono text-sm font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{safeNum(detailBet.finalReturn).toFixed(2)}{currency}</p>
                   </div>
-                  <div className="col-span-2 rounded-lg border border-slate-200 p-3 dark:border-slate-800 sm:col-span-1">
-                    <p className="text-[9px] font-bold uppercase text-slate-400">Lucro líquido</p>
-                    <p className={`mt-1 font-mono text-sm font-bold ${safeNum(detailBet.netProfit) > 0 ? "text-emerald-600 dark:text-emerald-400" : safeNum(detailBet.netProfit) < 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-700 dark:text-slate-200"}`}>
+                  <div className="col-span-2 rounded-sm border border-zinc-200 p-3 dark:border-zinc-800 sm:col-span-1">
+                    <p className="text-[9px] font-bold uppercase text-zinc-400">Lucro líquido</p>
+                    <p className={`mt-1 font-mono text-sm font-bold tabular-nums ${safeNum(detailBet.netProfit) > 0 ? "text-emerald-600 dark:text-emerald-400" : safeNum(detailBet.netProfit) < 0 ? "text-rose-600 dark:text-rose-400" : "text-zinc-700 dark:text-zinc-200"}`}>
                       {safeNum(detailBet.netProfit) > 0 ? "+" : ""}{safeNum(detailBet.netProfit).toFixed(2)}{currency}
                     </p>
                   </div>
@@ -1547,41 +1639,48 @@ export default function BetsManager({
 
               <section>
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
                     Seleções do boletim
                   </h3>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                  <span className="rounded-sm bg-zinc-100 px-2 py-1 text-[10px] font-bold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300">
                     {detailBet.selections.length}
                   </span>
                 </div>
                 <div className="space-y-3">
-                  {detailBet.selections.length > 0 ? detailBet.selections.map((selection, index) => (
-                    <article key={selection.id || index} className={`rounded-xl border p-4 ${selectionDetailClass(selection.result)}`}>
+                  {detailBet.selections.length > 0 ? detailBet.selections.map((selection, index) => {
+                    const displayResult = resolveSelectionDisplayResult(
+                      detailBet.status,
+                      selection.result,
+                      detailBet.type,
+                    );
+                    return (
+                    <article key={selection.id || index} className={`rounded-sm border p-4 ${selectionDetailClass(displayResult)}`}>
                       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                         <div className="min-w-0">
-                          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Seleção {index + 1}</p>
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Seleção {index + 1}</p>
                           <h4 className={`mt-1 text-sm font-bold ${betTitleClass(detailBet.status)}`}>{selection.event || "Evento indisponível"}</h4>
-                          {selection.sport && <p className="mt-0.5 text-[10px] font-semibold text-indigo-600 dark:text-indigo-300">{selection.sport}</p>}
+                          {selection.sport && <p className="mt-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-300">{selection.sport}</p>}
                         </div>
-                        {getSelectionResultBadge(selection.result)}
+                        {getSelectionResultBadge(displayResult)}
                       </div>
-                      <div className="mt-3 grid grid-cols-1 gap-2 border-t border-slate-200/70 pt-3 dark:border-slate-700 sm:grid-cols-[1fr_1fr_auto]">
+                      <div className="mt-3 grid grid-cols-1 gap-2 border-t border-zinc-200/70 pt-3 dark:border-zinc-700 sm:grid-cols-[1fr_1fr_auto]">
                         <div>
-                          <p className="text-[9px] font-bold uppercase text-slate-400">Mercado</p>
-                          <p className="mt-0.5 text-xs font-medium text-slate-700 dark:text-slate-200">{selection.market || "—"}</p>
+                          <p className="text-[9px] font-bold uppercase text-zinc-400">Mercado</p>
+                          <p className="mt-0.5 text-xs font-medium text-zinc-700 dark:text-zinc-200">{selection.market || "—"}</p>
                         </div>
                         <div>
-                          <p className="text-[9px] font-bold uppercase text-slate-400">Escolha</p>
-                          <p className="mt-0.5 text-xs font-semibold text-slate-900 dark:text-white">{selection.choice || "—"}</p>
+                          <p className="text-[9px] font-bold uppercase text-zinc-400">Escolha</p>
+                          <p className="mt-0.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100">{selection.choice || "—"}</p>
                         </div>
                         <div className="sm:text-right">
-                          <p className="text-[9px] font-bold uppercase text-slate-400">Odd</p>
-                          <p className="mt-0.5 font-mono text-xs font-bold text-indigo-600 dark:text-indigo-300">@{safeNum(selection.odd).toFixed(2)}</p>
+                          <p className="text-[9px] font-bold uppercase text-zinc-400">Odd</p>
+                          <p className="mt-0.5 font-mono text-xs font-bold tabular-nums text-emerald-600 dark:text-emerald-300">@{safeNum(selection.odd).toFixed(2)}</p>
                         </div>
                       </div>
                     </article>
-                  )) : (
-                    <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
+                    );
+                  }) : (
+                    <div className="rounded-sm border border-dashed border-zinc-300 p-5 text-center text-xs text-zinc-400 dark:border-zinc-700 dark:text-zinc-500">
                       Esta aposta não tem seleções guardadas.
                     </div>
                   )}
@@ -1591,21 +1690,21 @@ export default function BetsManager({
               {(detailBet.notes || detailBet.comment || detailBet.tags) && (
                 <section className="grid gap-3 sm:grid-cols-2">
                   {detailBet.notes && (
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Notas</p>
-                      <p className="mt-1 whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-200">{detailBet.notes}</p>
+                    <div className="rounded-sm border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Notas</p>
+                      <p className="mt-1 whitespace-pre-wrap text-xs text-zinc-700 dark:text-zinc-200">{detailBet.notes}</p>
                     </div>
                   )}
                   {detailBet.comment && (
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Comentário</p>
-                      <p className="mt-1 whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-200">{detailBet.comment}</p>
+                    <div className="rounded-sm border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Comentário</p>
+                      <p className="mt-1 whitespace-pre-wrap text-xs text-zinc-700 dark:text-zinc-200">{detailBet.comment}</p>
                     </div>
                   )}
                   {detailBet.tags && (
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Etiquetas</p>
-                      <p className="mt-1 text-xs font-semibold text-indigo-600 dark:text-indigo-300">{detailBet.tags}</p>
+                    <div className="rounded-sm border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Etiquetas</p>
+                      <p className="mt-1 text-xs font-semibold text-emerald-600 dark:text-emerald-300">{detailBet.tags}</p>
                     </div>
                   )}
                 </section>
@@ -1823,7 +1922,7 @@ export default function BetsManager({
                       <option value="SR">Stake devolvida — SR (ganho = odd×stake)</option>
                     </select>
                     <p className="text-[11px] text-emerald-700/70 dark:text-emerald-300/70 mt-1">
-                      Predefinido pela casa ({formBookmaker}). SNR é o padrão; o Betclic usa SR.
+                      Predefinido pela casa ({formBookmaker}). SNR é o padrão da indústria; a Betclic e a Betano usam SR.
                     </p>
                   </div>
                 )}
