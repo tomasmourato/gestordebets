@@ -6,7 +6,7 @@
 // duplicar, apagar) e formulário em página-folha (FAB) suportado pelo hook
 // partilhado useBetForm.
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import {
   Plus,
   Search,
@@ -24,8 +24,16 @@ import {
   EyeOff,
 } from "lucide-react";
 import { Bet, BookieAccount, BetStatus } from "../../types";
-import { AVAILABLE_BOOKMAKERS, safeNum, calculateBetReturnAndProfit } from "../../utils";
+import { AVAILABLE_BOOKMAKERS, safeNum, calculateBetReturnAndProfit, selectBetsForFinancialSummary } from "../../utils";
+import FilteredBetsSummary from "../../components/FilteredBetsSummary";
 import { useBetForm } from "../../hooks/useBetForm";
+import { selectionHaptic } from "../../lib/haptics";
+import { createLongPressController } from "../../lib/longPress";
+import {
+  INITIAL_BET_SELECTION_STATE,
+  betSelectionReducer,
+  type BetSelectionAction,
+} from "../../lib/betSelection";
 import {
   BottomSheet,
   SheetPage,
@@ -158,19 +166,42 @@ export default function MobileBets({
 
   // Drill-down por URL (vindo do dashboard), como no desktop.
   const initialFilters = useMemo(() => new URLSearchParams(window.location.search), []);
-  const initialFilter = (name: string) => initialFilters.get(name) || "ALL";
 
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState(() => initialFilter("status"));
-  const [typeFilter, setTypeFilter] = useState(() => initialFilter("type"));
-  const [moneyFilter, setMoneyFilter] = useState(() => initialFilter("money"));
-  const [bookmakerFilter, setBookmakerFilter] = useState(() => initialFilter("bookmaker"));
-  const [accountFilter, setAccountFilter] = useState(() => initialFilter("account"));
-  const [sportFilter, setSportFilter] = useState(() => initialFilter("sport"));
+  const [search, setSearch] = useState(() => initialFilters.get("search") || "");
+  const [statusFilter, setStatusFilter] = useState(() => initialFilters.get("status") || "ALL");
+  const [typeFilter, setTypeFilter] = useState(() => initialFilters.get("type") || "ALL");
+  const [moneyFilter, setMoneyFilter] = useState(() => initialFilters.get("money") || "ALL");
+  const [bookmakerFilter, setBookmakerFilter] = useState(() => initialFilters.get("bookmaker") || "ALL");
+  const [accountFilter, setAccountFilter] = useState(() => initialFilters.get("account") || "ALL");
+  const [sportFilter, setSportFilter] = useState(() => initialFilters.get("sport") || "ALL");
   const [dateFrom, setDateFrom] = useState(() => initialFilters.get("dateFrom") || "");
   const [dateTo, setDateTo] = useState(() => initialFilters.get("dateTo") || "");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortAsc, setSortAsc] = useState(false);
+
+  const commitSearch = () => {
+    const next = search.trim();
+    setSearch(next);
+
+    const params = new URLSearchParams(window.location.search);
+    if (next) params.set("search", next);
+    else params.delete("search");
+    const query = params.toString();
+    const nextUrl = `/bets${query ? `?${query}` : ""}`;
+    if (`${window.location.pathname}${window.location.search}` !== nextUrl) {
+      window.history.pushState({ ...window.history.state }, "", nextUrl);
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (window.location.pathname !== "/bets") return;
+      const next = new URLSearchParams(window.location.search).get("search") || "";
+      setSearch(next);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailBet, setDetailBet] = useState<Bet | null>(null);
@@ -182,10 +213,19 @@ export default function MobileBets({
   const [formOpen, setFormOpen] = useState(false);
 
   // Modo de seleção (ações em massa).
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectionState, dispatchSelection] = useReducer(
+    betSelectionReducer,
+    INITIAL_BET_SELECTION_STATE,
+  );
+  const { isSelecting } = selectionState;
+  const selectedIds = selectionState.selectedIds;
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [bulkRunning, setBulkRunning] = useState(false);
+  const longPressControllerRef = useRef<ReturnType<typeof createLongPressController> | null>(null);
+  const longPressOriginRef = useRef<{ x: number; y: number } | null>(null);
+  if (longPressControllerRef.current === null) {
+    longPressControllerRef.current = createLongPressController();
+  }
 
   // Editar em massa (só campos comuns) e ignorar/repor em massa.
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
@@ -376,46 +416,70 @@ export default function MobileBets({
     setBeNote("");
   };
 
+  const applySelectionAction = (action: BetSelectionAction) => {
+    const next = betSelectionReducer(selectionState, action);
+    dispatchSelection(action);
+    setConfirmBulkDelete(false);
+    if (!next.isSelecting) resetBulkEdit();
+  };
+
   const toggleSelecting = () => {
-    setIsSelecting((current) => {
-      if (current) {
-        setSelectedIds(new Set());
-        setConfirmBulkDelete(false);
-        resetBulkEdit();
-      }
-      return !current;
-    });
+    applySelectionAction({ type: "toggle-mode" });
   };
 
   const toggleSelected = (id: string) => {
-    setConfirmBulkDelete(false);
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    applySelectionAction({ type: "toggle-one", betId: id });
   };
+
+  const toggleSelectedFromLongPress = (id: string) => {
+    toggleSelected(id);
+    void selectionHaptic();
+  };
+
+  const startBetLongPress = (event: ReactPointerEvent<HTMLDivElement>, id: string) => {
+    if (!event.isPrimary || event.button !== 0) return;
+    longPressOriginRef.current = { x: event.clientX, y: event.clientY };
+    longPressControllerRef.current?.start(() => toggleSelectedFromLongPress(id));
+  };
+
+  const moveBetLongPress = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const origin = longPressOriginRef.current;
+    if (!origin) return;
+    if (Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 10) {
+      longPressOriginRef.current = null;
+      longPressControllerRef.current?.cancel();
+    }
+  };
+
+  const finishBetLongPress = () => {
+    longPressOriginRef.current = null;
+    longPressControllerRef.current?.finish();
+  };
+
+  const cancelBetLongPress = () => {
+    longPressOriginRef.current = null;
+    longPressControllerRef.current?.cancel();
+  };
+
+  useEffect(
+    () => () => {
+      longPressControllerRef.current?.dispose();
+    },
+    [],
+  );
 
   // Selecionar/desmarcar todas as apostas atualmente filtradas (não só as
   // visíveis num grupo) — como no desktop.
   const toggleAllFiltered = () => {
-    setConfirmBulkDelete(false);
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      const allSelected = filteredBets.length > 0 && filteredBets.every((b) => next.has(b.id));
-      if (allSelected) filteredBets.forEach((b) => next.delete(b.id));
-      else filteredBets.forEach((b) => next.add(b.id));
-      return next;
+    applySelectionAction({
+      type: "toggle-filtered",
+      filteredIds: filteredBets.map((bet) => bet.id),
     });
   };
 
   const finishBulk = () => {
-    setSelectedIds(new Set());
-    setConfirmBulkDelete(false);
-    setIsSelecting(false);
+    applySelectionAction({ type: "clear" });
     setBulkRunning(false);
-    resetBulkEdit();
   };
 
   // Apostas atualmente selecionadas (ordem da lista visível é irrelevante aqui).
@@ -580,6 +644,10 @@ export default function MobileBets({
   const selectedList = bets.filter((b) => selectedIds.has(b.id));
   const allSelectedIgnored = selectedList.length > 0 && selectedList.every((b) => b.isIgnored);
   const allFilteredSelected = filteredBets.length > 0 && filteredBets.every((b) => selectedIds.has(b.id));
+  const summaryBets = useMemo(
+    () => selectBetsForFinancialSummary(filteredBets, selectedIds, isSelecting),
+    [filteredBets, selectedIds, isSelecting],
+  );
   const noSelection = selectedIds.size === 0 || bulkRunning;
 
   return (
@@ -593,6 +661,13 @@ export default function MobileBets({
             placeholder="Pesquisar…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onBlur={commitSearch}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                commitSearch();
+              }
+            }}
             className="h-11 w-full rounded-full border border-zinc-200 bg-white pl-9 pr-4 text-sm text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
           />
         </div>
@@ -639,6 +714,12 @@ export default function MobileBets({
         )}
       </div>
 
+      <FilteredBetsSummary
+        bets={summaryBets}
+        currency={currency}
+        freebetOnly={moneyFilter === "FREEBET"}
+      />
+
       {/* Lista agrupada por dia */}
       {groups.map(({ day, bets: dayBets }) => (
         <div key={day || "flat"}>
@@ -651,7 +732,17 @@ export default function MobileBets({
                   // Ignorada: esbatida, como no desktop, para se perceber à
                   // vista que não conta para as estatísticas.
                   className={`px-4 py-3 ${bet.isIgnored ? "opacity-60" : ""}`}
-                  onClick={() => (isSelecting ? toggleSelected(bet.id) : setDetailBet(bet))}
+                  onPointerDown={(event) => startBetLongPress(event, bet.id)}
+                  onPointerMove={moveBetLongPress}
+                  onPointerUp={finishBetLongPress}
+                  onPointerCancel={cancelBetLongPress}
+                  onPointerLeave={cancelBetLongPress}
+                  onContextMenu={(event) => event.preventDefault()}
+                  onClick={() => {
+                    if (longPressControllerRef.current?.consumeClick()) return;
+                    if (isSelecting) toggleSelected(bet.id);
+                    else setDetailBet(bet);
+                  }}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
 import {
@@ -103,5 +104,32 @@ describe("betSelectionReducer", () => {
 
     assert.equal(result.isSelecting, false);
     assert.deepEqual([...result.selectedIds], []);
+  });
+});
+
+describe("desktop and mobile selection integration", () => {
+  const desktopSource = readFileSync(
+    new URL("../../src/components/BetsManager.tsx", import.meta.url),
+    "utf8",
+  );
+  const mobileSource = readFileSync(
+    new URL("../../src/mobile/screens/MobileBets.tsx", import.meta.url),
+    "utf8",
+  );
+
+  it("routes desktop selection paths through the shared reducer action", () => {
+    assert.match(desktopSource, /useReducer\(\s*betSelectionReducer/);
+    assert.match(desktopSource, /const toggleBetSelection = \(id: string\).*type: "toggle-one"/s);
+    assert.match(desktopSource, /toggleBetSelectionFromLongPress.*toggleBetSelection\(id\)/s);
+    assert.match(desktopSource, /onChange=\{\(\) => toggleBetSelection\(bet\.id\)\}/);
+    assert.match(desktopSource, /type: "toggle-filtered"/);
+  });
+
+  it("routes mobile selection paths through the shared reducer action", () => {
+    assert.match(mobileSource, /useReducer\(\s*betSelectionReducer/);
+    assert.match(mobileSource, /const toggleSelected = \(id: string\).*type: "toggle-one"/s);
+    assert.match(mobileSource, /toggleSelectedFromLongPress.*toggleSelected\(id\)/s);
+    assert.match(mobileSource, /if \(isSelecting\) toggleSelected\(bet\.id\)/);
+    assert.match(mobileSource, /type: "toggle-filtered"/);
   });
 });
