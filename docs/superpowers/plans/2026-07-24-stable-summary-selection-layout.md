@@ -18,6 +18,7 @@
 - Existing number-change animation, financial calculations, currency formatting, pending-stake copy, and freebet content remain unchanged.
 - Desktop and mobile leave selection mode immediately whenever a deselection operation produces an empty selected-ID set.
 - Card click/tap, checkbox, long press, and “deselect filtered” must all use the same selection-state transition.
+- A “deselect filtered” action with no filtered IDs is a no-op; it does not count as reducing an existing selection to zero.
 - If deselecting the currently filtered bets leaves selected hidden bets, selection mode remains active.
 - Manually entering selection mode may temporarily have zero selected IDs; only reducing an existing selection to zero exits automatically.
 - Existing completed bulk actions continue to clear selection, close selection mode, and reset their transient UI.
@@ -144,6 +145,16 @@ describe("betSelectionReducer", () => {
     assert.equal(result.isSelecting, false);
     assert.deepEqual([...result.selectedIds], []);
   });
+
+  it("keeps manually entered empty selection mode on an empty filtered toggle", () => {
+    const result = betSelectionReducer(
+      { isSelecting: true, selectedIds: new Set<string>() },
+      { type: "toggle-filtered", filteredIds: [] },
+    );
+
+    assert.equal(result.isSelecting, true);
+    assert.deepEqual([...result.selectedIds], []);
+  });
 });
 ```
 
@@ -234,7 +245,7 @@ Run:
 bun test extension/test/bet-selection.test.ts
 ```
 
-Expected: 8 tests PASS.
+Expected: 9 tests PASS.
 
 - [ ] **Step 5: Commit the reducer**
 
@@ -305,7 +316,7 @@ Run:
 bun test extension/test/bet-selection.test.ts
 ```
 
-Expected: the 8 reducer tests PASS and both integration tests FAIL because the components still use independent `useState` values.
+Expected: the 9 reducer tests PASS and both integration tests FAIL because the components still use independent `useState` values.
 
 - [ ] **Step 3: Replace desktop’s split selection state with the reducer**
 
@@ -507,7 +518,7 @@ Run:
 bun test extension/test/bet-selection.test.ts extension/test/long-press.test.ts
 ```
 
-Expected: 10 selection tests and 3 long-press controller tests PASS.
+Expected: 11 selection tests and 3 long-press controller tests PASS.
 
 - [ ] **Step 7: Run the TypeScript check**
 
