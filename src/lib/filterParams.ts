@@ -3,8 +3,8 @@
 // nomes de parâmetros em todo o lado, para um URL colado noutro separador
 // reproduzir exatamente a mesma vista.
 //
-// A pesquisa por texto do histórico NÃO entra aqui de propósito: cada tecla
-// criaria uma entrada no histórico do browser.
+// A pesquisa por texto do histórico entra aqui apenas quando é confirmada
+// (Enter/desfocar); a UI mantém o rascunho local enquanto o utilizador escreve.
 
 import {
   EMPTY_TIMEFRAME_FILTER,
@@ -21,6 +21,7 @@ export interface BetFilters {
   sport: string;
   type: string;
   money: string;
+  search: string;
   timeframe: TimeframeFilterValue;
 }
 
@@ -31,6 +32,7 @@ export const EMPTY_BET_FILTERS: BetFilters = {
   sport: "ALL",
   type: "ALL",
   money: "ALL",
+  search: "",
   timeframe: EMPTY_TIMEFRAME_FILTER,
 };
 
@@ -49,6 +51,7 @@ export function readFilters(params: URLSearchParams): BetFilters {
     sport: single("sport"),
     type: single("type"),
     money: single("money"),
+    search: params.get("search") || "",
     timeframe: {
       // Um intervalo explícito sem `timeframe` (ex.: drill-down antigo) conta
       // como período personalizado.
@@ -77,6 +80,7 @@ export function serializeFilters(filters: BetFilters): string {
   set("sport", filters.sport);
   set("type", filters.type);
   set("money", filters.money);
+  set("search", filters.search.trim());
   set("timeframe", filters.timeframe.timeframe);
 
   // As datas só descrevem o filtro quando o período é personalizado; nos

@@ -142,3 +142,12 @@ export interface DashboardStats {
   yield: number; // (netProfit / totalStake) * 100 or yield formula (lucro liquido / stake total) * 100. Actually ROI and Yield are often used interchangeably or slightly differently. Yield is typically net profit / total stakes. ROI is typically profit / total risk or capital. Let's use standard definitions.
   winRate: number; // (won + 0.5 * halfWon) / settled bets * 100
 }
+
+export interface FilteredBetsSummary {
+  settledStake: number;
+  pendingStake: number;
+  freebetStake: number;
+  totalReturn: number;
+  netProfit: number;
+  betCount: number;
+}
