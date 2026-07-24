@@ -1054,6 +1054,7 @@ export default function BetsManager({
         bets={summaryBets}
         currency={currency}
         freebetOnly={freebetFilter === "FREEBET"}
+        reserveFooterSpace
         footer={
           isSelecting && selectedBetIds.size > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
