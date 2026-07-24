@@ -177,15 +177,20 @@ async function loadAccounts() {
   }
 }
 
-// Encontra a conta correspondente a um username detetado: primeiro pelo campo
-// username da conta (case-insensitive), depois pelo label como rede de segurança.
-function matchAccountByUsername(options, username) {
-  if (!username) return null;
-  const target = String(username).trim().toLowerCase();
-  if (!target) return null;
+// Encontra a conta correspondente a uma identidade detetada {username, customerId,
+// email}. O username (handle, ex.: customerCode "ronkzinho") bate certo com o
+// campo username da conta OU com o label; o customerId/email só batem certo com o
+// campo username EXPLÍCITO (nunca com o label) — o email só associa se o
+// utilizador o tiver posto na conta. Mesma regra do background.
+function matchAccountByUsername(options, identity) {
+  const norm = (v) => (v == null ? "" : String(v).trim().toLowerCase());
+  const id = identity && typeof identity === "object" ? identity : { username: identity };
+  const handle = norm(id.username);
+  const explicit = [handle, norm(id.customerId), norm(id.email)].filter(Boolean);
+  if (explicit.length === 0) return null;
   return (
-    options.find((a) => a.username && String(a.username).trim().toLowerCase() === target) ||
-    options.find((a) => String(a.label).trim().toLowerCase() === target) ||
+    options.find((a) => a.username && explicit.includes(norm(a.username))) ||
+    (handle ? options.find((a) => norm(a.label) === handle) : null) ||
     null
   );
 }
@@ -198,9 +203,7 @@ async function applyDetectedUsernames(saved) {
   let detected;
   try {
     detected = await chrome.runtime.sendMessage({ type: "DETECT_USERNAMES" });
-    console.log("[BetTrackr] build=update-only-1 DETECT_USERNAMES ->", JSON.stringify(detected));
-  } catch (e) {
-    console.log("[BetTrackr] build=update-only-1 DETECT_USERNAMES falhou:", String((e && e.message) || e));
+  } catch (_) {
     return;
   }
   if (!detected || typeof detected !== "object") return;
@@ -211,6 +214,10 @@ async function applyDetectedUsernames(saved) {
     const username = info && typeof info === "object" ? info.username : info;
     const error = info && typeof info === "object" ? info.error : null;
     const loggedIn = info && typeof info === "object" ? info.loggedIn : undefined;
+    // Identificadores extra além do username (a Betano expõe customerId + email).
+    const email = info && typeof info === "object" ? info.email : null;
+    const customerId = info && typeof info === "object" ? info.customerId : null;
+    const identity = { username, customerId, email };
     const select = accountSelects[key];
     const hint = accountHints[key];
     const options = accountOptionsByKey[key] || [];
@@ -240,7 +247,7 @@ async function applyDetectedUsernames(saved) {
       continue;
     }
 
-    const match = matchAccountByUsername(options, username);
+    const match = matchAccountByUsername(options, identity);
     hint.hidden = false;
     if (match) {
       // Pré-seleciona e persiste — o import vai para a conta certa mesmo que o
@@ -253,8 +260,11 @@ async function applyDetectedUsernames(saved) {
       hint.style.color = "#34d399";
       hint.textContent = `✓ Sessão @${username} → conta associada automaticamente`;
     } else {
+      // Sugere o username (handle) para o utilizador pôr no campo username da
+      // conta; o email é alternativa (só associa se posto no campo username).
+      const emailHint = email && email !== username ? ` (ou o email "${email}")` : "";
       hint.style.color = "#f59e0b";
-      hint.textContent = `Sessão @${username} detetada — define este username na conta para associar automaticamente`;
+      hint.textContent = `Sessão @${username} detetada — põe "${username}" no username da conta${emailHint} para associar automaticamente`;
     }
   }
 }
