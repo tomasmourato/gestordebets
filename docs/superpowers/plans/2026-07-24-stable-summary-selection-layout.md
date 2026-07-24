@@ -2,16 +2,18 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Keep the desktop financial-summary container the same height before and during selection, animate its metric text into a compact state while actions are visible, and make desktop/mobile selection mode exit whenever a deselection leaves no selected bets.
+**Goal:** Keep the desktop financial-summary container the same height before and during selection, let its metrics fill the surface normally, compact them only while actions are visible, and make desktop/mobile selection mode exit whenever a deselection leaves no selected bets.
 
-**Architecture:** Add a small pure selection reducer so desktop and mobile share one atomic state transition for manual mode entry, single-card toggles, filtered-set toggles, and clearing. Extend `FilteredBetsSummary` with an opt-in desktop footer reservation; it owns the fixed desktop row heights and reduced-motion-aware metric-size animation, while the mobile caller keeps the existing 2×2 layout without a reserved footer slot.
+**Architecture:** A small pure selection reducer lets desktop and mobile share one atomic state transition for manual mode entry, single-card toggles, filtered-set toggles, and clearing. `FilteredBetsSummary` owns a fixed desktop outer height: metrics flex to fill it normally, then contract with reduced-motion-aware typography when the conditional action row appears. Mobile keeps the existing 2×2 layout.
 
 **Tech Stack:** React 19, TypeScript 5.8, Tailwind CSS 4, `motion/react` 12, Bun/Node test runner, Vite 6.
 
 ## Global Constraints
 
 - The desktop summary must have the same outer height before selection, after selection starts, and after the final selection is removed.
-- The desktop metric row is slightly taller at baseline and reserves a fixed `3.5rem` action slot at `md` widths.
+- The desktop outer summary is fixed at `9rem` at `md` widths; there is no permanently empty action slot.
+- Without selection, the metrics flex to occupy the complete summary height.
+- During selection, the metrics contract to `5.375rem` and the conditional action row occupies `3.5rem`.
 - Desktop metric values animate from `0.875rem/1.25rem` to `0.75rem/1rem` while the selected-bet footer is present.
 - Metric-size and footer transitions use the existing `motion/react` dependency and use zero-duration transitions when `useReducedMotion()` is true.
 - Mobile keeps the current responsive 2×2 metric grid and does not render an empty desktop action-row slot.
@@ -21,6 +23,8 @@
 - A “deselect filtered” action with no filtered IDs is a no-op; it does not count as reducing an existing selection to zero.
 - If deselecting the currently filtered bets leaves selected hidden bets, selection mode remains active.
 - Manually entering selection mode may temporarily have zero selected IDs; only reducing an existing selection to zero exits automatically.
+- The manual entry state is the only permitted empty selection state, and it still renders “Cancelar seleção” in the summary.
+- Only “Cancelar seleção” moves into the summary actions. “Selecionar filtradas” remains in the filter toolbar.
 - Existing completed bulk actions continue to clear selection, close selection mode, and reset their transient UI.
 - Do not change extension messaging as part of this work; the reported missing-receiver console warning is outside this layout/selection scope.
 
@@ -30,10 +34,10 @@
 - Create `extension/test/bet-selection.test.ts`: reducer contract for manual zero-selection entry, individual deselection, and filtered deselection.
 - Modify `src/lib/longPress.ts`: retain only pointer-duration/click-suppression behavior after generic selection logic moves to `betSelection.ts`.
 - Modify `extension/test/long-press.test.ts`: keep controller timing/cancellation coverage and remove the selection-state tests moved to the new reducer suite.
-- Modify `src/components/BetsManager.tsx`: consume the reducer for desktop click, keyboard, checkbox, long-press, filtered-toggle, and bulk-clear paths; request the reserved desktop footer slot.
+- Modify `src/components/BetsManager.tsx`: consume the reducer for desktop click, keyboard, checkbox, long-press, filtered-toggle, and bulk-clear paths; request the fixed desktop selection layout and place only “Cancelar seleção” in its action row.
 - Modify `src/mobile/screens/MobileBets.tsx`: consume the same reducer for tap, long-press, filtered-toggle, manual mode, and bulk-clear paths.
-- Modify `src/components/FilteredBetsSummary.tsx`: add the opt-in reserved footer slot and reduced-motion-aware compact metric animation.
-- Modify `extension/test/filtered-bets-summary.test.ts`: verify stable desktop slot markup, compact/normal states, and the absence of a mobile slot.
+- Modify `src/components/FilteredBetsSummary.tsx`: add the opt-in fixed desktop height, full-height normal metrics, a conditional footer, and reduced-motion-aware compact metric animation.
+- Modify `extension/test/filtered-bets-summary.test.ts`: verify expanded/compact metric states, the conditional desktop footer, toolbar placement, and unchanged mobile behavior.
 
 ---
 
@@ -539,7 +543,9 @@ git commit -m "fix: exit empty bet selection mode"
 
 ---
 
-### Task 3: Reserve the Desktop Summary Footer and Animate Compact Metrics
+### Task 3: Fill the Fixed Summary and Conditionally Reveal Compact Actions
+
+> Revision note: the implementation details below originally described a permanently reserved footer slot. The binding behavior is now the Global Constraints above and the approved design spec: `fixedSelectionHeight`, `md:h-36`, expanded `md:flex-1` metrics without selection, compact `md:h-[5.375rem]` metrics with selection, and a conditional `md:h-14` footer. Only “Cancelar seleção” moves into this footer; “Selecionar filtradas” remains in the filter toolbar.
 
 **Files:**
 - Modify: `src/components/FilteredBetsSummary.tsx:1-139`

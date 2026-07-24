@@ -943,18 +943,16 @@ export default function BetsManager({
           trailing={
             <div className="flex shrink-0 flex-wrap items-center gap-2">
               {/* Multiple selection */}
-              <button
-                type="button"
-                onClick={toggleSelectionMode}
-                className={`inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-sm border px-3 text-xs font-semibold transition-colors cursor-pointer ${
-                  isSelecting
-                    ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300"
-                    : "bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:border-emerald-300 hover:text-emerald-600 dark:hover:border-emerald-700 dark:hover:text-emerald-300"
-                }`}
-              >
-                <CheckSquare size={14} />
-                {isSelecting ? "Cancelar seleção" : "Selecionar várias"}
-              </button>
+              {!isSelecting && (
+                <button
+                  type="button"
+                  onClick={toggleSelectionMode}
+                  className="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-600 transition-colors hover:border-emerald-300 hover:text-emerald-600 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:border-emerald-700 dark:hover:text-emerald-300"
+                >
+                  <CheckSquare size={14} />
+                  Selecionar várias
+                </button>
+              )}
 
               {isSelecting && (
                 <button
@@ -1054,15 +1052,26 @@ export default function BetsManager({
         bets={summaryBets}
         currency={currency}
         freebetOnly={freebetFilter === "FREEBET"}
-        reserveFooterSpace
+        fixedSelectionHeight
         footer={
-          isSelecting && selectedBetIds.size > 0 ? (
+          isSelecting ? (
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400 md:flex-nowrap md:gap-1 md:h-full">
-          <span className="md:shrink-0 md:whitespace-nowrap">
-            <strong className="text-emerald-600 dark:text-emerald-300">{selectedBetIds.size}</strong>{" "}
-            {selectedBetIds.size === 1 ? "aposta selecionada" : "apostas selecionadas"}
-          </span>
+          <div className="flex items-center gap-2 md:shrink-0 md:gap-1">
+            <button
+              type="button"
+              onClick={toggleSelectionMode}
+              className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-emerald-200 bg-emerald-50 px-3 py-1.5 font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-950 md:gap-1 md:px-2 md:py-1 md:text-[11px]"
+            >
+              <CheckSquare size={13} />
+              Cancelar seleção
+            </button>
+            <span className="md:whitespace-nowrap">
+              <strong className="text-emerald-600 dark:text-emerald-300">{selectedBetIds.size}</strong>{" "}
+              {selectedBetIds.size === 1 ? "aposta selecionada" : "apostas selecionadas"}
+            </span>
+          </div>
 
+          {selectedBetIds.size > 0 && (
           <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:shrink-0 md:gap-1">
             {isConfirmingBulkDelete ? (
               <div className="inline-flex items-center gap-2 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 px-2 py-1 md:gap-1 md:shrink-0 md:text-[11px]">
@@ -1128,6 +1137,7 @@ export default function BetsManager({
               </>
             )}
           </div>
+          )}
         </div>
           ) : undefined
         }

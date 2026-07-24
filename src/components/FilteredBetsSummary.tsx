@@ -8,7 +8,7 @@ interface FilteredBetsSummaryProps {
   currency: string;
   freebetOnly: boolean;
   footer?: ReactNode;
-  reserveFooterSpace?: boolean;
+  fixedSelectionHeight?: boolean;
 }
 
 const money = (value: number, currency: string) =>
@@ -76,7 +76,7 @@ export default function FilteredBetsSummary({
   currency,
   freebetOnly,
   footer,
-  reserveFooterSpace = false,
+  fixedSelectionHeight = false,
 }: FilteredBetsSummaryProps) {
   const summary = calculateFilteredBetsSummary(bets);
   const reduceMotion = useReducedMotion();
@@ -135,11 +135,21 @@ export default function FilteredBetsSummary({
     <section
       aria-label="Resumo financeiro das apostas filtradas"
       data-summary-compact={compactMetrics ? "true" : "false"}
-      className="overflow-visible rounded-sm border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+      data-summary-fixed-height={fixedSelectionHeight ? "true" : undefined}
+      className={`overflow-visible rounded-sm border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 ${
+        fixedSelectionHeight ? "md:flex md:h-36 md:flex-col" : ""
+      }`}
     >
-      <div
+      <motion.div
+        data-summary-metrics-state={compactMetrics ? "compact" : "expanded"}
+        layout={fixedSelectionHeight && !reduceMotion}
+        transition={{ duration: reduceMotion ? 0 : 0.18, ease: [0.16, 1, 0.3, 1] }}
         className={`grid grid-cols-2 divide-x divide-y divide-zinc-200 dark:divide-zinc-800 md:grid-cols-4 md:divide-y-0 ${
-          reserveFooterSpace ? "md:h-20" : ""
+          fixedSelectionHeight
+            ? compactMetrics
+              ? "md:h-[5.375rem] md:flex-none"
+              : "md:flex-1"
+            : ""
         }`}
       >
         {items.map((item) => (
@@ -162,30 +172,26 @@ export default function FilteredBetsSummary({
             </motion.p>
           </div>
         ))}
-      </div>
-      {reserveFooterSpace ? (
-        <div
-          data-summary-footer-slot
-          className="hidden items-center overflow-visible border-t border-zinc-200 px-4 dark:border-zinc-800 md:h-14 md:flex"
-        >
-          <AnimatePresence initial={false} mode="wait">
-            {footer ? (
-              <motion.div
-                key="summary-footer"
-                initial={reduceMotion ? false : { opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
-                transition={{
-                  duration: reduceMotion ? 0 : 0.16,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="w-full"
-              >
-                {footer}
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </div>
+      </motion.div>
+      {fixedSelectionHeight ? (
+        <AnimatePresence initial={false}>
+          {footer ? (
+            <motion.div
+              key="summary-footer"
+              data-summary-footer
+              initial={reduceMotion ? false : { opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.16,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+              className="hidden items-center overflow-visible border-t border-zinc-200 px-4 dark:border-zinc-800 md:flex md:h-14 md:flex-none"
+            >
+              <div className="w-full">{footer}</div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       ) : footer ? (
         <div data-summary-footer className="border-t border-zinc-200 px-3 py-2.5 dark:border-zinc-800 md:px-4">
           {footer}

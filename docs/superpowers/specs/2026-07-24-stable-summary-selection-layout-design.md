@@ -6,14 +6,16 @@ Keep the filtered financial summary visually stable while selected-bet actions a
 
 ## Approved behavior
 
-- The shared `FilteredBetsSummary` remains a fixed, slightly taller height at desktop widths so its optional desktop action row has reserved space before selection begins.
-- Desktop selection actions continue to render in the summary surface, but the metrics animate from their normal `text-sm` treatment to a compact `text-xs` treatment while actions are visible.
+- The shared `FilteredBetsSummary` keeps one fixed, slightly taller desktop height without permanently reserving an empty action row.
+- With no selection, the four metrics expand vertically to occupy the entire summary surface.
+- While selection mode is active, the metric area contracts, its values animate from `text-sm` to `text-xs`, and the action row appears inside the same unchanged outer height.
 - The metric text transition uses the existing `motion/react` dependency and respects reduced-motion preferences.
 - The responsive mobile 2×2 metrics layout remains intact. Its summary uses the same stable metric sizing contract without introducing a blank desktop action-row gap or layout jump.
 - Existing number-change animation and freebet content stay unchanged.
+- Only “Cancelar seleção” moves from the filter toolbar into the summary action row. “Selecionar filtradas” stays in the filter toolbar.
 - Desktop and mobile leave selection mode immediately whenever a deselection operation produces an empty selected-ID set.
 - The empty-selection rule applies consistently to card clicks/taps, checkboxes, long presses, and “deselect filtered” actions. Existing completed bulk actions continue to clear selection and leave selection mode.
-- Entering selection mode manually may still show zero selected bets until the user selects a card; the automatic exit is triggered when an existing selection is reduced to zero.
+- Manually entering selection mode is the only allowed empty-selection state; the summary row still exposes “Cancelar seleção” in that state. Automatic exit is triggered when an existing selection is reduced to zero.
 
 ## Console findings
 
@@ -23,6 +25,7 @@ Keep the filtered financial summary visually stable while selected-bet actions a
 
 ## Testing
 
-- Extend the existing filtered-summary unit test to assert the stable-height and compact-selection-state classes/attributes.
+- Extend the existing filtered-summary unit test to assert full-height normal metrics, compact selection metrics, the conditional footer, and the unchanged outer height.
+- Verify that only “Cancelar seleção” moves into the summary while “Selecionar filtradas” remains in the toolbar.
 - Extend selection-state tests to verify that removing the final selected ID exits selection mode and that removing only one of several IDs keeps selection mode active.
 - Keep current summary, long-press, lint, and production-build verification.

@@ -90,13 +90,13 @@ describe("calculateFilteredBetsSummary", () => {
     assert.match(markup, /10,00€.*\*.*8,00€.*5,00€ por liquidar/);
   });
 
-  it("reserves a stable desktop footer slot and compacts metrics only when actions are present", () => {
+  it("fills the fixed desktop surface normally and compacts metrics only when actions are present", () => {
     const withFooter = renderToStaticMarkup(
       React.createElement(FilteredBetsSummary, {
         bets: [bet()],
         currency: "€",
         freebetOnly: false,
-        reserveFooterSpace: true,
+        fixedSelectionHeight: true,
         footer: React.createElement("div", null, "2 apostas selecionadas"),
       }),
     );
@@ -105,7 +105,7 @@ describe("calculateFilteredBetsSummary", () => {
         bets: [bet()],
         currency: "€",
         freebetOnly: false,
-        reserveFooterSpace: true,
+        fixedSelectionHeight: true,
       }),
     );
     const mobileLayout = renderToStaticMarkup(
@@ -116,12 +116,16 @@ describe("calculateFilteredBetsSummary", () => {
       }),
     );
 
-    assert.match(withFooter, /data-summary-footer-slot/);
-    assert.match(withoutFooter, /data-summary-footer-slot/);
-    assert.match(withFooter, /md:h-20/);
-    assert.match(withoutFooter, /md:h-20/);
+    assert.match(withFooter, /data-summary-fixed-height="true"/);
+    assert.match(withoutFooter, /data-summary-fixed-height="true"/);
+    assert.match(withFooter, /md:h-36/);
+    assert.match(withoutFooter, /md:h-36/);
+    assert.match(withFooter, /data-summary-metrics-state="compact"/);
+    assert.match(withFooter, /md:h-\[5\.375rem\]/);
+    assert.match(withoutFooter, /data-summary-metrics-state="expanded"/);
+    assert.match(withoutFooter, /md:flex-1/);
     assert.match(withFooter, /md:h-14/);
-    assert.match(withoutFooter, /md:h-14/);
+    assert.doesNotMatch(withoutFooter, /data-summary-footer/);
     assert.match(withFooter, /data-summary-compact="true"/);
     assert.match(withFooter, /data-summary-metric-size="compact"/);
     assert.match(withFooter, /2 apostas selecionadas/);
@@ -129,8 +133,8 @@ describe("calculateFilteredBetsSummary", () => {
     assert.match(withoutFooter, /data-summary-compact="false"/);
     assert.match(withoutFooter, /data-summary-metric-size="normal"/);
     assert.doesNotMatch(withoutFooter, /2 apostas selecionadas/);
-    assert.doesNotMatch(mobileLayout, /data-summary-footer-slot/);
-    assert.doesNotMatch(mobileLayout, /md:h-20/);
+    assert.doesNotMatch(mobileLayout, /data-summary-fixed-height/);
+    assert.doesNotMatch(mobileLayout, /md:h-36/);
   });
 });
 
@@ -170,9 +174,22 @@ describe("desktop selection footer", () => {
     const source = readFileSync(new URL("../../src/components/BetsManager.tsx", import.meta.url), "utf8");
 
     assert.match(source, /flex flex-wrap items-center justify-between gap-2[^`]*md:flex-nowrap md:gap-1 md:h-full/);
-    assert.match(source, /<span className="md:shrink-0 md:whitespace-nowrap">/);
+    assert.match(source, /flex items-center gap-2 md:shrink-0 md:gap-1/);
+    assert.match(source, /Cancelar seleção/);
     assert.match(source, /flex flex-wrap items-center gap-2[^`]*md:flex-nowrap md:shrink-0 md:gap-1/);
     assert.match(source, /px-3 py-1\.5[^`]*md:px-2 md:py-1 md:text-\[11px\] md:gap-1/);
     assert.match(source, /inline-flex items-center gap-2[^`]*md:gap-1 md:shrink-0 md:text-\[11px\]/);
+  });
+
+  it("moves only cancel selection into the summary actions", () => {
+    const source = readFileSync(new URL("../../src/components/BetsManager.tsx", import.meta.url), "utf8");
+    const toolbar = source.slice(source.indexOf("id=\"bets-toolbar\""), source.indexOf("<FilteredBetsSummary"));
+    const summary = source.slice(source.indexOf("<FilteredBetsSummary"), source.indexOf("{/* Painel: editar em massa"));
+
+    assert.doesNotMatch(toolbar, /Cancelar seleção/);
+    assert.match(toolbar, /Selecionar várias/);
+    assert.match(toolbar, /Selecionar filtradas/);
+    assert.match(summary, /Cancelar seleção/);
+    assert.match(summary, /footer=\{\s*isSelecting\s*\?/);
   });
 });
