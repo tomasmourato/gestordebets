@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "routes/insightsRoutes.ts": {
-    "mtime": 1784850176.4535408,
-    "ast_hash": "c0384de23871918016d7e8b710121f59",
+    "mtime": 1784877911.341098,
+    "ast_hash": "4af1d43103110a1ddf42331aba75dbbe",
     "semantic_hash": ""
   },
   "routes/socialRoutes.ts": {
@@ -475,8 +475,8 @@
     "semantic_hash": ""
   },
   "src/components/AIInsights.tsx": {
-    "mtime": 1784850330.5960295,
-    "ast_hash": "c8874abe16fda57e3e14bd672afaa50c",
+    "mtime": 1784878748.8196788,
+    "ast_hash": "752ec5c23094b88c93a1fb089bbbf491",
     "semantic_hash": ""
   },
   "src/components/AccountPanel.tsx": {
@@ -1015,8 +1015,8 @@
     "semantic_hash": ""
   },
   "src/mobile/screens/MobileInsights.tsx": {
-    "mtime": 1784850428.2179775,
-    "ast_hash": "1987b3bac3834f32eb787b7ec5937b56",
+    "mtime": 1784878775.5726533,
+    "ast_hash": "a5562ed60789c47f9f66e32d12be386d",
     "semantic_hash": ""
   },
   "src/mobile/screens/MobileSettings.tsx": {
@@ -1442,6 +1442,11 @@
   "src/lib/betEvaluation.ts": {
     "mtime": 1784850193.8623588,
     "ast_hash": "1049b2c341045f3be715c8ee3ad21f81",
+    "semantic_hash": ""
+  },
+  "src/hooks/useLoadingSteps.ts": {
+    "mtime": 1784878716.0396233,
+    "ast_hash": "263cb3698be158f4214a72e9761f79ee",
     "semantic_hash": ""
   }
 }

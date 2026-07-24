@@ -203,13 +203,12 @@ PASSO 3 — ESTIMAR A PROBABILIDADE justa da seleção ("estimatedProbability", 
 - Quando a informação é escassa, aproxima-te da probabilidade implícita e baixa a confiança.
 - Evita excesso de confiança. Para múltiplas, estima a probabilidade combinada tendo em conta a correlação entre pernas.
 
-NÃO calcules o Valor Esperado, a probabilidade implícita nem a odd justa — só preciso da "offeredOdd" e da tua "estimatedProbability"; os cálculos são feitos à parte.
+REGRA CRÍTICA — NÃO EMITAS VEREDITO DE VALOR. Não calcules nem menciones o Valor Esperado, a probabilidade implícita, a odd justa, "edge", nem afirmes que a aposta "tem valor", "é boa", "vale a pena" ou o contrário. Esses números são calculados pelo sistema a partir da "offeredOdd" e da tua "estimatedProbability" — se opinares sobre valor, entras em contradição com o cálculo. Limita-te a reportar os factos e a fundamentar a PROBABILIDADE que estimaste.
 
-Para cada aposta escreve ainda: uma "justification" clara e honesta (2 a 4 frases), 2 a 5 "keyFactors" (os fatores que mais pesam) e 1 a 4 "risks" (incertezas ou cenários adversos).
+Para cada aposta escreve ainda: uma "justification" clara e honesta (2 a 4 frases) que explique COMO chegaste à probabilidade (forma, H2H, ausências, contexto, consenso de mercado) e termine aí, sem juízo de valor; 2 a 5 "keyFactors" (os fatores que mais pesam) e 1 a 4 "risks" (incertezas ou cenários adversos).
 
 Responde SÓ com JSON válido, a começar em { e a terminar em }, sem texto à volta nem blocos de código, neste formato:
 {
-  "summary": "avaliação geral em 1 a 2 frases",
   "bets": [
     {
       "type": "SIMPLES",
@@ -337,7 +336,39 @@ function sanitizeEvaluation(raw: any): { summary: string; bets: any[] } {
     .slice(0, EVAL_MAX_BETS);
 
   if (bets.length === 0) throw new Error("O modelo não conseguiu avaliar nenhuma aposta.");
-  return { summary: clip(raw?.summary, 600), bets };
+  // O resumo é DERIVADO dos números calculados, nunca copiado do modelo: a
+  // prosa do modelo já afirmou "valor positivo" numa aposta que o cálculo dava
+  // como -EV, contradizendo o cartão. Assim o veredito tem uma única fonte.
+  return { summary: buildEvalSummary(bets), bets };
+}
+
+/** Resumo determinístico, coerente por construção com os vereditos calculados. */
+function buildEvalSummary(bets: any[]): string {
+  const evStr = (pct: number) => `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
+
+  if (bets.length === 1) {
+    const b = bets[0];
+    const polarity =
+      b.verdict === "VALOR"
+        ? "positivo"
+        : b.verdict === "SEM_VALOR"
+          ? "negativo"
+          : "praticamente neutro";
+    const comparison =
+      b.offeredOdd >= b.fairOdd
+        ? `A odd oferecida (${b.offeredOdd.toFixed(2)}) está acima da odd justa estimada (${b.fairOdd.toFixed(2)}).`
+        : `A odd oferecida (${b.offeredOdd.toFixed(2)}) está abaixo da odd justa estimada (${b.fairOdd.toFixed(2)}).`;
+    return `Valor esperado ${polarity}: ${evStr(b.expectedValuePct)} por unidade apostada. ${comparison}`;
+  }
+
+  const pos = bets.filter((b) => b.verdict === "VALOR").length;
+  const neg = bets.filter((b) => b.verdict === "SEM_VALOR").length;
+  const neutral = bets.length - pos - neg;
+  const parts: string[] = [];
+  if (pos) parts.push(`${pos} com valor esperado positivo`);
+  if (neutral) parts.push(`${neutral} perto do valor justo`);
+  if (neg) parts.push(`${neg} com valor esperado negativo`);
+  return `${bets.length} apostas avaliadas: ${parts.join(", ")}.`;
 }
 
 async function evaluateBet(input: { imageBase64?: string; text: string }) {
