@@ -1,7 +1,7 @@
 # Graph Report - bettrackr-betano-account  (2026-07-24)
 
 ## Corpus Check
-- 149 files · ~176,700 words
+- 149 files · ~176,750 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -190,7 +190,7 @@ Nodes (45): bcryptjs, @capacitor/android, @capacitor/app, @capacitor/camera, @ca
 
 ### Community 4 - "Build Toolchain"
 Cohesion: 0.15
-Nodes (13): adm-zip, @capacitor/cli, devDependencies, adm-zip, @capacitor/cli, @types/express, @types/node, @types/pg (+5 more)
+Nodes (13): adm-zip, devDependencies, adm-zip, tailwindcss, @types/express, @types/node, @types/pg, vite (+5 more)
 
 ### Community 5 - "API Security and Database"
 Cohesion: 0.05

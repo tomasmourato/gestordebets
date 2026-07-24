@@ -605,41 +605,134 @@ function betclicReadStateFn() {
   return { username, login, ngState, loggedIn: true, error: username ? null : "sem sessão betclic (inicia sessão em betclic.pt)" };
 }
 
+// Função executada DENTRO da página betano.pt: lê a identidade da sessão atual.
+// A Betano (plataforma Kaizen) tem um username/handle real — o customerCode
+// (ex.: "ronkzinho") — mas ele NÃO vive no estado embebido (initial_state só
+// tem customerId + email). A única fonte é GET /api/balance -> data.customerCode,
+// obtido só com os cookies da sessão. Fazemos um fetch FRESCO a cada sondagem:
+// é isso que apanha a troca de conta (logout+login) sem depender de estado
+// congelado no load. O customerId (de initial_state) e o email ficam como
+// identificadores secundários. Async: o chrome.scripting resolve a promise.
+// Corre no mundo MAIN (precisa de window["initial_state"] e do fetch com cookies).
+async function betanoReadStateFn() {
+  let customerId = null;
+  let email = null;
+  let username = null; // customerCode — o handle mostrado ao utilizador
+  let loggedIn = true;
+
+  // 1) initial_state.user — traz customerId + email (secundários) e o sinal
+  //    fiável de logout (isLoggedIn:false).
+  try {
+    const user = window["initial_state"] && window["initial_state"].user;
+    if (user) {
+      loggedIn = user.isLoggedIn !== false;
+      const info = user.info || {};
+      if (info.customerId != null) customerId = String(info.customerId);
+      if (typeof info.email === "string") email = info.email;
+    }
+  } catch (_) {}
+
+  // 2) /api/balance -> data.customerCode: o username real. Fetch fresco (cookies)
+  //    => reflete a conta ATUAL mesmo após trocar de conta sem recarregar.
+  try {
+    const r = await fetch("/api/balance?_=" + Date.now(), {
+      credentials: "include",
+      headers: { Accept: "application/json, text/plain, */*" },
+    });
+    if (r.status === 401 || r.status === 403) {
+      loggedIn = false; // sinal positivo de sessão terminada
+    } else if (r.ok) {
+      const j = await r.json().catch(() => null);
+      const cc = j && j.data && j.data.customerCode;
+      if (typeof cc === "string" && cc.trim()) username = cc.trim();
+    }
+  } catch (_) {}
+
+  // loggedIn só é false com sinal POSITIVO (isLoggedIn:false ou /api/balance
+  // 401/403). Sem identidade mas SEM esse sinal NÃO afirmamos logout: devolvemos
+  // loggedIn:true para o probe recorrer ao fallback do storage (populado pelo
+  // inject) em vez de o limpar.
+  if (!loggedIn) return { username: null, loggedIn: false };
+  // username preferido = customerCode (handle); cai para customerId/email só
+  // quando o /api/balance não deu resposta utilizável.
+  const primary = username || customerId || email || null;
+  return {
+    username: primary,
+    customerId,
+    email,
+    loggedIn: true,
+    error: primary ? null : "estado da sessão Betano indisponível na página (recarrega betano.pt)",
+  };
+}
+
+// Sondas de identidade por casa: tabs a consultar, função a correr na página e
+// a chave de cache. betclic e betano partilham a mesma lógica de sondagem.
+const IDENTITY_PROBES = {
+  betclic: {
+    urls: ["https://www.betclic.pt/*"],
+    readFn: betclicReadStateFn,
+    cacheKey: "betclicUsername",
+    openHint: "abre betclic.pt numa tab",
+  },
+  betano: {
+    urls: ["https://www.betano.pt/*", "https://betano.pt/*"],
+    readFn: betanoReadStateFn,
+    cacheKey: "betanoUsername",
+    // Identidade rica {username, customerId, email} para o fallback sem tab
+    // (auto-import) poder associar por qualquer campo, tal como a leitura live.
+    identityKey: "betanoIdentity",
+    openHint: "abre betano.pt numa tab",
+    // MAIN world: preciso para ler window["initial_state"] e fazer o fetch a
+    // /api/balance com os cookies da página (o username real = customerCode).
+    world: "MAIN",
+  },
+};
+
 // Sonda a identidade da casa e devolve diagnóstico ({username, error}) para o
 // popup poder mostrar o motivo quando falha.
 async function probeBookmakerIdentity(source, _cfg) {
-  if (source !== "betclic") return { username: null };
+  const probe = IDENTITY_PROBES[source];
+  if (!probe) return { username: null };
 
-  // 1) Leitura live do estado SSR das tabs betclic.pt abertas. O estado é
-  //    "congelado" no load da página, por isso lemos primeiro a tab ATIVA / a
+  // 1) Leitura live do estado da sessão nas tabs abertas da casa. O estado
+  //    embebido é "congelado" no load, por isso lemos primeiro a tab ATIVA / a
   //    mais recente — a que reflete a sessão atual. Assim, mudar de conta
-  //    (logout + login noutra conta, que recarrega a página) passa a atualizar.
+  //    (logout + login, que recarrega a página) passa a atualizar.
   let liveError = null;
   try {
-    const tabs = (await chrome.tabs.query({ url: ["https://www.betclic.pt/*"] }))
+    const tabs = (await chrome.tabs.query({ url: probe.urls }))
       .filter((t) => t.id !== undefined)
       .sort((a, b) =>
         (Number(Boolean(b.active)) - Number(Boolean(a.active))) ||
         ((b.lastAccessed || 0) - (a.lastAccessed || 0))
       );
     if (tabs.length === 0) {
-      liveError = "abre betclic.pt numa tab";
+      liveError = probe.openHint;
     } else {
       for (const tab of tabs) {
         const results = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
-          func: betclicReadStateFn,
+          func: probe.readFn,
+          world: probe.world, // undefined -> ISOLATED (betclic); "MAIN" -> betano
         });
         const out = (results && results[0] && results[0].result) || null;
         if (out && out.username) {
-          chrome.storage.local.set({ betclicUsername: out.username });
+          const toStore = { [probe.cacheKey]: out.username };
+          if (probe.identityKey) {
+            toStore[probe.identityKey] = {
+              username: out.username || null,
+              customerId: out.customerId || null,
+              email: out.email || null,
+            };
+          }
+          chrome.storage.local.set(toStore);
           return out;
         }
-        // Sessão terminada numa tab betclic aberta: a verdade é "sem conta".
-        // Limpa o username em cache para não reaparecer stale e não recorras
-        // ao fallback (que devolveria o último login memorizado).
+        // Sessão terminada numa tab aberta: a verdade é "sem conta". Limpa o
+        // username em cache para não reaparecer stale e não recorras ao
+        // fallback (que devolveria o último login memorizado).
         if (out && out.loggedIn === false) {
-          chrome.storage.local.remove("betclicUsername");
+          chrome.storage.local.remove([probe.cacheKey, probe.identityKey].filter(Boolean));
           return { username: null, loggedIn: false };
         }
         liveError = (out && out.error) || "sem resposta da página";
@@ -649,16 +742,22 @@ async function probeBookmakerIdentity(source, _cfg) {
     liveError = String((e && e.message) || e);
   }
 
-  // 2) Fallback: username guardado por content-betclic.js num load anterior
-  //    (para quando não há tab betclic aberta agora — ex.: auto-import).
-  const stored = await chrome.storage.local.get(["betclicUsername"]);
-  if (stored.betclicUsername) return { username: String(stored.betclicUsername) };
+  // 2) Fallback: identidade guardada pelo content script num load anterior (para
+  //    quando não há tab aberta agora — ex.: auto-import). A identidade rica
+  //    permite associar por username/customerId/email; senão só o username.
+  if (probe.identityKey) {
+    const rich = (await chrome.storage.local.get([probe.identityKey]))[probe.identityKey];
+    if (rich && (rich.username || rich.customerId || rich.email)) {
+      return {
+        username: rich.username || rich.customerId || rich.email,
+        customerId: rich.customerId || null,
+        email: rich.email || null,
+      };
+    }
+  }
+  const stored = await chrome.storage.local.get([probe.cacheKey]);
+  if (stored[probe.cacheKey]) return { username: String(stored[probe.cacheKey]) };
   return { username: null, error: liveError };
-}
-
-async function fetchBookmakerUsername(source, cfg) {
-  const probe = await probeBookmakerIdentity(source, cfg);
-  return probe.username;
 }
 
 async function fetchBettrackrAccounts(cfg) {
@@ -679,6 +778,30 @@ function accountsForBookmaker(accounts, source) {
   return accounts.filter((account) => account && (!bookmaker || String(account.bookmaker) === bookmaker));
 }
 
+// Associa uma conta a uma identidade detetada {username, customerId, email}.
+// Regras (iguais no popup e no background):
+//   - o username (handle, ex.: customerCode "ronkzinho") bate certo com o campo
+//     username da conta OU com o label (rede de segurança para quem nomeou a
+//     conta como o handle sem preencher o campo dedicado);
+//   - o customerId/email só batem certo com o campo username EXPLÍCITO da conta
+//     (nunca com o label) — ou seja, o email só associa se o utilizador o tiver
+//     posto na conta do BetTrackr. Assim evita-se associar por acaso.
+function matchAccountByIdentity(candidates, identity) {
+  const norm = (v) => (v == null ? "" : String(v).trim().toLowerCase());
+  const handle = norm(identity && identity.username);
+  const explicit = [handle, norm(identity && identity.customerId), norm(identity && identity.email)]
+    .filter(Boolean);
+  return (
+    candidates.find((account) =>
+      typeof account.username === "string" && explicit.includes(norm(account.username))
+    ) ||
+    (handle
+      ? candidates.find((account) => norm(account.label) === handle)
+      : null) ||
+    null
+  );
+}
+
 // Decide a que conta vão as apostas de uma casa. A ordem é a mesma no import
 // manual e no automático — a deteção nunca depende do popup estar aberto:
 //   1) username da sessão da casa (ex.: Betclic /me) que bate certo com o
@@ -692,17 +815,10 @@ async function resolveAccountId(source, cfg, accounts, manualAccountId) {
   const label = SOURCE_BOOKMAKER[source] || source;
 
   try {
-    const username = await fetchBookmakerUsername(source, cfg);
+    const probe = await probeBookmakerIdentity(source, cfg);
+    const username = probe && probe.username;
     if (username) {
-      const target = username.trim().toLowerCase();
-      // Primeiro pelo campo username da conta; depois pelo label como rede de
-      // segurança (mesma regra do popup) — para quem nomeou a conta como o
-      // username sem preencher o campo dedicado.
-      const match =
-        candidates.find((account) =>
-          typeof account.username === "string" && account.username.trim().toLowerCase() === target
-        ) ||
-        candidates.find((account) => String(account.label).trim().toLowerCase() === target);
+      const match = matchAccountByIdentity(candidates, probe);
       if (match) {
         progress(`${label}: conta @${username} detetada automaticamente.`);
         return String(match.id);
