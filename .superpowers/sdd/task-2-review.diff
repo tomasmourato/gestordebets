@@ -1,0 +1,1217 @@
+# Review package: 66f38e1..244eff1
+
+## Commits
+244eff1 fix: exit empty bet selection mode
+
+## Files changed
+ extension/test/bet-selection.test.ts |  28 ++++
+ extension/test/long-press.test.ts    |  63 ++++++++
+ src/components/BetsManager.tsx       | 270 +++++++++++++++++++++++------------
+ src/lib/longPress.ts                 |  58 ++++++++
+ src/mobile/screens/MobileBets.tsx    | 171 ++++++++++++++++------
+ 5 files changed, 459 insertions(+), 131 deletions(-)
+
+## Diff
+diff --git a/extension/test/bet-selection.test.ts b/extension/test/bet-selection.test.ts
+index 798fe5f..e3ac59d 100644
+--- a/extension/test/bet-selection.test.ts
++++ b/extension/test/bet-selection.test.ts
+@@ -1,11 +1,12 @@
+ import assert from "node:assert/strict";
++import { readFileSync } from "node:fs";
+ import { describe, it } from "node:test";
+ 
+ import {
+   INITIAL_BET_SELECTION_STATE,
+   betSelectionReducer,
+   type BetSelectionState,
+ } from "../../src/lib/betSelection";
+ 
+ const selected = (...ids: string[]): BetSelectionState => ({
+   isSelecting: true,
+@@ -98,10 +99,37 @@ describe("betSelectionReducer", () => {
+     assert.deepEqual([...result.selectedIds], ["a", "b"]);
+   });
+ 
+   it("clears selection and mode explicitly after a completed bulk action", () => {
+     const result = betSelectionReducer(selected("a", "b"), { type: "clear" });
+ 
+     assert.equal(result.isSelecting, false);
+     assert.deepEqual([...result.selectedIds], []);
+   });
+ });
++
++describe("desktop and mobile selection integration", () => {
++  const desktopSource = readFileSync(
++    new URL("../../src/components/BetsManager.tsx", import.meta.url),
++    "utf8",
++  );
++  const mobileSource = readFileSync(
++    new URL("../../src/mobile/screens/MobileBets.tsx", import.meta.url),
++    "utf8",
++  );
++
++  it("routes desktop selection paths through the shared reducer action", () => {
++    assert.match(desktopSource, /useReducer\(\s*betSelectionReducer/);
++    assert.match(desktopSource, /const toggleBetSelection = \(id: string\).*type: "toggle-one"/s);
++    assert.match(desktopSource, /toggleBetSelectionFromLongPress.*toggleBetSelection\(id\)/s);
++    assert.match(desktopSource, /onChange=\{\(\) => toggleBetSelection\(bet\.id\)\}/);
++    assert.match(desktopSource, /type: "toggle-filtered"/);
++  });
++
++  it("routes mobile selection paths through the shared reducer action", () => {
++    assert.match(mobileSource, /useReducer\(\s*betSelectionReducer/);
++    assert.match(mobileSource, /const toggleSelected = \(id: string\).*type: "toggle-one"/s);
++    assert.match(mobileSource, /toggleSelectedFromLongPress.*toggleSelected\(id\)/s);
++    assert.match(mobileSource, /if \(isSelecting\) toggleSelected\(bet\.id\)/);
++    assert.match(mobileSource, /type: "toggle-filtered"/);
++  });
++});
+diff --git a/extension/test/long-press.test.ts b/extension/test/long-press.test.ts
+new file mode 100644
+index 0000000..432ef8a
+--- /dev/null
++++ b/extension/test/long-press.test.ts
+@@ -0,0 +1,63 @@
++import assert from "node:assert/strict";
++import { describe, it } from "node:test";
++
++import { createLongPressController } from "../../src/lib/longPress";
++
++describe("long-press controller", () => {
++  it("fires once and consumes only the release click", () => {
++    let scheduled: (() => void) | undefined;
++    let fired = 0;
++    const controller = createLongPressController({
++      delay: 500,
++      schedule: (callback) => {
++        scheduled = callback;
++        return 1;
++      },
++      cancelScheduled: () => {},
++    });
++
++    controller.start(() => fired++);
++    scheduled?.();
++    scheduled?.();
++
++    assert.equal(fired, 1);
++    assert.equal(controller.consumeClick(), true);
++    assert.equal(controller.consumeClick(), false);
++  });
++
++  it("does nothing after a cancelled press", () => {
++    let scheduled: (() => void) | undefined;
++    let fired = 0;
++    const controller = createLongPressController({
++      schedule: (callback) => {
++        scheduled = callback;
++        return 1;
++      },
++      cancelScheduled: () => {},
++    });
++
++    controller.start(() => fired++);
++    controller.cancel();
++    scheduled?.();
++
++    assert.equal(fired, 0);
++    assert.equal(controller.consumeClick(), false);
++  });
++
++  it("still suppresses the release click after activation and later pointer cancellation", () => {
++    let scheduled: (() => void) | undefined;
++    const controller = createLongPressController({
++      schedule: (callback) => {
++        scheduled = callback;
++        return 1;
++      },
++      cancelScheduled: () => {},
++    });
++
++    controller.start(() => {});
++    scheduled?.();
++    controller.cancel();
++
++    assert.equal(controller.consumeClick(), true);
++  });
++});
+diff --git a/src/components/BetsManager.tsx b/src/components/BetsManager.tsx
+index 758d44f..cf0d682 100644
+--- a/src/components/BetsManager.tsx
++++ b/src/components/BetsManager.tsx
+@@ -1,11 +1,11 @@
+-import React, { useEffect, useState, useMemo } from "react";
++import React, { useEffect, useState, useMemo, useReducer, useRef, type PointerEvent as ReactPointerEvent } from "react";
+ import { 
+   Plus, 
+   Search, 
+   Trash2, 
+   Edit, 
+   Copy, 
+   X, 
+   PlusCircle, 
+   MinusCircle, 
+   Check,
+@@ -13,32 +13,43 @@ import {
+   Eye,
+   EyeOff,
+   Trash,
+   Clock,
+   AlertTriangle,
+   ArrowUp,
+   ArrowDown,
+   CheckSquare
+ } from "lucide-react";
+ import { Bet, BookieAccount, Selection, BetStatus, BetType, FreebetType, SelectionResult } from "../types";
+-import { calculateBetReturnAndProfit, AVAILABLE_BOOKMAKERS, safeNum } from "../utils";
++import { calculateBetReturnAndProfit, AVAILABLE_BOOKMAKERS, safeNum, selectBetsForFinancialSummary } from "../utils";
+ import { defaultFreebetTypeFor } from "../lib/bookmakers";
+ import { hasCashoutSignal } from "../lib/betStatus";
+ import FilterDropdown from "./FilterDropdown";
++import FilteredBetsSummary from "./FilteredBetsSummary";
+ import FiltersBar from "./FiltersBar";
+ import TimeframeFilter, {
+   EMPTY_TIMEFRAME_FILTER,
+   resolveTimeframeRange,
+   type TimeframeFilterValue,
+ } from "./TimeframeFilter";
+ import { readFilters, serializeFilters } from "../lib/filterParams";
+ import { useUrlFilterSync } from "../hooks/useUrlFilterSync";
++import { createLongPressController } from "../lib/longPress";
++import {
++  INITIAL_BET_SELECTION_STATE,
++  betSelectionReducer,
++  type BetSelectionAction,
++} from "../lib/betSelection";
++import {
++  resolveSelectionDisplayResult,
++  type SelectionDisplayResult,
++} from "../lib/selectionDisplayResult";
+ 
+ interface BetsManagerProps {
+   bets: Bet[];
+   currency: string;
+   accounts?: BookieAccount[];
+   onAddBet: (bet: Bet) => void | Promise<void>;
+   onAddBets: (bets: Bet[]) => void | Promise<void>;
+   onUpdateBet: (bet: Bet) => void | Promise<void>;
+   onIgnoreBet: (id: string, ignored: boolean, comment?: string | null) => void | Promise<void>;
+   onDeleteBet: (id: string) => void | Promise<void>;
+@@ -81,63 +92,82 @@ export default function BetsManager({
+   onDeleteBet,
+   initialSearch,
+   accounts = []
+ }: BetsManagerProps) {
+   const initialFilters = useMemo(
+     () => readFilters(new URLSearchParams(initialSearch ?? "")),
+     [initialSearch]
+   );
+ 
+   // Search & Filter state
+-  const [search, setSearch] = useState("");
++  const [search, setSearch] = useState(initialFilters.search);
++  const [committedSearch, setCommittedSearch] = useState(initialFilters.search);
+   const [statusFilter, setStatusFilter] = useState<string>(initialFilters.status);
+   const [typeFilter, setTypeFilter] = useState<string>(initialFilters.type);
+   const [freebetFilter, setFreebetFilter] = useState<string>(initialFilters.money);
+   const [bookmakerFilter, setBookmakerFilter] = useState<string>(initialFilters.bookmaker);
+   // "ALL" | "NONE" (sem conta) | id de uma conta — também chega via drill-down (?account=)
+   const [accountFilter, setAccountFilter] = useState<string>(initialFilters.account);
+   const [sportFilter, setSportFilter] = useState<string>(initialFilters.sport);
+   const [timeframeFilter, setTimeframeFilter] = useState<TimeframeFilterValue>(initialFilters.timeframe);
+ 
+-  // Filtros <-> URL. A pesquisa por texto fica de fora de propósito: cada tecla
+-  // criaria uma entrada no histórico do browser.
++  // Filtros <-> URL. A pesquisa só entra no URL quando é confirmada por Enter
++  // ou ao sair do campo, para cada tecla não criar uma entrada no histórico.
+   const filterSearch = useMemo(
+     () => serializeFilters({
+       status: statusFilter,
+       bookmaker: bookmakerFilter,
+       account: accountFilter,
+       sport: sportFilter,
+       type: typeFilter,
+       money: freebetFilter,
++      search: committedSearch,
+       timeframe: timeframeFilter,
+     }),
+-    [statusFilter, bookmakerFilter, accountFilter, sportFilter, typeFilter, freebetFilter, timeframeFilter]
++    [statusFilter, bookmakerFilter, accountFilter, sportFilter, typeFilter, freebetFilter, committedSearch, timeframeFilter]
+   );
+ 
++  const commitSearch = () => {
++    const next = search.trim();
++    setSearch(next);
++    setCommittedSearch(next);
++  };
++
+   useUrlFilterSync({
+     path: "/bets",
+     search: filterSearch,
+     onExternalChange: (params) => {
+       const next = readFilters(params);
+       setStatusFilter(next.status);
+       setBookmakerFilter(next.bookmaker);
+       setAccountFilter(next.account);
+       setSportFilter(next.sport);
+       setTypeFilter(next.type);
+       setFreebetFilter(next.money);
++      setSearch(next.search);
++      setCommittedSearch(next.search);
+       setTimeframeFilter(next.timeframe);
+     },
+   });
+   const [sortField, setSortField] = useState<SortField>("date");
+   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+-  const [isSelecting, setIsSelecting] = useState(false);
+-  const [selectedBetIds, setSelectedBetIds] = useState<Set<string>>(new Set());
++  const [selectionState, dispatchSelection] = useReducer(
++    betSelectionReducer,
++    INITIAL_BET_SELECTION_STATE,
++  );
++  const { isSelecting } = selectionState;
++  const selectedBetIds = selectionState.selectedIds;
++  const longPressControllerRef = useRef<ReturnType<typeof createLongPressController> | null>(null);
++  const longPressOriginRef = useRef<{ x: number; y: number } | null>(null);
++  if (longPressControllerRef.current === null) {
++    longPressControllerRef.current = createLongPressController();
++  }
+   const [isConfirmingBulkDelete, setIsConfirmingBulkDelete] = useState(false);
+   const [isBulkActionRunning, setIsBulkActionRunning] = useState(false);
+   // Editar em massa (só campos comuns) e ignorar/repor em massa.
+   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
+   const [isBulkIgnoreOpen, setIsBulkIgnoreOpen] = useState(false);
+   const [bulkIgnoreComment, setBulkIgnoreComment] = useState("");
+   const [bulkStatus, setBulkStatus] = useState(KEEP);
+   const [bulkSport, setBulkSport] = useState("");
+   const [bulkBookmaker, setBulkBookmaker] = useState(KEEP);
+   const [bulkAccount, setBulkAccount] = useState(KEEP);
+@@ -321,65 +351,98 @@ export default function BetsManager({
+     setIsBulkIgnoreOpen(false);
+     setBulkIgnoreComment("");
+     setBulkStatus(KEEP);
+     setBulkSport("");
+     setBulkBookmaker(KEEP);
+     setBulkAccount(KEEP);
+     setBulkMoney(KEEP);
+     setBulkNote("");
+   };
+ 
++  const applySelectionAction = (action: BetSelectionAction) => {
++    const next = betSelectionReducer(selectionState, action);
++    dispatchSelection(action);
++    setIsConfirmingBulkDelete(false);
++    if (!next.isSelecting) resetBulkEdit();
++  };
++
+   const toggleSelectionMode = () => {
+-    setIsSelecting(current => {
+-      if (current) {
+-        setSelectedBetIds(new Set());
+-        setIsConfirmingBulkDelete(false);
+-        resetBulkEdit();
+-      }
+-      return !current;
+-    });
++    applySelectionAction({ type: "toggle-mode" });
+   };
+ 
+   const toggleBetSelection = (id: string) => {
+-    setIsConfirmingBulkDelete(false);
+-    setSelectedBetIds(current => {
+-      const next = new Set(current);
+-      if (next.has(id)) next.delete(id);
+-      else next.add(id);
+-      return next;
+-    });
++    applySelectionAction({ type: "toggle-one", betId: id });
++  };
++
++  const toggleBetSelectionFromLongPress = (id: string) => {
++    toggleBetSelection(id);
++  };
++
++  const startBetLongPress = (event: ReactPointerEvent<HTMLDivElement>, id: string) => {
++    if (!event.isPrimary || event.button !== 0) return;
++    if (
++      event.target instanceof Element
++      && event.target.closest("button, input, label, a, textarea, select")
++    ) return;
++
++    longPressOriginRef.current = { x: event.clientX, y: event.clientY };
++    longPressControllerRef.current?.start(() => toggleBetSelectionFromLongPress(id));
+   };
+ 
++  const moveBetLongPress = (event: ReactPointerEvent<HTMLDivElement>) => {
++    const origin = longPressOriginRef.current;
++    if (!origin) return;
++    if (Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 10) {
++      longPressOriginRef.current = null;
++      longPressControllerRef.current?.cancel();
++    }
++  };
++
++  const finishBetLongPress = () => {
++    longPressOriginRef.current = null;
++    longPressControllerRef.current?.finish();
++  };
++
++  const cancelBetLongPress = () => {
++    longPressOriginRef.current = null;
++    longPressControllerRef.current?.cancel();
++  };
++
++  useEffect(
++    () => () => {
++      longPressControllerRef.current?.dispose();
++    },
++    [],
++  );
++
+   const allFilteredBetsSelected = filteredBets.length > 0 && filteredBets.every(bet => selectedBetIds.has(bet.id));
++  const summaryBets = useMemo(
++    () => selectBetsForFinancialSummary(filteredBets, selectedBetIds, isSelecting),
++    [filteredBets, selectedBetIds, isSelecting],
++  );
+   const selectedBetsList = bets.filter(bet => selectedBetIds.has(bet.id));
+   const allSelectedIgnored = selectedBetsList.length > 0 && selectedBetsList.every(b => b.isIgnored);
+   const bulkFieldClass =
+     "w-full h-9 px-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500";
+   const bulkLabelClass =
+     "block text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1";
+ 
+   const toggleAllFilteredBets = () => {
+-    setIsConfirmingBulkDelete(false);
+-    setSelectedBetIds(current => {
+-      const next = new Set(current);
+-      if (allFilteredBetsSelected) filteredBets.forEach(bet => next.delete(bet.id));
+-      else filteredBets.forEach(bet => next.add(bet.id));
+-      return next;
++    applySelectionAction({
++      type: "toggle-filtered",
++      filteredIds: filteredBets.map((bet) => bet.id),
+     });
+   };
+ 
+   const finishBulkAction = () => {
+-    setSelectedBetIds(new Set());
+-    setIsConfirmingBulkDelete(false);
+-    setIsSelecting(false);
++    applySelectionAction({ type: "clear" });
+     setIsBulkActionRunning(false);
+-    resetBulkEdit();
+   };
+ 
+   // Editar em massa: aplica só os campos alterados; os únicos por aposta
+   // (montante, odd, seleções) ficam intactos. Recalcula retorno/lucro só
+   // quando muda o estado ou o tipo de dinheiro — os cálculos dependem deles.
+   const applyBulkEdit = async () => {
+     const selected = bets.filter(bet => selectedBetIds.has(bet.id));
+     if (selected.length === 0) return;
+ 
+     const changesStatus = bulkStatus !== KEEP;
+@@ -775,41 +838,43 @@ export default function BetsManager({
+         return <span className={`${base} bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700`}><MinusCircle size={10} /> Anulada</span>;
+       case "MEIO_GANHA":
+         return <span className={`${base} bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900`}><Check size={10} /> Meio Ganha</span>;
+       case "MEIO_PERDIDA":
+         return <span className={`${base} bg-rose-50/50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400 border-rose-200 dark:border-rose-900`}><X size={10} /> Meio Perdida</span>;
+       case "CASHOUT":
+         return <span className={`${base} bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-300 border-violet-200 dark:border-violet-900`}><MinusCircle size={10} /> Cashout</span>;
+     }
+   };
+ 
+-  const getSelectionResultBadge = (result?: SelectionResult) => {
++  const getSelectionResultBadge = (result?: SelectionDisplayResult) => {
+     const base = "inline-flex w-max items-center gap-1 rounded-sm border px-2 py-1 text-[9px] font-bold uppercase tracking-wider";
+     switch (result) {
+       case "GANHA":
+         return <span className={`${base} border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300`}><Check size={10} /> Ganha</span>;
+       case "PERDIDA":
+         return <span className={`${base} border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-200`}><X size={10} /> Perdida</span>;
+       case "ANULADA":
+         return <span className={`${base} border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300`}><MinusCircle size={10} /> Anulada</span>;
+       case "POR_LIQUIDAR":
+         return <span className={`${base} border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300`}><Clock size={10} /> Pendente</span>;
+       case "MEIO_GANHA":
+         return <span className={`${base} border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300`}><Check size={10} /> Meio ganha</span>;
+       case "MEIO_PERDIDA":
+         return <span className={`${base} border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300`}><X size={10} /> Meio perdida</span>;
++      case "DESCONHECIDO":
++        return <span className={`${base} border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300`}><HelpCircle size={10} /> Desconhecido</span>;
+       default:
+         return null;
+     }
+   };
+ 
+-  const selectionDetailClass = (result?: SelectionResult) => {
++  const selectionDetailClass = (result?: SelectionDisplayResult) => {
+     if (result === "PERDIDA" || result === "MEIO_PERDIDA") {
+       return "border-rose-200 bg-rose-50/70 dark:border-rose-900 dark:bg-rose-950/25";
+     }
+     if (result === "GANHA" || result === "MEIO_GANHA") {
+       return "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20";
+     }
+     return "border-zinc-200 bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-800/50";
+   };
+ 
+   const betTitleClass = (status: BetStatus) => {
+@@ -839,20 +904,27 @@ export default function BetsManager({
+         <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+           {/* Search */}
+           <div className="relative min-w-0 flex-1">
+             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+             <input
+               type="search"
+               placeholder="Pesquisar equipa, mercado ou notas..."
+               className="h-10 w-full rounded-sm border border-zinc-200 bg-zinc-50 pl-9 pr-4 text-xs text-zinc-800 outline-none transition-all placeholder:text-zinc-400 hover:border-zinc-300 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:hover:border-zinc-600 dark:focus:border-emerald-500 dark:focus:bg-zinc-800"
+               value={search}
+               onChange={(e) => setSearch(e.target.value)}
++              onBlur={commitSearch}
++              onKeyDown={(e) => {
++                if (e.key === "Enter") {
++                  e.preventDefault();
++                  commitSearch();
++                }
++              }}
+             />
+           </div>
+ 
+           <span className="hidden text-[11px] font-medium text-zinc-400 lg:block dark:text-zinc-500">
+             {filteredBets.length} de {bets.length} apostas
+           </span>
+ 
+           {/* New Bet Button */}
+           <button
+             onClick={openAddModal}
+@@ -971,22 +1043,27 @@ export default function BetsManager({
+           />
+ 
+           <TimeframeFilter
+             className="flex-1 min-w-40"
+             value={timeframeFilter}
+             onChange={setTimeframeFilter}
+           />
+         </FiltersBar>
+       </div>
+ 
+-      {isSelecting && selectedBetIds.size > 0 && (
+-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm px-3 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
++      <FilteredBetsSummary
++        bets={summaryBets}
++        currency={currency}
++        freebetOnly={freebetFilter === "FREEBET"}
++        footer={
++          isSelecting && selectedBetIds.size > 0 ? (
++        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+           <span>
+             <strong className="text-emerald-600 dark:text-emerald-300">{selectedBetIds.size}</strong>{" "}
+             {selectedBetIds.size === 1 ? "aposta selecionada" : "apostas selecionadas"}
+           </span>
+ 
+           <div className="flex flex-wrap items-center gap-2">
+             {isConfirmingBulkDelete ? (
+               <div className="inline-flex items-center gap-2 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 px-2 py-1">
+                 <span className="font-semibold text-rose-700 dark:text-rose-300">
+                   Apagar {selectedBetIds.size} {selectedBetIds.size === 1 ? "aposta" : "apostas"}?
+@@ -1044,21 +1121,23 @@ export default function BetsManager({
+                   onClick={() => { setIsConfirmingBulkDelete(true); setIsBulkEditOpen(false); setIsBulkIgnoreOpen(false); }}
+                   disabled={isBulkActionRunning}
+                   className="px-3 py-1.5 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950 disabled:opacity-50 font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                 >
+                   <Trash2 size={13} /> Apagar
+                 </button>
+               </>
+             )}
+           </div>
+         </div>
+-      )}
++          ) : undefined
++        }
++      />
+ 
+       {/* Painel: editar em massa — só campos comuns */}
+       {isSelecting && selectedBetIds.size > 0 && isBulkEditOpen && (
+         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm px-3 py-3 space-y-3">
+           <div className="flex items-center justify-between gap-2">
+             <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+               Editar {selectedBetIds.size} {selectedBetIds.size === 1 ? "aposta" : "apostas"} — só campos comuns
+             </span>
+             <button
+               type="button"
+@@ -1198,32 +1277,38 @@ export default function BetsManager({
+       {/* Bets List / Grid */}
+       <div className="space-y-3" id="bets-list">
+         {filteredBets.map((bet) => {
+           const isSettled = bet.status !== "POR_LIQUIDAR";
+           return (
+             <div
+               key={bet.id}
+               role="button"
+               tabIndex={0}
+               aria-label={`${isSelecting ? "Selecionar" : "Ver detalhes da"} aposta de ${bet.dateTime}`}
++              onPointerDown={(event) => startBetLongPress(event, bet.id)}
++              onPointerMove={moveBetLongPress}
++              onPointerUp={finishBetLongPress}
++              onPointerCancel={cancelBetLongPress}
++              onPointerLeave={cancelBetLongPress}
+               onClick={() => {
++                if (longPressControllerRef.current?.consumeClick()) return;
+                 if (isSelecting) toggleBetSelection(bet.id);
+                 else setDetailBet(bet);
+               }}
+               onKeyDown={(event) => {
+                 if (event.target !== event.currentTarget) return;
+                 if (event.key !== "Enter" && event.key !== " ") return;
+                 event.preventDefault();
+                 if (isSelecting) toggleBetSelection(bet.id);
+                 else setDetailBet(bet);
+               }}
+-              className={`bg-white dark:bg-zinc-900 rounded-sm border p-4 md:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${
++              className={`bg-white dark:bg-zinc-900 rounded-sm border p-4 md:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
+                 selectedBetIds.has(bet.id)
+                   ? "border-emerald-300 dark:border-emerald-700 ring-1 ring-emerald-100 dark:ring-emerald-950"
+                   : "border-zinc-200 dark:border-zinc-800"
+               } ${bet.isIgnored ? "opacity-60" : ""}`}
+             >
+ 
+               {isSelecting && (
+                 <label
+                   className="flex items-center self-start md:self-center cursor-pointer"
+                   title="Selecionar aposta"
+@@ -1456,163 +1541,166 @@ export default function BetsManager({
+             >
+               Adicionar Nova Aposta
+             </button>
+           </div>
+         )}
+       </div>
+ 
+       {/* Read-only bet details */}
+       {detailBet && (
+         <div
+-          className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-950/75 p-0 backdrop-blur-sm sm:items-center sm:p-4"
++          className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-zinc-950/70 p-0 backdrop-blur-xs sm:items-center sm:p-4"
+           role="dialog"
+           aria-modal="true"
+           aria-labelledby="bet-details-title"
+           onClick={(event) => {
+             if (event.target === event.currentTarget) setDetailBet(null);
+           }}
+         >
+-          <div className="flex h-[96vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:h-auto sm:max-h-[90vh] sm:rounded-2xl">
+-            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 dark:border-slate-800 sm:px-6">
++          <div className="flex h-[96vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-md border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:h-auto sm:max-h-[90vh] sm:rounded-md">
++            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800 sm:px-6">
+               <div className="min-w-0">
+                 <div className="mb-2 flex flex-wrap items-center gap-2">
+                   {getStatusBadge(detailBet.status)}
+-                  <span className="rounded-sm border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-300">
++                  <span className="rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
+                     {detailBet.type}
+                   </span>
+                 </div>
+-                <h2 id="bet-details-title" className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
+-                  <Eye size={19} className="text-indigo-500" /> Detalhes da aposta
++                <h2 id="bet-details-title" className="flex items-center gap-2 text-lg font-bold text-zinc-900 dark:text-zinc-100">
++                  <Eye size={19} className="text-emerald-500" /> Detalhes da aposta
+                 </h2>
+-                <p className="mt-1 truncate font-mono text-[10px] text-slate-400 dark:text-slate-500">
++                <p className="mt-1 truncate font-mono text-[10px] text-zinc-400 dark:text-zinc-500">
+                   ID {detailBet.id}
+                   {detailBet.metadata?.ref ? ` · Ref. ${detailBet.metadata.ref}` : ""}
+                 </p>
+               </div>
+               <button
+                 type="button"
+                 autoFocus
+                 onClick={() => setDetailBet(null)}
+-                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:hover:bg-slate-800 dark:hover:text-white cursor-pointer"
++                className="cursor-pointer rounded-sm p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                 aria-label="Fechar detalhes da aposta"
+               >
+                 <X size={18} />
+               </button>
+             </div>
+ 
+             <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6">
+               <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                 {[
+                   ["Casa", detailBet.bookmaker || "—"],
+                   ["Data e hora", detailBet.dateTime || "—"],
+                   ["Origem", detailBet.origin || "—"],
+                   ["Dinheiro", detailBet.isFreebet ? `Freebet ${detailBet.freebetType || ""}`.trim() : "Dinheiro real"],
+                   ...(detailBet.isIgnored ? [["Estatísticas", "Ignorada (excluída)"]] : []),
+                 ].map(([label, value]) => (
+-                  <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/40">
+-                    <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{label}</p>
+-                    <p className="mt-1 break-words text-xs font-semibold text-slate-800 dark:text-slate-100">{value}</p>
++                  <div key={label} className="rounded-sm border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
++                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">{label}</p>
++                    <p className="mt-1 break-words text-xs font-semibold text-zinc-800 dark:text-zinc-100">{value}</p>
+                   </div>
+                 ))}
+               </section>
+ 
+               <section>
+-                <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
++                <h3 className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+                   Resumo financeiro
+                 </h3>
+                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+-                    <p className="text-[9px] font-bold uppercase text-slate-400">Stake</p>
+-                    <p className="mt-1 font-mono text-sm font-bold text-slate-800 dark:text-slate-100" style={detailBet.isFreebet ? { color: "#a855f7" } : undefined}>{safeNum(detailBet.stake).toFixed(2)}{currency}</p>
++                  <div className="rounded-sm border border-zinc-200 p-3 dark:border-zinc-800">
++                    <p className="text-[9px] font-bold uppercase text-zinc-400">Stake</p>
++                    <p className={`mt-1 font-mono text-sm font-bold tabular-nums ${detailBet.isFreebet ? "text-purple-600 dark:text-purple-300" : "text-zinc-800 dark:text-zinc-100"}`}>{safeNum(detailBet.stake).toFixed(2)}{currency}</p>
+                   </div>
+-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+-                    <p className="text-[9px] font-bold uppercase text-slate-400">Odd total</p>
+-                    <p className="mt-1 font-mono text-sm font-bold text-indigo-600 dark:text-indigo-300">{safeNum(detailBet.odd).toFixed(2)}</p>
++                  <div className="rounded-sm border border-zinc-200 p-3 dark:border-zinc-800">
++                    <p className="text-[9px] font-bold uppercase text-zinc-400">Odd total</p>
++                    <p className="mt-1 font-mono text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-300">{safeNum(detailBet.odd).toFixed(2)}</p>
+                   </div>
+-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+-                    <p className="text-[9px] font-bold uppercase text-slate-400">Potencial</p>
+-                    <p className="mt-1 font-mono text-sm font-bold text-slate-800 dark:text-slate-100">{safeNum(detailBet.potentialReturn).toFixed(2)}{currency}</p>
++                  <div className="rounded-sm border border-zinc-200 p-3 dark:border-zinc-800">
++                    <p className="text-[9px] font-bold uppercase text-zinc-400">Potencial</p>
++                    <p className="mt-1 font-mono text-sm font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{safeNum(detailBet.potentialReturn).toFixed(2)}{currency}</p>
+                   </div>
+-                  <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+-                    <p className="text-[9px] font-bold uppercase text-slate-400">Retorno</p>
+-                    <p className="mt-1 font-mono text-sm font-bold text-slate-800 dark:text-slate-100">{safeNum(detailBet.finalReturn).toFixed(2)}{currency}</p>
++                  <div className="rounded-sm border border-zinc-200 p-3 dark:border-zinc-800">
++                    <p className="text-[9px] font-bold uppercase text-zinc-400">Retorno</p>
++                    <p className="mt-1 font-mono text-sm font-bold tabular-nums text-zinc-800 dark:text-zinc-100">{safeNum(detailBet.finalReturn).toFixed(2)}{currency}</p>
+                   </div>
+-                  <div className="col-span-2 rounded-lg border border-slate-200 p-3 dark:border-slate-800 sm:col-span-1">
+-                    <p className="text-[9px] font-bold uppercase text-slate-400">Lucro líquido</p>
+-                    <p className={`mt-1 font-mono text-sm font-bold ${safeNum(detailBet.netProfit) > 0 ? "text-emerald-600 dark:text-emerald-400" : safeNum(detailBet.netProfit) < 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-700 dark:text-slate-200"}`}>
++                  <div className="col-span-2 rounded-sm border border-zinc-200 p-3 dark:border-zinc-800 sm:col-span-1">
++                    <p className="text-[9px] font-bold uppercase text-zinc-400">Lucro líquido</p>
++                    <p className={`mt-1 font-mono text-sm font-bold tabular-nums ${safeNum(detailBet.netProfit) > 0 ? "text-emerald-600 dark:text-emerald-400" : safeNum(detailBet.netProfit) < 0 ? "text-rose-600 dark:text-rose-400" : "text-zinc-700 dark:text-zinc-200"}`}>
+                       {safeNum(detailBet.netProfit) > 0 ? "+" : ""}{safeNum(detailBet.netProfit).toFixed(2)}{currency}
+                     </p>
+                   </div>
+                 </div>
+               </section>
+ 
+               <section>
+                 <div className="mb-3 flex items-center justify-between gap-3">
+-                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
++                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+                     Seleções do boletim
+                   </h3>
+-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-300">
++                  <span className="rounded-sm bg-zinc-100 px-2 py-1 text-[10px] font-bold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300">
+                     {detailBet.selections.length}
+                   </span>
+                 </div>
+                 <div className="space-y-3">
+-                  {detailBet.selections.length > 0 ? detailBet.selections.map((selection, index) => (
+-                    <article key={selection.id || index} className={`rounded-xl border p-4 ${selectionDetailClass(selection.result)}`}>
++                  {detailBet.selections.length > 0 ? detailBet.selections.map((selection, index) => {
++                    const displayResult = resolveSelectionDisplayResult(detailBet.status, selection.result);
++                    return (
++                    <article key={selection.id || index} className={`rounded-sm border p-4 ${selectionDetailClass(displayResult)}`}>
+                       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                         <div className="min-w-0">
+-                          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Seleção {index + 1}</p>
++                          <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">Seleção {index + 1}</p>
+                           <h4 className={`mt-1 text-sm font-bold ${betTitleClass(detailBet.status)}`}>{selection.event || "Evento indisponível"}</h4>
+-                          {selection.sport && <p className="mt-0.5 text-[10px] font-semibold text-indigo-600 dark:text-indigo-300">{selection.sport}</p>}
++                          {selection.sport && <p className="mt-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-300">{selection.sport}</p>}
+                         </div>
+-                        {getSelectionResultBadge(selection.result)}
++                        {getSelectionResultBadge(displayResult)}
+                       </div>
+-                      <div className="mt-3 grid grid-cols-1 gap-2 border-t border-slate-200/70 pt-3 dark:border-slate-700 sm:grid-cols-[1fr_1fr_auto]">
++                      <div className="mt-3 grid grid-cols-1 gap-2 border-t border-zinc-200/70 pt-3 dark:border-zinc-700 sm:grid-cols-[1fr_1fr_auto]">
+                         <div>
+-                          <p className="text-[9px] font-bold uppercase text-slate-400">Mercado</p>
+-                          <p className="mt-0.5 text-xs font-medium text-slate-700 dark:text-slate-200">{selection.market || "—"}</p>
++                          <p className="text-[9px] font-bold uppercase text-zinc-400">Mercado</p>
++                          <p className="mt-0.5 text-xs font-medium text-zinc-700 dark:text-zinc-200">{selection.market || "—"}</p>
+                         </div>
+                         <div>
+-                          <p className="text-[9px] font-bold uppercase text-slate-400">Escolha</p>
+-                          <p className="mt-0.5 text-xs font-semibold text-slate-900 dark:text-white">{selection.choice || "—"}</p>
++                          <p className="text-[9px] font-bold uppercase text-zinc-400">Escolha</p>
++                          <p className="mt-0.5 text-xs font-semibold text-zinc-900 dark:text-zinc-100">{selection.choice || "—"}</p>
+                         </div>
+                         <div className="sm:text-right">
+-                          <p className="text-[9px] font-bold uppercase text-slate-400">Odd</p>
+-                          <p className="mt-0.5 font-mono text-xs font-bold text-indigo-600 dark:text-indigo-300">@{safeNum(selection.odd).toFixed(2)}</p>
++                          <p className="text-[9px] font-bold uppercase text-zinc-400">Odd</p>
++                          <p className="mt-0.5 font-mono text-xs font-bold tabular-nums text-emerald-600 dark:text-emerald-300">@{safeNum(selection.odd).toFixed(2)}</p>
+                         </div>
+                       </div>
+                     </article>
+-                  )) : (
+-                    <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
++                    );
++                  }) : (
++                    <div className="rounded-sm border border-dashed border-zinc-300 p-5 text-center text-xs text-zinc-400 dark:border-zinc-700 dark:text-zinc-500">
+                       Esta aposta não tem seleções guardadas.
+                     </div>
+                   )}
+                 </div>
+               </section>
+ 
+               {(detailBet.notes || detailBet.comment || detailBet.tags) && (
+                 <section className="grid gap-3 sm:grid-cols-2">
+                   {detailBet.notes && (
+-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+-                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Notas</p>
+-                      <p className="mt-1 whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-200">{detailBet.notes}</p>
++                    <div className="rounded-sm border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
++                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Notas</p>
++                      <p className="mt-1 whitespace-pre-wrap text-xs text-zinc-700 dark:text-zinc-200">{detailBet.notes}</p>
+                     </div>
+                   )}
+                   {detailBet.comment && (
+-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+-                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Comentário</p>
+-                      <p className="mt-1 whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-200">{detailBet.comment}</p>
++                    <div className="rounded-sm border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
++                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Comentário</p>
++                      <p className="mt-1 whitespace-pre-wrap text-xs text-zinc-700 dark:text-zinc-200">{detailBet.comment}</p>
+                     </div>
+                   )}
+                   {detailBet.tags && (
+-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+-                      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Etiquetas</p>
+-                      <p className="mt-1 text-xs font-semibold text-indigo-600 dark:text-indigo-300">{detailBet.tags}</p>
++                    <div className="rounded-sm border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
++                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Etiquetas</p>
++                      <p className="mt-1 text-xs font-semibold text-emerald-600 dark:text-emerald-300">{detailBet.tags}</p>
+                     </div>
+                   )}
+                 </section>
+               )}
+             </div>
+           </div>
+         </div>
+       )}
+ 
+       {/* Registar/Editar Modal */}
+diff --git a/src/lib/longPress.ts b/src/lib/longPress.ts
+new file mode 100644
+index 0000000..8674197
+--- /dev/null
++++ b/src/lib/longPress.ts
+@@ -0,0 +1,58 @@
++type TimerHandle = ReturnType<typeof setTimeout> | number;
++
++interface LongPressOptions {
++  delay?: number;
++  schedule?: (callback: () => void, delay: number) => TimerHandle;
++  cancelScheduled?: (handle: TimerHandle) => void;
++}
++
++export interface LongPressController {
++  start(callback: () => void): void;
++  cancel(): void;
++  finish(): void;
++  consumeClick(): boolean;
++  dispose(): void;
++}
++
++export function createLongPressController(options: LongPressOptions = {}): LongPressController {
++  const delay = options.delay ?? 500;
++  const schedule = options.schedule ?? ((callback, ms) => window.setTimeout(callback, ms));
++  const cancelScheduled = options.cancelScheduled ?? ((handle) => window.clearTimeout(handle as number));
++  let timer: TimerHandle | null = null;
++  let suppressClick = false;
++
++  const cancelTimer = () => {
++    if (timer !== null) cancelScheduled(timer);
++    timer = null;
++  };
++
++  return {
++    start(callback) {
++      cancelTimer();
++      suppressClick = false;
++      timer = schedule(() => {
++        if (timer === null) return;
++        timer = null;
++        suppressClick = true;
++        callback();
++      }, delay);
++    },
++    cancel() {
++      const wasPending = timer !== null;
++      cancelTimer();
++      if (wasPending) suppressClick = false;
++    },
++    finish() {
++      cancelTimer();
++    },
++    consumeClick() {
++      const consumed = suppressClick;
++      suppressClick = false;
++      return consumed;
++    },
++    dispose() {
++      cancelTimer();
++      suppressClick = false;
++    },
++  };
++}
+diff --git a/src/mobile/screens/MobileBets.tsx b/src/mobile/screens/MobileBets.tsx
+index e408884..ef2ad0d 100644
+--- a/src/mobile/screens/MobileBets.tsx
++++ b/src/mobile/screens/MobileBets.tsx
+@@ -1,38 +1,46 @@
+ // src/mobile/screens/MobileBets.tsx
+ // Gestão de apostas mobile touch-first: pesquisa + sheet de filtros (mesma
+ // semântica do BetsManager desktop, incluindo drill-down por URL), lista de
+ // cards agrupada por dia com swipe para editar/apagar, sheet de detalhe,
+ // modo de seleção com ações em massa (editar campos comuns, ignorar/repor,
+ // duplicar, apagar) e formulário em página-folha (FAB) suportado pelo hook
+ // partilhado useBetForm.
+ 
+-import { useMemo, useState, type ReactNode } from "react";
++import { useEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+ import {
+   Plus,
+   Search,
+   Filter,
+   Trash2,
+   Pencil,
+   Copy,
+   Check,
+   X,
+   Clock,
+   MinusCircle,
+   CheckSquare,
+   PlusCircle,
+   Eye,
+   EyeOff,
+ } from "lucide-react";
+ import { Bet, BookieAccount, BetStatus } from "../../types";
+-import { AVAILABLE_BOOKMAKERS, safeNum, calculateBetReturnAndProfit } from "../../utils";
++import { AVAILABLE_BOOKMAKERS, safeNum, calculateBetReturnAndProfit, selectBetsForFinancialSummary } from "../../utils";
++import FilteredBetsSummary from "../../components/FilteredBetsSummary";
+ import { useBetForm } from "../../hooks/useBetForm";
++import { selectionHaptic } from "../../lib/haptics";
++import { createLongPressController } from "../../lib/longPress";
++import {
++  INITIAL_BET_SELECTION_STATE,
++  betSelectionReducer,
++  type BetSelectionAction,
++} from "../../lib/betSelection";
+ import {
+   BottomSheet,
+   SheetPage,
+   FAB,
+   ListGroup,
+   ListItem,
+   MobileCard,
+   SectionHeader,
+   SwipeableRow,
+   Pressable,
+@@ -151,48 +159,80 @@ export default function MobileBets({
+   onAddBet,
+   onAddBets,
+   onUpdateBet,
+   onIgnoreBet,
+   onDeleteBet,
+ }: MobileBetsProps) {
+   const toast = useToast();
+ 
+   // Drill-down por URL (vindo do dashboard), como no desktop.
+   const initialFilters = useMemo(() => new URLSearchParams(window.location.search), []);
+-  const initialFilter = (name: string) => initialFilters.get(name) || "ALL";
+-
+-  const [search, setSearch] = useState("");
+-  const [statusFilter, setStatusFilter] = useState(() => initialFilter("status"));
+-  const [typeFilter, setTypeFilter] = useState(() => initialFilter("type"));
+-  const [moneyFilter, setMoneyFilter] = useState(() => initialFilter("money"));
+-  const [bookmakerFilter, setBookmakerFilter] = useState(() => initialFilter("bookmaker"));
+-  const [accountFilter, setAccountFilter] = useState(() => initialFilter("account"));
+-  const [sportFilter, setSportFilter] = useState(() => initialFilter("sport"));
++
++  const [search, setSearch] = useState(() => initialFilters.get("search") || "");
++  const [statusFilter, setStatusFilter] = useState(() => initialFilters.get("status") || "ALL");
++  const [typeFilter, setTypeFilter] = useState(() => initialFilters.get("type") || "ALL");
++  const [moneyFilter, setMoneyFilter] = useState(() => initialFilters.get("money") || "ALL");
++  const [bookmakerFilter, setBookmakerFilter] = useState(() => initialFilters.get("bookmaker") || "ALL");
++  const [accountFilter, setAccountFilter] = useState(() => initialFilters.get("account") || "ALL");
++  const [sportFilter, setSportFilter] = useState(() => initialFilters.get("sport") || "ALL");
+   const [dateFrom, setDateFrom] = useState(() => initialFilters.get("dateFrom") || "");
+   const [dateTo, setDateTo] = useState(() => initialFilters.get("dateTo") || "");
+   const [sortField, setSortField] = useState<SortField>("date");
+   const [sortAsc, setSortAsc] = useState(false);
+ 
++  const commitSearch = () => {
++    const next = search.trim();
++    setSearch(next);
++
++    const params = new URLSearchParams(window.location.search);
++    if (next) params.set("search", next);
++    else params.delete("search");
++    const query = params.toString();
++    const nextUrl = `/bets${query ? `?${query}` : ""}`;
++    if (`${window.location.pathname}${window.location.search}` !== nextUrl) {
++      window.history.pushState({ ...window.history.state }, "", nextUrl);
++    }
++  };
++
++  useEffect(() => {
++    const handlePopState = () => {
++      if (window.location.pathname !== "/bets") return;
++      const next = new URLSearchParams(window.location.search).get("search") || "";
++      setSearch(next);
++    };
++    window.addEventListener("popstate", handlePopState);
++    return () => window.removeEventListener("popstate", handlePopState);
++  }, []);
++
+   const [filtersOpen, setFiltersOpen] = useState(false);
+   const [detailBet, setDetailBet] = useState<Bet | null>(null);
+   // Ignorar abre uma sheet própria para o comentário opcional (o desktop
+   // pré-preenche com o comentário atual da aposta); repor é imediato.
+   const [ignoringBet, setIgnoringBet] = useState<Bet | null>(null);
+   const [ignoreComment, setIgnoreComment] = useState("");
+   const [deletingBet, setDeletingBet] = useState<Bet | null>(null);
+   const [formOpen, setFormOpen] = useState(false);
+ 
+   // Modo de seleção (ações em massa).
+-  const [isSelecting, setIsSelecting] = useState(false);
+-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
++  const [selectionState, dispatchSelection] = useReducer(
++    betSelectionReducer,
++    INITIAL_BET_SELECTION_STATE,
++  );
++  const { isSelecting } = selectionState;
++  const selectedIds = selectionState.selectedIds;
+   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+   const [bulkRunning, setBulkRunning] = useState(false);
++  const longPressControllerRef = useRef<ReturnType<typeof createLongPressController> | null>(null);
++  const longPressOriginRef = useRef<{ x: number; y: number } | null>(null);
++  if (longPressControllerRef.current === null) {
++    longPressControllerRef.current = createLongPressController();
++  }
+ 
+   // Editar em massa (só campos comuns) e ignorar/repor em massa.
+   const [bulkEditOpen, setBulkEditOpen] = useState(false);
+   const [beStatus, setBeStatus] = useState(KEEP);
+   const [beSport, setBeSport] = useState("");
+   const [beBookmaker, setBeBookmaker] = useState(KEEP);
+   const [beAccount, setBeAccount] = useState(KEEP);
+   const [beMoney, setBeMoney] = useState(KEEP);
+   const [beNote, setBeNote] = useState("");
+   const [bulkIgnoreOpen, setBulkIgnoreOpen] = useState(false);
+@@ -369,60 +409,84 @@ export default function MobileBets({
+   // Seleção em massa.
+   const resetBulkEdit = () => {
+     setBeStatus(KEEP);
+     setBeSport("");
+     setBeBookmaker(KEEP);
+     setBeAccount(KEEP);
+     setBeMoney(KEEP);
+     setBeNote("");
+   };
+ 
++  const applySelectionAction = (action: BetSelectionAction) => {
++    const next = betSelectionReducer(selectionState, action);
++    dispatchSelection(action);
++    setConfirmBulkDelete(false);
++    if (!next.isSelecting) resetBulkEdit();
++  };
++
+   const toggleSelecting = () => {
+-    setIsSelecting((current) => {
+-      if (current) {
+-        setSelectedIds(new Set());
+-        setConfirmBulkDelete(false);
+-        resetBulkEdit();
+-      }
+-      return !current;
+-    });
++    applySelectionAction({ type: "toggle-mode" });
+   };
+ 
+   const toggleSelected = (id: string) => {
+-    setConfirmBulkDelete(false);
+-    setSelectedIds((current) => {
+-      const next = new Set(current);
+-      if (next.has(id)) next.delete(id);
+-      else next.add(id);
+-      return next;
+-    });
++    applySelectionAction({ type: "toggle-one", betId: id });
++  };
++
++  const toggleSelectedFromLongPress = (id: string) => {
++    toggleSelected(id);
++    void selectionHaptic();
++  };
++
++  const startBetLongPress = (event: ReactPointerEvent<HTMLDivElement>, id: string) => {
++    if (!event.isPrimary || event.button !== 0) return;
++    longPressOriginRef.current = { x: event.clientX, y: event.clientY };
++    longPressControllerRef.current?.start(() => toggleSelectedFromLongPress(id));
++  };
++
++  const moveBetLongPress = (event: ReactPointerEvent<HTMLDivElement>) => {
++    const origin = longPressOriginRef.current;
++    if (!origin) return;
++    if (Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 10) {
++      longPressOriginRef.current = null;
++      longPressControllerRef.current?.cancel();
++    }
++  };
++
++  const finishBetLongPress = () => {
++    longPressOriginRef.current = null;
++    longPressControllerRef.current?.finish();
+   };
+ 
++  const cancelBetLongPress = () => {
++    longPressOriginRef.current = null;
++    longPressControllerRef.current?.cancel();
++  };
++
++  useEffect(
++    () => () => {
++      longPressControllerRef.current?.dispose();
++    },
++    [],
++  );
++
+   // Selecionar/desmarcar todas as apostas atualmente filtradas (não só as
+   // visíveis num grupo) — como no desktop.
+   const toggleAllFiltered = () => {
+-    setConfirmBulkDelete(false);
+-    setSelectedIds((current) => {
+-      const next = new Set(current);
+-      const allSelected = filteredBets.length > 0 && filteredBets.every((b) => next.has(b.id));
+-      if (allSelected) filteredBets.forEach((b) => next.delete(b.id));
+-      else filteredBets.forEach((b) => next.add(b.id));
+-      return next;
++    applySelectionAction({
++      type: "toggle-filtered",
++      filteredIds: filteredBets.map((bet) => bet.id),
+     });
+   };
+ 
+   const finishBulk = () => {
+-    setSelectedIds(new Set());
+-    setConfirmBulkDelete(false);
+-    setIsSelecting(false);
++    applySelectionAction({ type: "clear" });
+     setBulkRunning(false);
+-    resetBulkEdit();
+   };
+ 
+   // Apostas atualmente selecionadas (ordem da lista visível é irrelevante aqui).
+   const selectedBets = () => bets.filter((b) => selectedIds.has(b.id));
+ 
+   // Editar em massa: aplica só os campos alterados; os únicos por aposta
+   // (montante, odd, seleções) ficam intactos. Recalcula retorno/lucro apenas
+   // quando o estado ou o tipo de dinheiro muda — os cálculos dependem deles.
+   const applyBulkEdit = async () => {
+     const selected = selectedBets();
+@@ -573,33 +637,44 @@ export default function MobileBets({
+ 
+   // ------------------------------------------------------------- render
+ 
+   const accountOptions = accounts.filter(
+     (a) => a.bookmaker === (form.bookmaker === "Outra" ? form.customBookmaker.trim() : form.bookmaker),
+   );
+ 
+   const selectedList = bets.filter((b) => selectedIds.has(b.id));
+   const allSelectedIgnored = selectedList.length > 0 && selectedList.every((b) => b.isIgnored);
+   const allFilteredSelected = filteredBets.length > 0 && filteredBets.every((b) => selectedIds.has(b.id));
++  const summaryBets = useMemo(
++    () => selectBetsForFinancialSummary(filteredBets, selectedIds, isSelecting),
++    [filteredBets, selectedIds, isSelecting],
++  );
+   const noSelection = selectedIds.size === 0 || bulkRunning;
+ 
+   return (
+     <div className="space-y-3">
+       {/* Pesquisa + filtros + seleção */}
+       <div className="flex items-center gap-2">
+         <div className="relative min-w-0 flex-1">
+           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+           <input
+             type="search"
+             placeholder="Pesquisar…"
+             value={search}
+             onChange={(e) => setSearch(e.target.value)}
++            onBlur={commitSearch}
++            onKeyDown={(e) => {
++              if (e.key === "Enter") {
++                e.preventDefault();
++                commitSearch();
++              }
++            }}
+             className="h-11 w-full rounded-full border border-zinc-200 bg-white pl-9 pr-4 text-sm text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-emerald-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+           />
+         </div>
+         <Pressable
+           as="button"
+           onClick={() => setFiltersOpen(true)}
+           aria-label="Filtros"
+           className="relative flex items-center justify-center w-11 h-11 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300"
+         >
+           <Filter size={17} />
+@@ -632,33 +707,49 @@ export default function MobileBets({
+             as="button"
+             onClick={toggleAllFiltered}
+             disabled={filteredBets.length === 0}
+             className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 disabled:opacity-40 px-2 py-1 rounded-full"
+           >
+             {allFilteredSelected ? "Desmarcar filtradas" : `Selecionar filtradas (${filteredBets.length})`}
+           </Pressable>
+         )}
+       </div>
+ 
++      <FilteredBetsSummary
++        bets={summaryBets}
++        currency={currency}
++        freebetOnly={moneyFilter === "FREEBET"}
++      />
++
+       {/* Lista agrupada por dia */}
+       {groups.map(({ day, bets: dayBets }) => (
+         <div key={day || "flat"}>
+           {day !== "" && <SectionHeader>{formatDay(day)}</SectionHeader>}
+           <MobileCard className="!p-0 overflow-hidden divide-y divide-zinc-100 dark:divide-zinc-800">
+             {dayBets.map((bet) => {
+               const isSelected = selectedIds.has(bet.id);
+               const card = (
+                 <div
+                   // Ignorada: esbatida, como no desktop, para se perceber à
+                   // vista que não conta para as estatísticas.
+                   className={`px-4 py-3 ${bet.isIgnored ? "opacity-60" : ""}`}
+-                  onClick={() => (isSelecting ? toggleSelected(bet.id) : setDetailBet(bet))}
++                  onPointerDown={(event) => startBetLongPress(event, bet.id)}
++                  onPointerMove={moveBetLongPress}
++                  onPointerUp={finishBetLongPress}
++                  onPointerCancel={cancelBetLongPress}
++                  onPointerLeave={cancelBetLongPress}
++                  onContextMenu={(event) => event.preventDefault()}
++                  onClick={() => {
++                    if (longPressControllerRef.current?.consumeClick()) return;
++                    if (isSelecting) toggleSelected(bet.id);
++                    else setDetailBet(bet);
++                  }}
+                 >
+                   <div className="flex items-start justify-between gap-2">
+                     <div className="min-w-0 flex-1">
+                       <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                         {bet.selections[0]?.event || "Múltipla"}
+                         {bet.selections.length > 1 && (
+                           <span className="ml-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                             +{bet.selections.length - 1}
+                           </span>
+                         )}

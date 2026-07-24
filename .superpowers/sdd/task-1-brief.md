@@ -1,5 +1,20 @@
+### Task 1: Add the Shared Selection-State Reducer
+
+**Files:**
+- Create: `src/lib/betSelection.ts`
+- Create: `extension/test/bet-selection.test.ts`
+
+**Interfaces:**
+- Consumes: immutable `ReadonlySet<string>` semantics through reducer state.
+- Produces: `BetSelectionState`, `BetSelectionAction`, `INITIAL_BET_SELECTION_STATE`, and `betSelectionReducer(state, action): BetSelectionState`.
+- Invariant: `toggle-one` and `toggle-filtered` derive `isSelecting` from the resulting set; `toggle-mode` may deliberately create `{ isSelecting: true, selectedIds: empty }`.
+
+- [ ] **Step 1: Write the failing reducer tests**
+
+Create `extension/test/bet-selection.test.ts` with:
+
+```ts
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 
 import {
@@ -23,20 +38,6 @@ describe("betSelectionReducer", () => {
     const stopped = betSelectionReducer(started, { type: "toggle-mode" });
     assert.equal(stopped.isSelecting, false);
     assert.deepEqual([...stopped.selectedIds], []);
-  });
-
-  it("preserves manually enabled empty selection mode when no filtered bets exist", () => {
-    const manuallyEnabled = betSelectionReducer(INITIAL_BET_SELECTION_STATE, {
-      type: "toggle-mode",
-    });
-    const result = betSelectionReducer(manuallyEnabled, {
-      type: "toggle-filtered",
-      filteredIds: [],
-    });
-
-    assert.equal(result, manuallyEnabled);
-    assert.equal(result.isSelecting, true);
-    assert.deepEqual([...result.selectedIds], []);
   });
 
   it("starts selection when an individual bet is added", () => {
@@ -106,40 +107,103 @@ describe("betSelectionReducer", () => {
     assert.deepEqual([...result.selectedIds], []);
   });
 });
+```
 
-describe("desktop and mobile selection integration", () => {
-  const desktopSource = readFileSync(
-    new URL("../../src/components/BetsManager.tsx", import.meta.url),
-    "utf8",
-  );
-  const mobileSource = readFileSync(
-    new URL("../../src/mobile/screens/MobileBets.tsx", import.meta.url),
-    "utf8",
-  );
+- [ ] **Step 2: Run the reducer test and verify the missing module**
 
-  it("routes desktop selection paths through the shared reducer action", () => {
-    assert.match(desktopSource, /useReducer\(\s*betSelectionReducer/);
-    assert.match(desktopSource, /const toggleBetSelection = \(id: string\).*type: "toggle-one"/s);
-    assert.match(desktopSource, /toggleBetSelectionFromLongPress.*toggleBetSelection\(id\)/s);
-    assert.match(desktopSource, /onChange=\{\(\) => toggleBetSelection\(bet\.id\)\}/);
-    assert.match(desktopSource, /type: "toggle-filtered"/);
-  });
+Run:
 
-  it("routes mobile selection paths through the shared reducer action", () => {
-    assert.match(mobileSource, /useReducer\(\s*betSelectionReducer/);
-    assert.match(mobileSource, /const toggleSelected = \(id: string\).*type: "toggle-one"/s);
-    assert.match(mobileSource, /toggleSelectedFromLongPress.*toggleSelected\(id\)/s);
-    assert.match(mobileSource, /if \(isSelecting\) toggleSelected\(bet\.id\)/);
-    assert.match(mobileSource, /type: "toggle-filtered"/);
-  });
+```bash
+bun test extension/test/bet-selection.test.ts
+```
 
-  it("keeps the desktop card as the selection target while animating only its inner padding", () => {
-    const cardSource = desktopSource.slice(desktopSource.indexOf("{/* Bets List / Grid */}"), desktopSource.indexOf("{/* Detail Modal */}"));
+Expected: FAIL because `../../src/lib/betSelection` does not exist.
 
-    assert.match(cardSource, /className=\{`relative bg-white/);
-    assert.match(cardSource, /className="absolute left-4 top-1\/2 z-10 hidden -translate-y-1\/2 md:flex/);
-    assert.match(cardSource, /<motion\.div[\s\S]*?animate=\{\{ paddingLeft: isSelecting \? "44px" : "0px" \}\}/);
-    assert.match(cardSource, /duration: reduceMotion \? 0 : 0\.18/);
-    assert.doesNotMatch(cardSource, /<AnimatePresence|\blayout=/);
-  });
-});
+- [ ] **Step 3: Implement the pure reducer**
+
+Create `src/lib/betSelection.ts` with:
+
+```ts
+export interface BetSelectionState {
+  isSelecting: boolean;
+  selectedIds: Set<string>;
+}
+
+export type BetSelectionAction =
+  | { type: "toggle-mode" }
+  | { type: "toggle-one"; betId: string }
+  | { type: "toggle-filtered"; filteredIds: readonly string[] }
+  | { type: "clear" };
+
+export const INITIAL_BET_SELECTION_STATE: BetSelectionState = {
+  isSelecting: false,
+  selectedIds: new Set<string>(),
+};
+
+export function betSelectionReducer(
+  state: BetSelectionState,
+  action: BetSelectionAction,
+): BetSelectionState {
+  if (action.type === "clear") {
+    return {
+      isSelecting: false,
+      selectedIds: new Set<string>(),
+    };
+  }
+
+  if (action.type === "toggle-mode") {
+    return state.isSelecting
+      ? {
+          isSelecting: false,
+          selectedIds: new Set<string>(),
+        }
+      : {
+          isSelecting: true,
+          selectedIds: new Set<string>(),
+        };
+  }
+
+  const next = new Set(state.selectedIds);
+
+  if (action.type === "toggle-one") {
+    if (next.has(action.betId)) next.delete(action.betId);
+    else next.add(action.betId);
+
+    return {
+      isSelecting: next.size > 0,
+      selectedIds: next,
+    };
+  }
+
+  if (action.filteredIds.length === 0) return state;
+
+  const allFilteredSelected = action.filteredIds.every((id) => next.has(id));
+  if (allFilteredSelected) action.filteredIds.forEach((id) => next.delete(id));
+  else action.filteredIds.forEach((id) => next.add(id));
+
+  return {
+    isSelecting: next.size > 0,
+    selectedIds: next,
+  };
+}
+```
+
+- [ ] **Step 4: Run the reducer tests**
+
+Run:
+
+```bash
+bun test extension/test/bet-selection.test.ts
+```
+
+Expected: 8 tests PASS.
+
+- [ ] **Step 5: Commit the reducer**
+
+```bash
+git add src/lib/betSelection.ts extension/test/bet-selection.test.ts
+git commit -m "feat: centralize bet selection state"
+```
+
+---
+

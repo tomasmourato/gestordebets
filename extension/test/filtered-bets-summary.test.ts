@@ -90,8 +90,8 @@ describe("calculateFilteredBetsSummary", () => {
     assert.match(markup, /10,00€.*\*.*8,00€.*5,00€ por liquidar/);
   });
 
-  it("fills the fixed desktop surface normally and compacts metrics only when actions are present", () => {
-    const withFooter = renderToStaticMarkup(
+  it("uses the same fixed desktop height and only renders a compact top rail while selecting", () => {
+    const withSelectionRail = renderToStaticMarkup(
       React.createElement(FilteredBetsSummary, {
         bets: [bet()],
         currency: "€",
@@ -116,22 +116,31 @@ describe("calculateFilteredBetsSummary", () => {
       }),
     );
 
-    assert.match(withFooter, /data-summary-fixed-height="true"/);
+    assert.match(withSelectionRail, /data-summary-fixed-height="true"/);
     assert.match(withoutFooter, /data-summary-fixed-height="true"/);
-    assert.match(withFooter, /md:h-36/);
+    assert.match(withSelectionRail, /md:h-36/);
     assert.match(withoutFooter, /md:h-36/);
-    assert.match(withFooter, /data-summary-metrics-state="compact"/);
-    assert.match(withFooter, /md:h-\[5\.375rem\]/);
+    assert.match(withSelectionRail, /data-summary-metrics-state="compact"/);
+    assert.match(withSelectionRail, /md:h-\[5\.375rem\]/);
     assert.match(withoutFooter, /data-summary-metrics-state="expanded"/);
     assert.match(withoutFooter, /md:flex-1/);
-    assert.match(withFooter, /md:h-14/);
-    assert.doesNotMatch(withoutFooter, /data-summary-footer/);
-    assert.match(withFooter, /data-summary-compact="true"/);
-    assert.match(withFooter, /data-summary-metric-size="compact"/);
-    assert.match(withFooter, /2 apostas selecionadas/);
-    assert.match(withFooter, /data-motion-value=/);
+    assert.match(withSelectionRail, /data-summary-selection-rail="true"/);
+    assert.match(withSelectionRail, /data-summary-selection-divider="true"/);
+    assert.ok(withSelectionRail.indexOf("data-summary-selection-rail") < withSelectionRail.indexOf("data-summary-metrics-state"));
+    assert.doesNotMatch(withoutFooter, /data-summary-selection-rail/);
+    assert.doesNotMatch(withoutFooter, /data-summary-selection-divider/);
+    assert.match(withSelectionRail, /data-summary-compact="true"/);
+    assert.match(withSelectionRail, /data-summary-metric-size="compact"/);
+    assert.match(withSelectionRail, /--summary-metric-size:1rem/);
+    assert.match(withSelectionRail, /--summary-label-size:0\.625rem/);
+    assert.match(withSelectionRail, /md:items-start md:text-left/);
+    assert.match(withSelectionRail, /2 apostas selecionadas/);
+    assert.match(withSelectionRail, /data-summary-rail-motion="fade"/);
     assert.match(withoutFooter, /data-summary-compact="false"/);
     assert.match(withoutFooter, /data-summary-metric-size="normal"/);
+    assert.match(withoutFooter, /--summary-metric-size:1\.5rem/);
+    assert.match(withoutFooter, /--summary-label-size:0\.75rem/);
+    assert.match(withoutFooter, /md:items-center md:text-center/);
     assert.doesNotMatch(withoutFooter, /2 apostas selecionadas/);
     assert.doesNotMatch(mobileLayout, /data-summary-fixed-height/);
     assert.doesNotMatch(mobileLayout, /md:h-36/);
@@ -169,11 +178,11 @@ describe("desktop bet-card focus", () => {
   });
 });
 
-describe("desktop selection footer", () => {
-  it("keeps the fixed-height desktop footer on one compact action row", () => {
+describe("desktop integrated selection rail", () => {
+  it("keeps all desktop bulk actions together in the compact top rail", () => {
     const source = readFileSync(new URL("../../src/components/BetsManager.tsx", import.meta.url), "utf8");
 
-    assert.match(source, /flex flex-wrap items-center justify-between gap-2[^`]*md:flex-nowrap md:gap-1 md:h-full/);
+    assert.match(source, /flex flex-wrap items-center justify-between gap-2[^`]*md:flex-nowrap md:gap-1/);
     assert.match(source, /flex items-center gap-2 md:shrink-0 md:gap-1/);
     assert.match(source, /Cancelar seleção/);
     assert.match(source, /flex flex-wrap items-center gap-2[^`]*md:flex-nowrap md:shrink-0 md:gap-1/);
@@ -181,15 +190,50 @@ describe("desktop selection footer", () => {
     assert.match(source, /inline-flex items-center gap-2[^`]*md:gap-1 md:shrink-0 md:text-\[11px\]/);
   });
 
-  it("moves only cancel selection into the summary actions", () => {
+  it("keeps Cancel neutral and preserves the Lucide icons within the summary rail", () => {
     const source = readFileSync(new URL("../../src/components/BetsManager.tsx", import.meta.url), "utf8");
     const toolbar = source.slice(source.indexOf("id=\"bets-toolbar\""), source.indexOf("<FilteredBetsSummary"));
     const summary = source.slice(source.indexOf("<FilteredBetsSummary"), source.indexOf("{/* Painel: editar em massa"));
+    const cancelLabelIndex = summary.indexOf("Cancelar seleção");
+    const cancelButton = summary.slice(summary.lastIndexOf("<button", cancelLabelIndex), summary.indexOf("</button>", cancelLabelIndex) + 9);
 
     assert.doesNotMatch(toolbar, /Cancelar seleção/);
     assert.match(toolbar, /Selecionar várias/);
     assert.match(toolbar, /Selecionar filtradas/);
     assert.match(summary, /Cancelar seleção/);
     assert.match(summary, /footer=\{\s*isSelecting\s*\?/);
+    assert.match(cancelButton, /border-zinc-200/);
+    assert.doesNotMatch(cancelButton, /bg-emerald-|(?<!hover:)text-emerald-/);
+    assert.match(summary, /<CheckSquare size=\{13\} \/>/);
+    assert.match(summary, /<Edit size=\{13\} \/>/);
+    assert.match(summary, /allSelectedIgnored \? <>\s*<Eye size=\{13\} \/> Repor\s*<\/> : <>\s*<EyeOff size=\{13\} \/> Ignorar/);
+    assert.match(summary, /<Copy size=\{13\} \/>/);
+    assert.match(summary, /<Trash2 size=\{13\} \/>/);
+    assert.match(summary, /aria-label="Cancelar eliminação"[\s\S]*?<X size=\{14\} \/>/);
+  });
+
+  it("uses desktop-only 180 ms typography transitions without FLIP or positional rail motion", () => {
+    const summarySource = readFileSync(new URL("../../src/components/FilteredBetsSummary.tsx", import.meta.url), "utf8");
+    const typedUtility = (prefix: string, variable: string) => `${prefix}${"["}${"length:var("}${variable}${")]"}`;
+    const ambiguousUtility = (prefix: string, variable: string) => `${prefix}${"["}${"var("}${variable}${")]"}`;
+    const metricSizeUtility = typedUtility("md:text-", "--summary-metric-size");
+    const labelSizeUtility = typedUtility("md:text-", "--summary-label-size");
+    const metricLineHeightUtility = typedUtility("md:leading-", "--summary-metric-line-height");
+
+    assert.match(summarySource, /data-summary-rail-motion="fade"[\s\S]*?transition=\{\{[\s\S]*?duration: reduceMotion \? 0 : 0\.18/);
+    assert.match(summarySource, /--summary-metric-size":\s*fixedSelectionHeight\s*\?\s*compactMetrics\s*\?\s*"1rem"\s*:\s*"1\.5rem"\s*:\s*"0\.875rem"/);
+    assert.match(summarySource, /--summary-label-size":\s*fixedSelectionHeight\s*\?\s*compactMetrics\s*\?\s*"0\.625rem"\s*:\s*"0\.75rem"\s*:\s*"0\.625rem"/);
+    assert.ok(summarySource.includes(metricSizeUtility));
+    assert.ok(summarySource.includes(labelSizeUtility));
+    assert.ok(summarySource.includes(metricLineHeightUtility));
+    assert.ok(!summarySource.includes(ambiguousUtility("md:text-", "--summary-metric-size")));
+    assert.ok(!summarySource.includes(ambiguousUtility("md:text-", "--summary-label-size")));
+    assert.ok(!summarySource.includes(ambiguousUtility("md:leading-", "--summary-metric-line-height")));
+    assert.match(summarySource, /--summary-metric-size[\s\S]*?transition=\{\{[\s\S]*?duration: reduceMotion \? 0 : 0\.18/);
+    assert.match(summarySource, /--summary-label-size[\s\S]*?transition=\{\{[\s\S]*?duration: reduceMotion \? 0 : 0\.18/);
+    assert.doesNotMatch(summarySource, /\blayout=/);
+    assert.doesNotMatch(summarySource, /\by\s*:/);
+    assert.doesNotMatch(summarySource, /\bexit=/);
+    assert.doesNotMatch(summarySource, /motion-safe:transition-\[opacity,transform\]|motion-safe:duration-\[180ms\]|motion-reduce:transition-none/);
   });
 });

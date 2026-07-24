@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useReducer, useRef, type PointerEvent as ReactPointerEvent } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { 
   Plus, 
   Search, 
@@ -156,6 +157,7 @@ export default function BetsManager({
   );
   const { isSelecting } = selectionState;
   const selectedBetIds = selectionState.selectedIds;
+  const reduceMotion = useReducedMotion();
   const longPressControllerRef = useRef<ReturnType<typeof createLongPressController> | null>(null);
   const longPressOriginRef = useRef<{ x: number; y: number } | null>(null);
   if (longPressControllerRef.current === null) {
@@ -848,18 +850,6 @@ export default function BetsManager({
   const getSelectionResultBadge = (result?: SelectionDisplayResult) => {
     const base = "inline-flex w-max items-center gap-1 rounded-sm border px-2 py-1 text-[9px] font-bold uppercase tracking-wider";
     switch (result) {
-      case "GANHA":
-        return <span className={`${base} border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300`}><Check size={10} /> Ganha</span>;
-      case "PERDIDA":
-        return <span className={`${base} border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-200`}><X size={10} /> Perdida</span>;
-      case "ANULADA":
-        return <span className={`${base} border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300`}><MinusCircle size={10} /> Anulada</span>;
-      case "POR_LIQUIDAR":
-        return <span className={`${base} border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300`}><Clock size={10} /> Pendente</span>;
-      case "MEIO_GANHA":
-        return <span className={`${base} border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300`}><Check size={10} /> Meio ganha</span>;
-      case "MEIO_PERDIDA":
-        return <span className={`${base} border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300`}><X size={10} /> Meio perdida</span>;
       case "DESCONHECIDO":
         return <span className={`${base} border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300`}><HelpCircle size={10} /> Desconhecido</span>;
       default:
@@ -1055,24 +1045,23 @@ export default function BetsManager({
         fixedSelectionHeight
         footer={
           isSelecting ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400 md:flex-nowrap md:gap-1 md:h-full">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400 md:flex-nowrap md:gap-1">
+          <span className="md:whitespace-nowrap">
+            <strong className="text-emerald-600 dark:text-emerald-300">{selectedBetIds.size}</strong>{" "}
+            {selectedBetIds.size === 1 ? "aposta selecionada" : "apostas selecionadas"}
+          </span>
           <div className="flex items-center gap-2 md:shrink-0 md:gap-1">
             <button
               type="button"
               onClick={toggleSelectionMode}
-              className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-emerald-200 bg-emerald-50 px-3 py-1.5 font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-950 md:gap-1 md:px-2 md:py-1 md:text-[11px]"
+              className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-zinc-200 bg-white px-3 py-1.5 font-semibold text-zinc-700 transition-colors hover:border-emerald-300 hover:text-emerald-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-emerald-700 dark:hover:text-emerald-300 md:gap-1 md:px-2 md:py-1 md:text-[11px]"
             >
               <CheckSquare size={13} />
               Cancelar seleção
             </button>
-            <span className="md:whitespace-nowrap">
-              <strong className="text-emerald-600 dark:text-emerald-300">{selectedBetIds.size}</strong>{" "}
-              {selectedBetIds.size === 1 ? "aposta selecionada" : "apostas selecionadas"}
-            </span>
-          </div>
 
-          {selectedBetIds.size > 0 && (
-          <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:shrink-0 md:gap-1">
+            {selectedBetIds.size > 0 && (
+            <div className="flex flex-wrap items-center gap-2 md:flex-nowrap md:shrink-0 md:gap-1">
             {isConfirmingBulkDelete ? (
               <div className="inline-flex items-center gap-2 rounded-sm border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/50 px-2 py-1 md:gap-1 md:shrink-0 md:text-[11px]">
                 <span className="font-semibold text-rose-700 dark:text-rose-300">
@@ -1136,8 +1125,9 @@ export default function BetsManager({
                 </button>
               </>
             )}
+            </div>
+            )}
           </div>
-          )}
         </div>
           ) : undefined
         }
@@ -1312,7 +1302,7 @@ export default function BetsManager({
                 if (isSelecting) toggleBetSelection(bet.id);
                 else setDetailBet(bet);
               }}
-              className={`bg-white dark:bg-zinc-900 rounded-sm border p-4 md:p-5 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
+              className={`relative bg-white dark:bg-zinc-900 rounded-sm border p-4 md:p-5 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
                 selectedBetIds.has(bet.id)
                   ? "border-emerald-300 dark:border-emerald-700 ring-1 ring-emerald-100 dark:ring-emerald-950"
                   : "border-zinc-200 dark:border-zinc-800"
@@ -1321,7 +1311,7 @@ export default function BetsManager({
 
               {isSelecting && (
                 <label
-                  className="flex items-center self-start md:self-center cursor-pointer"
+                  className="absolute left-4 top-1/2 z-10 hidden -translate-y-1/2 md:flex items-center cursor-pointer"
                   title="Selecionar aposta"
                   onClick={(event) => event.stopPropagation()}
                   onKeyDown={(event) => event.stopPropagation()}
@@ -1336,6 +1326,11 @@ export default function BetsManager({
                 </label>
               )}
 
+              <motion.div
+                animate={{ paddingLeft: isSelecting ? "44px" : "0px" }}
+                transition={{ duration: reduceMotion ? 0 : 0.18, ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center"
+              >
               {/* Left Column: Selections and Details */}
               <div className="space-y-2 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -1538,6 +1533,7 @@ export default function BetsManager({
 
               </div>
 
+              </motion.div>
             </div>
           );
         })}
@@ -1652,7 +1648,11 @@ export default function BetsManager({
                 </div>
                 <div className="space-y-3">
                   {detailBet.selections.length > 0 ? detailBet.selections.map((selection, index) => {
-                    const displayResult = resolveSelectionDisplayResult(detailBet.status, selection.result);
+                    const displayResult = resolveSelectionDisplayResult(
+                      detailBet.status,
+                      selection.result,
+                      detailBet.type,
+                    );
                     return (
                     <article key={selection.id || index} className={`rounded-sm border p-4 ${selectionDetailClass(displayResult)}`}>
                       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
@@ -1922,7 +1922,7 @@ export default function BetsManager({
                       <option value="SR">Stake devolvida — SR (ganho = odd×stake)</option>
                     </select>
                     <p className="text-[11px] text-emerald-700/70 dark:text-emerald-300/70 mt-1">
-                      Predefinido pela casa ({formBookmaker}). SNR é o padrão; o Betclic usa SR.
+                      Predefinido pela casa ({formBookmaker}). SNR é o padrão da indústria; a Betclic e a Betano usam SR.
                     </p>
                   </div>
                 )}

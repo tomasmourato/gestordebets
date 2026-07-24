@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-07-13T22:34:11.978245+00:00",
+  "generated_at": "2026-07-24T04:05:09.965506+00:00",
   "nodes": {
     "src_components_betsmanager": {
-      "code_fingerprint": "deeb877136523501c5b5c22f0127f2cc98b1e99f4064686574d6418eca520c9f",
+      "code_fingerprint": "9ac953138f76fd3b6991d37f643a162a11d39a90c6ccfb39da599a5132b33739",
       "label": "BetsManager.tsx",
       "last": "2026-07-13T22:34:11.924434+00:00",
       "provenance": [
@@ -12,13 +12,13 @@
           "q": "Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior"
         }
       ],
-      "score": 0.999999986,
+      "score": 0.789496834,
       "source_file": "src/components/BetsManager.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_components_dashboard_dashboard": {
-      "code_fingerprint": "8dc89e5512c0c175db12a7f50a38a9bc8acbf114dce645358ef7178b28a0e906",
+      "code_fingerprint": "406f87315ef4ed7c7bc679959df2fe111ad71f6488b4dd09a7abf70a2022ddbe",
       "label": "Dashboard()",
       "last": "2026-07-13T22:34:11.924434+00:00",
       "provenance": [
@@ -28,7 +28,7 @@
           "q": "Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior"
         }
       ],
-      "score": 0.999999986,
+      "score": 0.789496834,
       "source_file": "src/components/Dashboard.tsx",
       "status": "tentative",
       "uses": 1
@@ -44,13 +44,13 @@
           "q": "Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior"
         }
       ],
-      "score": 0.999999986,
+      "score": 0.789496834,
       "source_file": "src/lib/betStatus.ts",
       "status": "tentative",
       "uses": 1
     },
     "src_utils_calculatebetreturnandprofit": {
-      "code_fingerprint": "0b00b5d09dabc9e5e34349826e43260083e5b58555f36b60280a4a4fc1c1cb1b",
+      "code_fingerprint": "29f2c249c84030a90f494e4e0aca2afa4a654cdb039be32dba3e38f61ce1c1e2",
       "label": "calculateBetReturnAndProfit()",
       "last": "2026-07-13T22:34:11.924434+00:00",
       "provenance": [
@@ -60,13 +60,13 @@
           "q": "Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior"
         }
       ],
-      "score": 0.999999986,
+      "score": 0.789496834,
       "source_file": "src/utils.ts",
       "status": "tentative",
       "uses": 1
     },
     "src_utils_calculatedashboardstats": {
-      "code_fingerprint": "0b00b5d09dabc9e5e34349826e43260083e5b58555f36b60280a4a4fc1c1cb1b",
+      "code_fingerprint": "29f2c249c84030a90f494e4e0aca2afa4a654cdb039be32dba3e38f61ce1c1e2",
       "label": "calculateDashboardStats()",
       "last": "2026-07-13T22:34:11.924434+00:00",
       "provenance": [
@@ -76,7 +76,7 @@
           "q": "Analyze last commit from remote mourato and merge while preserving cashout filtering and status behavior"
         }
       ],
-      "score": 0.999999986,
+      "score": 0.789496834,
       "source_file": "src/utils.ts",
       "status": "tentative",
       "uses": 1

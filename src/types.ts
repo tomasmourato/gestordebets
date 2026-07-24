@@ -4,7 +4,7 @@ export type SelectionResult = Exclude<BetStatus, 'CASHOUT'>;
 
 // Regra de pagamento de uma freebet:
 //  SNR = Stake Not Returned (ganho = (odd-1) * stake) — padrão da indústria
-//  SR  = Stake Returned     (ganho = odd * stake)     — variante do Betclic
+//  SR  = Stake Returned     (ganho = odd * stake)     — variante da Betclic
 export type FreebetType = 'SNR' | 'SR';
 
 export interface Selection {

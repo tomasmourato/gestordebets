@@ -103,7 +103,7 @@ export function useBetclicExtension() {
     window.setTimeout(() => {
       setImporting((busy) => {
         if (busy) {
-          setResult({ ok: false, error: "A extensão não respondeu. Reabre o histórico do Betclic ou Betano." });
+          setResult({ ok: false, error: "A extensão não respondeu. Reabre o histórico da Betclic ou da Betano." });
         }
         return false;
       });

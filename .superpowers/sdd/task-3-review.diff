@@ -1,0 +1,412 @@
+# Review package: 244eff1..2fd7d9a
+
+## Commits
+2fd7d9a feat: stabilize selected bets summary layout
+
+## Files changed
+ extension/test/filtered-bets-summary.test.ts | 166 +++++++++++++++++++++++
+ src/components/BetsManager.tsx               |   1 +
+ src/components/FilteredBetsSummary.tsx       | 196 +++++++++++++++++++++++++++
+ 3 files changed, 363 insertions(+)
+
+## Diff
+diff --git a/extension/test/filtered-bets-summary.test.ts b/extension/test/filtered-bets-summary.test.ts
+new file mode 100644
+index 0000000..bef2f51
+--- /dev/null
++++ b/extension/test/filtered-bets-summary.test.ts
+@@ -0,0 +1,166 @@
++import assert from "node:assert/strict";
++import { readFileSync } from "node:fs";
++import { describe, it } from "node:test";
++import { renderToStaticMarkup } from "react-dom/server";
++import React from "react";
++
++import type { Bet, BetStatus } from "../../src/types";
++import { calculateFilteredBetsSummary, selectBetsForFinancialSummary } from "../../src/utils";
++import FilteredBetsSummary from "../../src/components/FilteredBetsSummary";
++
++function bet(overrides: Partial<Bet> = {}): Bet {
++  return {
++    id: "bet-1",
++    type: "SIMPLES",
++    status: "GANHA" as BetStatus,
++    selections: [],
++    stake: 10,
++    odd: 2,
++    isFreebet: false,
++    potentialReturn: 20,
++    finalReturn: 20,
++    netProfit: 10,
++    bookmaker: "Test",
++    dateTime: "2026-07-24 12:00",
++    origin: "MANUAL",
++    ...overrides,
++  };
++}
++
++describe("calculateFilteredBetsSummary", () => {
++  it("separates settled and pending real-money stakes", () => {
++    const summary = calculateFilteredBetsSummary([
++      bet({ id: "won", stake: 10, finalReturn: 20, netProfit: 10 }),
++      bet({ id: "pending", status: "POR_LIQUIDAR", stake: 5, finalReturn: 0, netProfit: 0 }),
++      bet({ id: "freebet", isFreebet: true, stake: 8, finalReturn: 16, netProfit: 16 }),
++      bet({ id: "pending-freebet", status: "POR_LIQUIDAR", isFreebet: true, stake: 3, finalReturn: 0, netProfit: 0 }),
++      bet({ id: "ignored", isIgnored: true, stake: 50, finalReturn: 100, netProfit: 50 }),
++    ]);
++
++    assert.deepEqual(summary, {
++      settledStake: 10,
++      pendingStake: 5,
++      totalReturn: 36,
++      netProfit: 26,
++      betCount: 4,
++      freebetStake: 11,
++    });
++  });
++
++  it("returns zeroes for an empty visible set", () => {
++    assert.deepEqual(calculateFilteredBetsSummary([]), {
++      settledStake: 0,
++      pendingStake: 0,
++      totalReturn: 0,
++      netProfit: 0,
++      betCount: 0,
++      freebetStake: 0,
++    });
++  });
++
++  it("marks the Freebet-only total with a compact asterisk helper", () => {
++    const markup = renderToStaticMarkup(
++      React.createElement(FilteredBetsSummary, {
++        bets: [bet({ isFreebet: true, stake: 12.5, finalReturn: 25, netProfit: 25 })],
++        currency: "€",
++        freebetOnly: true,
++      }),
++    );
++
++    assert.match(markup, /\*.*12,50€/);
++    assert.match(markup, /role="tooltip"/);
++    assert.match(markup, /Valor utilizado em freebets/);
++    assert.match(markup, /aria-expanded="false"/);
++    assert.match(markup, /text-violet/);
++  });
++
++  it("keeps cash, freebet, and pending stake information on one metric line", () => {
++    const markup = renderToStaticMarkup(
++      React.createElement(FilteredBetsSummary, {
++        bets: [
++          bet({ id: "cash", stake: 10 }),
++          bet({ id: "freebet", isFreebet: true, stake: 8 }),
++          bet({ id: "pending", status: "POR_LIQUIDAR", stake: 5 }),
++        ],
++        currency: "€",
++        freebetOnly: false,
++      }),
++    );
++
++    assert.match(markup, /10,00€.*\*.*8,00€.*5,00€ por liquidar/);
++  });
++
++  it("reserves a stable desktop footer slot and compacts metrics only when actions are present", () => {
++    const withFooter = renderToStaticMarkup(
++      React.createElement(FilteredBetsSummary, {
++        bets: [bet()],
++        currency: "€",
++        freebetOnly: false,
++        reserveFooterSpace: true,
++        footer: React.createElement("div", null, "2 apostas selecionadas"),
++      }),
++    );
++    const withoutFooter = renderToStaticMarkup(
++      React.createElement(FilteredBetsSummary, {
++        bets: [bet()],
++        currency: "€",
++        freebetOnly: false,
++        reserveFooterSpace: true,
++      }),
++    );
++    const mobileLayout = renderToStaticMarkup(
++      React.createElement(FilteredBetsSummary, {
++        bets: [bet()],
++        currency: "€",
++        freebetOnly: false,
++      }),
++    );
++
++    assert.match(withFooter, /data-summary-footer-slot/);
++    assert.match(withoutFooter, /data-summary-footer-slot/);
++    assert.match(withFooter, /md:h-20/);
++    assert.match(withoutFooter, /md:h-20/);
++    assert.match(withFooter, /md:h-14/);
++    assert.match(withoutFooter, /md:h-14/);
++    assert.match(withFooter, /data-summary-compact="true"/);
++    assert.match(withFooter, /data-summary-metric-size="compact"/);
++    assert.match(withFooter, /2 apostas selecionadas/);
++    assert.match(withFooter, /data-motion-value=/);
++    assert.match(withoutFooter, /data-summary-compact="false"/);
++    assert.match(withoutFooter, /data-summary-metric-size="normal"/);
++    assert.doesNotMatch(withoutFooter, /2 apostas selecionadas/);
++    assert.doesNotMatch(mobileLayout, /data-summary-footer-slot/);
++    assert.doesNotMatch(mobileLayout, /md:h-20/);
++  });
++});
++
++describe("selectBetsForFinancialSummary", () => {
++  it("uses only selected bets that remain visible while selection mode is active", () => {
++    const visibleBets = [bet({ id: "cash", stake: 10 }), bet({ id: "freebet", isFreebet: true, stake: 8 })];
++
++    assert.deepEqual(
++      selectBetsForFinancialSummary(visibleBets, new Set(["freebet", "hidden"]), true),
++      [visibleBets[1]],
++    );
++  });
++
++  it("keeps filtered totals when selection mode has no selected bets", () => {
++    const visibleBets = [bet({ id: "first" }), bet({ id: "second" })];
++
++    assert.equal(selectBetsForFinancialSummary(visibleBets, new Set(), true), visibleBets);
++    assert.equal(selectBetsForFinancialSummary(visibleBets, new Set(["first"]), false), visibleBets);
++  });
++});
++
++describe("desktop bet-card focus", () => {
++  it("shows the emerald focus ring for keyboard focus only", () => {
++    const source = readFileSync(new URL("../../src/components/BetsManager.tsx", import.meta.url), "utf8");
++    const cardClass = source
++      .split("\n")
++      .find((line) => line.includes("rounded-sm border p-4 md:p-5"));
++
++    assert.ok(cardClass);
++    assert.match(cardClass, /focus-visible:ring-2 focus-visible:ring-emerald-500\/40/);
++    assert.doesNotMatch(cardClass, /\bfocus:ring-2\b/);
++  });
++});
+diff --git a/src/components/BetsManager.tsx b/src/components/BetsManager.tsx
+index cf0d682..1e4addb 100644
+--- a/src/components/BetsManager.tsx
++++ b/src/components/BetsManager.tsx
+@@ -1047,20 +1047,21 @@ export default function BetsManager({
+             value={timeframeFilter}
+             onChange={setTimeframeFilter}
+           />
+         </FiltersBar>
+       </div>
+ 
+       <FilteredBetsSummary
+         bets={summaryBets}
+         currency={currency}
+         freebetOnly={freebetFilter === "FREEBET"}
++        reserveFooterSpace
+         footer={
+           isSelecting && selectedBetIds.size > 0 ? (
+         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+           <span>
+             <strong className="text-emerald-600 dark:text-emerald-300">{selectedBetIds.size}</strong>{" "}
+             {selectedBetIds.size === 1 ? "aposta selecionada" : "apostas selecionadas"}
+           </span>
+ 
+           <div className="flex flex-wrap items-center gap-2">
+             {isConfirmingBulkDelete ? (
+diff --git a/src/components/FilteredBetsSummary.tsx b/src/components/FilteredBetsSummary.tsx
+new file mode 100644
+index 0000000..a8c0379
+--- /dev/null
++++ b/src/components/FilteredBetsSummary.tsx
+@@ -0,0 +1,196 @@
++import { useId, useState, type ReactNode } from "react";
++import { AnimatePresence, motion, useReducedMotion } from "motion/react";
++import { type Bet } from "../types";
++import { calculateFilteredBetsSummary } from "../utils";
++
++interface FilteredBetsSummaryProps {
++  bets: Bet[];
++  currency: string;
++  freebetOnly: boolean;
++  footer?: ReactNode;
++  reserveFooterSpace?: boolean;
++}
++
++const money = (value: number, currency: string) =>
++  `${value.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${currency}`;
++
++function FreebetAsterisk() {
++  const tooltipId = useId();
++  const [open, setOpen] = useState(false);
++
++  return (
++    <span className="group relative inline-flex align-baseline">
++      <button
++        type="button"
++        aria-label="Explicar montante de freebet"
++        aria-describedby={tooltipId}
++        aria-expanded={open}
++        onClick={() => setOpen((current) => !current)}
++        onBlur={() => setOpen(false)}
++        onKeyDown={(event) => {
++          if (event.key === "Escape") setOpen(false);
++        }}
++        className="relative inline-flex cursor-help items-center justify-center font-bold text-violet-700 outline-none after:absolute after:-inset-2.5 hover:text-violet-800 focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-1 dark:text-violet-300 dark:hover:text-violet-200 dark:focus-visible:ring-offset-zinc-900"
++      >
++        *
++      </button>
++      <span
++        id={tooltipId}
++        role="tooltip"
++        className={`pointer-events-none absolute bottom-[calc(100%+0.5rem)] left-0 z-30 whitespace-nowrap rounded-sm border border-violet-200 bg-white px-2.5 py-1.5 font-sans text-[10px] font-semibold normal-case tracking-normal text-violet-800 shadow-lg shadow-violet-950/10 transition-opacity duration-150 dark:border-violet-800 dark:bg-zinc-950 dark:text-violet-200 dark:shadow-black/30 ${
++          open
++            ? "visible opacity-100"
++            : "invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
++        }`}
++      >
++        Valor utilizado em freebets
++      </span>
++    </span>
++  );
++}
++
++function AnimatedMetricValue({ valueKey, children }: { valueKey: string; children: ReactNode }) {
++  const reduceMotion = useReducedMotion();
++
++  return (
++    <span className="relative block min-h-5" aria-live="polite">
++      <AnimatePresence initial={false} mode="popLayout">
++        <motion.span
++          key={valueKey}
++          data-motion-value={valueKey}
++          initial={reduceMotion ? false : { opacity: 0, y: 5 }}
++          animate={{ opacity: 1, y: 0 }}
++          exit={reduceMotion ? undefined : { opacity: 0, y: -5 }}
++          transition={{ duration: reduceMotion ? 0 : 0.18, ease: [0.16, 1, 0.3, 1] }}
++          className="block"
++        >
++          {children}
++        </motion.span>
++      </AnimatePresence>
++    </span>
++  );
++}
++
++export default function FilteredBetsSummary({
++  bets,
++  currency,
++  freebetOnly,
++  footer,
++  reserveFooterSpace = false,
++}: FilteredBetsSummaryProps) {
++  const summary = calculateFilteredBetsSummary(bets);
++  const reduceMotion = useReducedMotion();
++  const compactMetrics = Boolean(footer);
++  const profitClass =
++    summary.netProfit > 0
++      ? "text-emerald-600 dark:text-emerald-400"
++      : summary.netProfit < 0
++        ? "text-rose-600 dark:text-rose-400"
++        : "text-zinc-700 dark:text-zinc-200";
++
++  const stakeValue: ReactNode = (
++    <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
++      {!freebetOnly && <span className="text-zinc-900 dark:text-zinc-100">{money(summary.settledStake, currency)}</span>}
++      {(freebetOnly || summary.freebetStake > 0) && (
++        <span className="whitespace-nowrap text-violet-700 dark:text-violet-300">
++          {!freebetOnly && "("}<FreebetAsterisk />{money(summary.freebetStake, currency)}{!freebetOnly && ")"}
++        </span>
++      )}
++      {summary.pendingStake > 0 && (
++        <span className="whitespace-nowrap text-[10px] font-semibold text-zinc-500 dark:text-zinc-400">
++          (+{money(summary.pendingStake, currency)} por liquidar)
++        </span>
++      )}
++    </span>
++  );
++
++  const items = [
++    {
++      label: "Total apostado",
++      value: stakeValue,
++      valueKey: `${summary.settledStake}:${summary.freebetStake}:${summary.pendingStake}:${freebetOnly}`,
++      className: "",
++    },
++    {
++      label: "Total recebido",
++      value: money(summary.totalReturn, currency),
++      valueKey: String(summary.totalReturn),
++      className: "text-zinc-900 dark:text-zinc-100",
++    },
++    {
++      label: "Resultado líquido",
++      value: `${summary.netProfit > 0 ? "+" : ""}${money(summary.netProfit, currency)}`,
++      valueKey: String(summary.netProfit),
++      className: profitClass,
++    },
++    {
++      label: "Apostas consideradas",
++      value: String(summary.betCount),
++      valueKey: String(summary.betCount),
++      className: "text-zinc-900 dark:text-zinc-100",
++    },
++  ];
++
++  return (
++    <section
++      aria-label="Resumo financeiro das apostas filtradas"
++      data-summary-compact={compactMetrics ? "true" : "false"}
++      className="overflow-visible rounded-sm border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
++    >
++      <div
++        className={`grid grid-cols-2 divide-x divide-y divide-zinc-200 dark:divide-zinc-800 md:grid-cols-4 md:divide-y-0 ${
++          reserveFooterSpace ? "md:h-20" : ""
++        }`}
++      >
++        {items.map((item) => (
++          <div key={item.label} className="min-w-0 px-3 py-3 md:flex md:flex-col md:justify-center md:px-4">
++            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{item.label}</p>
++            <motion.p
++              data-summary-metric-size={compactMetrics ? "compact" : "normal"}
++              initial={false}
++              animate={{
++                fontSize: compactMetrics ? "0.75rem" : "0.875rem",
++                lineHeight: compactMetrics ? "1rem" : "1.25rem",
++              }}
++              transition={{
++                duration: reduceMotion ? 0 : 0.18,
++                ease: [0.16, 1, 0.3, 1],
++              }}
++              className={`mt-1 font-mono font-bold tabular-nums ${item.className}`}
++            >
++              <AnimatedMetricValue valueKey={item.valueKey}>{item.value}</AnimatedMetricValue>
++            </motion.p>
++          </div>
++        ))}
++      </div>
++      {reserveFooterSpace ? (
++        <div
++          data-summary-footer-slot
++          className="hidden items-center overflow-visible border-t border-zinc-200 px-4 dark:border-zinc-800 md:h-14 md:flex"
++        >
++          <AnimatePresence initial={false} mode="wait">
++            {footer ? (
++              <motion.div
++                key="summary-footer"
++                initial={reduceMotion ? false : { opacity: 0, y: 4 }}
++                animate={{ opacity: 1, y: 0 }}
++                exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
++                transition={{
++                  duration: reduceMotion ? 0 : 0.16,
++                  ease: [0.16, 1, 0.3, 1],
++                }}
++                className="w-full"
++              >
++                {footer}
++              </motion.div>
++            ) : null}
++          </AnimatePresence>
++        </div>
++      ) : footer ? (
++        <div data-summary-footer className="border-t border-zinc-200 px-3 py-2.5 dark:border-zinc-800 md:px-4">
++          {footer}
++        </div>
++      ) : null}
++    </section>
++  );
++}
